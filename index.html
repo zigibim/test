@@ -124,10 +124,7 @@
         <!-- Cabeçalho -->
         <header class="flex justify-between items-center mb-6">
             <h1 class="text-2xl sm:text-3xl font-bold text-cyan-400">Meu Gestor de Aluguéis</h1>
-            <button id="openAddItemModal" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-lg flex items-center transition-transform transform hover:scale-105">
-                <i data-lucide="plus-circle" class="h-5 w-5 sm:mr-2"></i>
-                <span class="hidden sm:inline">Adicionar Item</span>
-            </button>
+            <!-- Botão Adicionar Item foi movido para a aba Meus Itens -->
         </header>
 
         <!-- Navegação Principal -->
@@ -137,6 +134,7 @@
                     <nav class="-mb-px flex space-x-6" aria-label="Tabs">
                         <button class="tab-button active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-cyan-500 text-cyan-400" data-tab="dashboard">Painel</button>
                         <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items">Meus Itens</button>
+                        <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals">Meus Aluguéis</button>
                         <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="finance">Financeiro</button>
                         <button id="notifications-tab-btn" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500 relative" data-tab="notifications">
                             Notificações
@@ -189,6 +187,12 @@
 
             <!-- Aba Meus Itens -->
             <div id="items-content" class="tab-content hidden">
+                <div class="mb-6 text-right">
+                    <button id="openAddItemModal" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105 inline-flex">
+                       <i data-lucide="plus-circle" class="h-5 w-5 mr-2"></i>
+                       <span>Adicionar Item</span>
+                   </button>
+               </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-semibold mb-4 flex items-center"><i data-lucide="package-check" class="mr-3 text-green-400"></i>Disponíveis para Alugar</h2>
@@ -202,6 +206,14 @@
                             <!-- Itens alugados aqui -->
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Aba Meus Aluguéis -->
+            <div id="rentals-content" class="tab-content hidden">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-4 flex items-center"><i data-lucide="calendar-clock" class="mr-3 text-cyan-400"></i>Aluguéis Ativos (por pendência)</h2>
+                <div id="sorted-rentals-list" class="space-y-4">
+                    <!-- Sorted rented items will be inserted here -->
                 </div>
             </div>
 
@@ -643,6 +655,7 @@
             const renderAll = () => {
                 renderSummaryCards();
                 renderItems();
+                renderRentals();
                 applyFiltersAndRender(); 
                 checkAlerts();
                 updateDashboardView();
@@ -663,7 +676,7 @@
                 rentedList.innerHTML = '';
 
                 if (items.length === 0) {
-                    availableList.innerHTML = `<p class="text-gray-400">Nenhum item cadastrado. Clique em "Adicionar Item" para começar.</p>`;
+                    availableList.innerHTML = `<p class="text-gray-400">Nenhum item cadastrado.</p>`;
                 }
 
                 items.forEach(item => {
@@ -688,7 +701,6 @@
                     `;
 
                     if (item.rentedTo) {
-                        // Item Alugado
                         const endDate = new Date(item.rentEndDate);
                         const isOverdue = new Date() > endDate;
                         
@@ -724,7 +736,6 @@
                         `;
                         rentedList.innerHTML += card;
                     } else {
-                        // Item Disponível
                         const card = `
                             <div class="bg-gray-800 p-4 rounded-lg border-l-4 border-green-500 flex flex-col h-full">
                                 <div class="flex-grow">
@@ -747,6 +758,103 @@
                 if (rentedList.innerHTML === '') rentedList.innerHTML = `<p class="text-gray-400">Nenhum item alugado no momento.</p>`;
                 if (availableList.innerHTML === '') availableList.innerHTML = `<p class="text-gray-400">Nenhum item disponível no momento.</p>`;
             };
+
+            const renderRentals = () => {
+                const sortedRentalsList = document.getElementById('sorted-rentals-list');
+                sortedRentalsList.innerHTML = '';
+
+                const rentedItems = items.filter(item => item.rentedTo);
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const getSortPriority = (item) => {
+                    const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                    // Priority 1: Contract overdue
+                    if (today > endDate && !item.renewalPending) {
+                        return { priority: 1, date: endDate };
+                    }
+
+                    // Priority 2: Payment overdue
+                    const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+                    const lastPaymentDate = item.lastPaymentAlertDate ? new Date(item.lastPaymentAlertDate) : null;
+                    if (today >= paymentDueDateThisMonth && (!lastPaymentDate || lastPaymentDate < paymentDueDateThisMonth)) {
+                        return { priority: 2, date: paymentDueDateThisMonth };
+                    }
+                    
+                    // Priority 3: Awaiting renewal
+                    if (item.renewalPending) {
+                        return { priority: 3, date: endDate };
+                    }
+
+                    // Priority 4: Normal active rental
+                    return { priority: 4, date: endDate };
+                };
+
+                rentedItems.sort((a, b) => {
+                    const aSort = getSortPriority(a);
+                    const bSort = getSortPriority(b);
+
+                    if (aSort.priority !== bSort.priority) {
+                        return aSort.priority - bSort.priority; // Sort by main priority
+                    }
+                    
+                    return aSort.date - bSort.date; // Then by date within the same priority
+                });
+
+
+                if (rentedItems.length === 0) {
+                    sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
+                    return;
+                }
+
+                rentedItems.forEach(item => {
+                    const actionButtons = `
+                        <div class="mt-4 flex justify-end items-center space-x-2">
+                            <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita">
+                                <i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita
+                            </button>
+                            <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
+                                <i data-lucide="file-signature" class="h-5 w-5"></i>
+                            </button>
+                            <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel">
+                                <i data-lucide="clipboard-edit" class="h-5 w-5"></i>
+                            </button>
+                            <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel">
+                                <i data-lucide="trash-2" class="h-5 w-5"></i>
+                            </button>
+                        </div>
+                    `;
+
+                    const endDate = new Date(item.rentEndDate);
+                    const isOverdue = new Date() > endDate;
+                    
+                    let borderColor = 'border-yellow-500';
+                    if (item.renewalPending) borderColor = 'border-pink-500';
+                    else if (isOverdue) borderColor = 'border-red-500';
+
+                    const card = `
+                        <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-lg">${item.name}</h3>
+                                        <p class="text-sm text-gray-400">${item.category}</p>
+                                    </div>
+                                    <span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span>
+                                </div>
+                                <div class="mt-3 text-sm space-y-1">
+                                    <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
+                                    <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
+                                    <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isOverdue ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                                </div>
+                            </div>
+                            ${actionButtons}
+                        </div>
+                    `;
+                    sortedRentalsList.innerHTML += card;
+                });
+            };
             
             const renderTransactions = (transactionsToRender) => {
                 const list = document.getElementById('transactions-list');
@@ -763,42 +871,23 @@
                     let typeClass = '', typeText = '', amountClass = '', amountPrefix = '';
                     
                     if (t.type === 'revenue') {
-                        typeClass = 'bg-green-900 text-green-300';
-                        typeText = 'Receita';
-                        amountClass = 'text-green-400';
-                        amountPrefix = '+';
+                        typeClass = 'bg-green-900 text-green-300'; typeText = 'Receita'; amountClass = 'text-green-400'; amountPrefix = '+';
                     } else if (t.type === 'expense') {
-                        typeClass = 'bg-red-900 text-red-300';
-                        typeText = 'Despesa';
-                        amountClass = 'text-red-400';
-                        amountPrefix = '-';
+                        typeClass = 'bg-red-900 text-red-300'; typeText = 'Despesa'; amountClass = 'text-red-400'; amountPrefix = '-';
                     } else if (t.type === 'management_fee') {
-                        typeClass = 'bg-yellow-900 text-yellow-300';
-                        typeText = 'Taxa Gerência';
-                        amountClass = 'text-yellow-400';
-                        amountPrefix = '-';
+                        typeClass = 'bg-yellow-900 text-yellow-300'; typeText = 'Taxa Gerência'; amountClass = 'text-yellow-400'; amountPrefix = '-';
                     }
 
                     const row = `
                         <tr class="border-b border-gray-700">
                             <td data-label="Data" class="p-4">${formatDate(t.date)}</td>
                             <td data-label="Descrição" class="p-4">${t.description}</td>
-                            <td data-label="Tipo" class="p-4">
-                                <span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass}">
-                                    ${typeText}
-                                </span>
-                            </td>
-                            <td data-label="Valor" class="p-4 text-right font-semibold ${amountClass}">
-                                ${amountPrefix} ${formatCurrency(t.amount)}
-                            </td>
+                            <td data-label="Tipo" class="p-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass}">${typeText}</span></td>
+                            <td data-label="Valor" class="p-4 text-right font-semibold ${amountClass}">${amountPrefix} ${formatCurrency(t.amount)}</td>
                             <td data-label="Ações" class="p-4 text-center actions-cell">
                             <div class="flex items-center justify-center md:justify-center space-x-2">
-                                    <button data-id="${t.id}" class="edit-transaction-btn text-gray-400 hover:text-cyan-400 transition-colors p-1 rounded-full" title="Editar Transação">
-                                        <i data-lucide="edit" class="h-4 w-4"></i>
-                                    </button>
-                                    <button data-id="${t.id}" class="delete-transaction-btn text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full" title="Excluir Transação">
-                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
-                                    </button>
+                                    <button data-id="${t.id}" class="edit-transaction-btn text-gray-400 hover:text-cyan-400 transition-colors p-1 rounded-full" title="Editar Transação"><i data-lucide="edit" class="h-4 w-4"></i></button>
+                                    <button data-id="${t.id}" class="delete-transaction-btn text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full" title="Excluir Transação"><i data-lucide="trash-2" class="h-4 w-4"></i></button>
                             </div>
                             </td>
                         </tr>
@@ -826,10 +915,7 @@
                         alertCount++;
                         const alertHTML = `
                             <div class="bg-red-900/50 border border-red-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                                <div>
-                                    <p class="font-semibold text-red-300">O contrato de "${item.name}" terminou.</p>
-                                    <p class="text-sm text-red-400">Ação necessária: renovar, finalizar ou deixar pendente.</p>
-                                </div>
+                                <div><p class="font-semibold text-red-300">O contrato de "${item.name}" terminou.</p><p class="text-sm text-red-400">Ação necessária: renovar, finalizar ou deixar pendente.</p></div>
                                 <button data-id="${item.id}" class="resolve-contract-end-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-md text-sm whitespace-nowrap self-end sm:self-center">Resolver</button>
                             </div>
                         `;
@@ -860,10 +946,7 @@
                         alertCount++;
                         const alertHTML = `
                             <div class="bg-yellow-900/50 border border-yellow-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                                <div>
-                                    <p class="font-semibold text-yellow-300">Pagamento de "${item.name}" está pendente este mês.</p>
-                                    <p class="text-sm text-yellow-400">A data de vencimento foi dia ${item.paymentDay}.</p>
-                                </div>
+                                <div><p class="font-semibold text-yellow-300">Pagamento de "${item.name}" está pendente este mês.</p><p class="text-sm text-yellow-400">A data de vencimento foi dia ${item.paymentDay}.</p></div>
                                 <button data-id="${item.id}" class="resolve-payment-btn bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-3 rounded-md text-sm whitespace-nowrap self-end sm:self-center">Resolver</button>
                             </div>
                         `;
@@ -888,7 +971,6 @@
                     }
                     return acc;
                 }, 0);
-
                 const monthName = new Date(year, month).toLocaleString('pt-BR', { month: 'long' });
                 document.getElementById('month-balance-title').textContent = `Saldo de ${monthName}/${year}`;
                 document.getElementById('month-balance').textContent = formatCurrency(balance);
@@ -896,11 +978,8 @@
 
             const renderChart = (year) => {
                 const ctx = document.getElementById('financialChart').getContext('2d');
-                
                 let labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                let revenueData = Array(12).fill(0);
-                let expenseData = Array(12).fill(0);
-                let managementFeeData = Array(12).fill(0);
+                let revenueData = Array(12).fill(0), expenseData = Array(12).fill(0), managementFeeData = Array(12).fill(0);
                 
                 transactions.forEach(t => {
                     const tDate = new Date(t.date);
@@ -912,91 +991,25 @@
                     }
                 });
 
-                if (financialChart) {
-                    financialChart.destroy();
-                }
-
-                financialChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Receitas',
-                            data: revenueData,
-                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                            borderColor: 'rgba(16, 185, 129, 1)',
-                            borderWidth: 2,
-                            tension: 0.1,
-                            fill: true,
-                        }, {
-                            label: 'Despesas',
-                            data: expenseData,
-                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                            borderColor: 'rgba(239, 68, 68, 1)',
-                            borderWidth: 2,
-                            tension: 0.1,
-                            fill: true,
-                        }, {
-                            label: 'Taxa de Gerência',
-                            data: managementFeeData,
-                            backgroundColor: 'rgba(252, 211, 77, 0.2)',
-                            borderColor: 'rgba(252, 211, 77, 1)',
-                            borderWidth: 2,
-                            tension: 0.1,
-                            fill: true,
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { color: '#9ca3af' },
-                                grid: { color: '#374151' }
-                            },
-                            x: {
-                                ticks: { color: '#9ca3af' },
-                                grid: { color: '#374151' }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                labels: {
-                                    color: '#d1d5db'
-                                }
-                            }
-                        },
-                        responsive: true,
-                        maintainAspectRatio: false
-                    }
-                });
+                if (financialChart) financialChart.destroy();
+                financialChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'Receitas', data: revenueData, backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 2, tension: 0.1, fill: true }, { label: 'Despesas', data: expenseData, backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 2, tension: 0.1, fill: true }, { label: 'Taxa de Gerência', data: managementFeeData, backgroundColor: 'rgba(252, 211, 77, 0.2)', borderColor: 'rgba(252, 211, 77, 1)', borderWidth: 2, tension: 0.1, fill: true } ] }, options: { scales: { y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }, x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } } }, plugins: { legend: { labels: { color: '#d1d5db' } } }, responsive: true, maintainAspectRatio: false } });
             };
             
             const applyFiltersAndRender = () => {
                 const description = document.getElementById('filterDescription').value.toLowerCase();
                 const type = document.getElementById('filterType').value;
                 const startDate = document.getElementById('filterStartDate').value;
-
                 let filtered = transactions.filter(t => {
                     const tDate = new Date(t.date + 'T00:00:00');
                     const start = startDate ? new Date(startDate + 'T00:00:00') : null;
-                    
-                    const matchesDescription = t.description.toLowerCase().includes(description);
-                    const matchesType = type === 'all' || t.type === type;
-                    const matchesDate = !start || tDate >= start;
-
-                    return matchesDescription && matchesType && matchesDate;
+                    return t.description.toLowerCase().includes(description) && (type === 'all' || t.type === type) && (!start || tDate >= start);
                 });
                 renderTransactions(filtered);
             };
 
             // --- Funções de Utilitários ---
             const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-            const formatDate = (dateString) => {
-                if(!dateString) return '';
-                const date = new Date(dateString);
-                const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-                return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
-            };
+            const formatDate = (dateString) => { if(!dateString) return ''; const date = new Date(dateString); return new Date(date.getTime() + (date.getTimezoneOffset() * 60000)).toLocaleDateString('pt-BR'); };
             const dateToYMD = (date) => date.toISOString().split('T')[0];
             const getTodayDateString = () => dateToYMD(new Date());
             const showModal = (modalId) => document.getElementById(modalId).classList.add('active');
@@ -1005,37 +1018,21 @@
             const populateTransactionItemSelect = (selectElementId, selectedId) => {
                 const select = document.getElementById(selectElementId);
                 select.innerHTML = '<option value="">Nenhum / Outra</option>';
-
                 const rentedItems = items.filter(item => item.rentedTo);
                 const availableItems = items.filter(item => !item.rentedTo);
-
                 if (rentedItems.length > 0) {
                     const rentedGroup = document.createElement('optgroup');
                     rentedGroup.label = 'Alugados';
-                    rentedItems.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = `${item.name} (Inquilino: ${item.rentedTo})`;
-                        rentedGroup.appendChild(option);
-                    });
+                    rentedItems.forEach(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = `${item.name} (Inquilino: ${item.rentedTo})`; rentedGroup.appendChild(option); });
                     select.appendChild(rentedGroup);
                 }
-
                 if (availableItems.length > 0) {
                     const availableGroup = document.createElement('optgroup');
                     availableGroup.label = 'Disponíveis';
-                    availableItems.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = item.name;
-                        availableGroup.appendChild(option);
-                    });
+                    availableItems.forEach(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = item.name; availableGroup.appendChild(option); });
                     select.appendChild(availableGroup);
                 }
-
-                if (selectedId) {
-                    select.value = selectedId;
-                }
+                if (selectedId) select.value = selectedId;
             };
 
             const showConfirmModal = (title, message, onConfirmCallback) => {
@@ -1047,11 +1044,8 @@
 
             const switchTab = (tabId) => {
                 tabButtons.forEach(btn => {
-                    btn.classList.toggle('active-tab', btn.dataset.tab === tabId);
-                    btn.classList.toggle('border-cyan-500', btn.dataset.tab === tabId);
-                    btn.classList.toggle('text-cyan-400', btn.dataset.tab === tabId);
-                    btn.classList.toggle('border-transparent', btn.dataset.tab !== tabId);
-                    btn.classList.toggle('text-gray-400', btn.dataset.tab !== tabId);
+                    btn.classList.toggle('active-tab', btn.dataset.tab === tabId); btn.classList.toggle('border-cyan-500', btn.dataset.tab === tabId); btn.classList.toggle('text-cyan-400', btn.dataset.tab === tabId);
+                    btn.classList.toggle('border-transparent', btn.dataset.tab !== tabId); btn.classList.toggle('text-gray-400', btn.dataset.tab !== tabId);
                 });
                 tabContents.forEach(content => content.classList.add('hidden'));
                 document.getElementById(`${tabId}-content`).classList.remove('hidden');
@@ -1081,156 +1075,41 @@
             }
             
             const initDashboardFilters = () => {
-                const monthSelect = document.getElementById('filterMonth');
-                const yearSelect = document.getElementById('filterYear');
-                const now = new Date();
-                
-                // Populate months
-                for(let i=0; i<12; i++) {
-                    const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'});
-                    monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`;
-                }
-                
-                // Populate years
+                const monthSelect = document.getElementById('filterMonth'), yearSelect = document.getElementById('filterYear'), now = new Date();
+                for(let i=0; i<12; i++) { const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}); monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`; }
                 const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))];
-                if (!years.includes(now.getFullYear())) {
-                    years.push(now.getFullYear());
-                }
+                if (!years.includes(now.getFullYear())) years.push(now.getFullYear());
                 years.sort((a,b) => b-a);
                 years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
-
-                // Set current month/year
-                monthSelect.value = now.getMonth();
-                yearSelect.value = now.getFullYear();
-                
-                monthSelect.addEventListener('change', updateDashboardView);
-                yearSelect.addEventListener('change', updateDashboardView);
+                monthSelect.value = now.getMonth(); yearSelect.value = now.getFullYear();
+                monthSelect.addEventListener('change', updateDashboardView); yearSelect.addEventListener('change', updateDashboardView);
             }
 
             // --- Manipuladores de Eventos ---
+            tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+            document.getElementById('openAddItemModal').addEventListener('click', () => { addItemForm.reset(); document.getElementById('itemCategorySelect').value = ""; document.getElementById('imovelFieldsWrapper').classList.add('hidden'); document.getElementById('itemCategoryOtherWrapper').classList.add('hidden'); showModal('addItemModal'); });
+            document.getElementById('openAddTransactionModalRevenue').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita'; document.getElementById('transactionType').value = 'revenue'; document.getElementById('managementFeeContainer').style.display = 'block'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
+            document.getElementById('openAddTransactionModalExpense').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Despesa'; document.getElementById('transactionType').value = 'expense'; document.getElementById('managementFeeContainer').style.display = 'none'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
+            modals.forEach(modal => { modal.addEventListener('click', (e) => { if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close-btn')) hideModal(modal.id); }); });
+            document.getElementById('itemCategorySelect').addEventListener('change', (e) => { document.getElementById('itemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro'); document.getElementById('imovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel'); });
+            document.getElementById('editItemCategorySelect').addEventListener('change', (e) => { document.getElementById('editItemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro'); document.getElementById('editImovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel'); });
+            ['filterDescription', 'filterType', 'filterStartDate'].forEach(id => { document.getElementById(id).addEventListener('input', applyFiltersAndRender); });
+            document.getElementById('clearFiltersBtn').addEventListener('click', () => { document.getElementById('filterDescription').value = ''; document.getElementById('filterType').value = 'all'; document.getElementById('filterStartDate').value = ''; applyFiltersAndRender(); });
+            document.getElementById('addTransactionModal').addEventListener('change', (e) => { if (e.target.id === 'addManagementFee') document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked); if (e.target.id === 'transactionItemLink') { const itemId = e.target.value; if (itemId) { const item = items.find(i => i.id === parseInt(itemId)); if (item) document.getElementById('transactionAmount').value = item.rentedTo ? item.rentValue : item.value; } } });
+            document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => { const totalAmount = parseFloat(document.getElementById('transactionAmount').value); if (!isNaN(totalAmount) && totalAmount > 0) document.getElementById('managementFeeAmount').value = (totalAmount * 0.10).toFixed(2); });
+            document.getElementById('setOneYearBtn').addEventListener('click', () => { const startDateInput = document.getElementById('rentStartDate'); if(startDateInput.value) { const startDate = new Date(startDateInput.value + "T00:00:00"); startDate.setFullYear(startDate.getFullYear() + 1); document.getElementById('rentEndDate').value = dateToYMD(startDate); } });
 
-            // Navegação por Abas
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => switchTab(button.dataset.tab));
-            });
-            
-            // Abrir Modais
-            document.getElementById('openAddItemModal').addEventListener('click', () => {
-                addItemForm.reset();
-                document.getElementById('itemCategorySelect').value = "";
-                document.getElementById('imovelFieldsWrapper').classList.add('hidden');
-                document.getElementById('itemCategoryOtherWrapper').classList.add('hidden');
-                showModal('addItemModal');
-            });
-            
-            document.getElementById('openAddTransactionModalRevenue').addEventListener('click', () => {
-                document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita';
-                document.getElementById('transactionType').value = 'revenue';
-                document.getElementById('managementFeeContainer').style.display = 'block';
-                addTransactionForm.reset();
-                document.getElementById('transactionDate').value = getTodayDateString();
-                populateTransactionItemSelect('transactionItemLink');
-                showModal('addTransactionModal');
-            });
-
-            document.getElementById('openAddTransactionModalExpense').addEventListener('click', () => {
-                document.getElementById('transactionModalTitle').textContent = 'Adicionar Despesa';
-                document.getElementById('transactionType').value = 'expense';
-                document.getElementById('managementFeeContainer').style.display = 'none';
-                addTransactionForm.reset();
-                document.getElementById('transactionDate').value = getTodayDateString();
-                populateTransactionItemSelect('transactionItemLink');
-                showModal('addTransactionModal');
-            });
-
-            // Fechar Modais
-            modals.forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close-btn')) {
-                        hideModal(modal.id);
-                    }
-                });
-            });
-
-            // Lógica de Categoria Dinâmica
-            document.getElementById('itemCategorySelect').addEventListener('change', (e) => {
-                document.getElementById('itemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro');
-                document.getElementById('imovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel');
-            });
-            document.getElementById('editItemCategorySelect').addEventListener('change', (e) => {
-                document.getElementById('editItemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro');
-                document.getElementById('editImovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel');
-            });
-            
-            // Lógica dos Filtros
-            ['filterDescription', 'filterType', 'filterStartDate'].forEach(id => {
-                document.getElementById(id).addEventListener('input', applyFiltersAndRender);
-            });
-            document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-                document.getElementById('filterDescription').value = '';
-                document.getElementById('filterType').value = 'all';
-                document.getElementById('filterStartDate').value = '';
-                applyFiltersAndRender();
-            });
-
-
-            document.getElementById('addTransactionModal').addEventListener('change', (e) => {
-                if (e.target.id === 'addManagementFee') {
-                    document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked);
-                }
-                if (e.target.id === 'transactionItemLink') {
-                    const itemId = e.target.value;
-                    const amountInput = document.getElementById('transactionAmount');
-                    if (itemId) {
-                        const item = items.find(i => i.id === parseInt(itemId));
-                        if (item) {
-                            amountInput.value = item.rentedTo ? item.rentValue : item.value;
-                        }
-                    }
-                }
-            });
-            
-            document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => {
-                const totalAmount = parseFloat(document.getElementById('transactionAmount').value);
-                if (!isNaN(totalAmount) && totalAmount > 0) {
-                    const feeAmount = totalAmount * 0.10;
-                    document.getElementById('managementFeeAmount').value = feeAmount.toFixed(2);
-                }
-            });
-            
-            document.getElementById('setOneYearBtn').addEventListener('click', () => {
-                const startDateInput = document.getElementById('rentStartDate');
-                const endDateInput = document.getElementById('rentEndDate');
-                if(startDateInput.value) {
-                    const startDate = new Date(startDateInput.value + "T00:00:00");
-                    startDate.setFullYear(startDate.getFullYear() + 1);
-                    endDateInput.value = dateToYMD(startDate);
-                }
-            });
-
-            // Lógica dos Formulários
             addItemForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const categorySelect = document.getElementById('itemCategorySelect');
-                if (!categorySelect.value) {
-                    alert('Por favor, selecione uma categoria.');
-                    return;
-                }
+                if (!categorySelect.value) { alert('Por favor, selecione uma categoria.'); return; }
                 let category = categorySelect.value;
-                if (category === 'outro') {
-                    category = document.getElementById('itemCategoryOther').value || 'Outro';
-                }
-
+                if (category === 'outro') category = document.getElementById('itemCategoryOther').value || 'Outro';
                 const newItem = {
                     id: Date.now(),
-                    name: document.getElementById('itemName').value,
-                    description: document.getElementById('itemDescription').value,
-                    category: category,
-                    value: parseFloat(document.getElementById('itemValue').value),
-                    paymentFrequency: document.getElementById('itemPaymentFrequency').value,
-                    rentedTo: null,
-                    endereco: category === 'Imóvel' ? document.getElementById('itemEndereco').value : null,
-                    cep: category === 'Imóvel' ? document.getElementById('itemCep').value : null,
+                    name: document.getElementById('itemName').value, description: document.getElementById('itemDescription').value, category: category,
+                    value: parseFloat(document.getElementById('itemValue').value), paymentFrequency: document.getElementById('itemPaymentFrequency').value, rentedTo: null,
+                    endereco: category === 'Imóvel' ? document.getElementById('itemEndereco').value : null, cep: category === 'Imóvel' ? document.getElementById('itemCep').value : null,
                 };
                 items.push(newItem);
                 saveData();
@@ -1247,14 +1126,9 @@
                 const item = items.find(i => i.id === itemId);
                 if (item) {
                     const categorySelect = document.getElementById('editItemCategorySelect');
-                    if (!categorySelect.value) {
-                        alert('Por favor, selecione uma categoria.');
-                        return;
-                    }
+                    if (!categorySelect.value) { alert('Por favor, selecione uma categoria.'); return; }
                     let category = categorySelect.value;
-                    if (category === 'outro') {
-                        category = document.getElementById('editItemCategoryOther').value || 'Outro';
-                    }
+                    if (category === 'outro') category = document.getElementById('editItemCategoryOther').value || 'Outro';
                     item.name = document.getElementById('editItemName').value;
                     item.description = document.getElementById('editItemDescription').value;
                     item.category = category;
@@ -1295,6 +1169,24 @@
                     document.getElementById('rentStartDate').value = getTodayDateString();
                     showModal('rentItemModal');
                 }
+
+                const addRevenueButton = e.target.closest('.add-revenue-btn');
+                if (addRevenueButton) {
+                    const itemId = parseInt(addRevenueButton.dataset.id);
+                    const item = items.find(i => i.id === itemId);
+                    
+                    switchTab('finance');
+                    
+                    document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita';
+                    document.getElementById('transactionType').value = 'revenue';
+                    document.getElementById('managementFeeContainer').style.display = 'block';
+                    addTransactionForm.reset();
+                    document.getElementById('transactionDate').value = getTodayDateString();
+                    populateTransactionItemSelect('transactionItemLink', item.id);
+                    document.getElementById('transactionDescription').value = `Recebimento aluguel: ${item.name}`;
+                    document.getElementById('transactionAmount').value = item.rentValue;
+                    showModal('addTransactionModal');
+                }
                 
                 const editRentButton = e.target.closest('.edit-rent-btn');
                 if (editRentButton) {
@@ -1303,13 +1195,8 @@
 
                     document.getElementById('rentModalTitle').textContent = "Editar Aluguel";
                     document.getElementById('rentItemId').value = item.id;
-                    document.getElementById('tenantName').value = item.rentedTo;
-                    document.getElementById('tenantPhone').value = item.tenantPhone || '';
-                    document.getElementById('tenantCPF').value = item.tenantCPF || '';
-                    document.getElementById('rentStartDate').value = item.rentStartDate;
-                    document.getElementById('rentEndDate').value = item.rentEndDate;
-                    document.getElementById('rentValue').value = item.rentValue;
-                    document.getElementById('paymentDay').value = item.paymentDay;
+                    document.getElementById('tenantName').value = item.rentedTo; document.getElementById('tenantPhone').value = item.tenantPhone || ''; document.getElementById('tenantCPF').value = item.tenantCPF || '';
+                    document.getElementById('rentStartDate').value = item.rentStartDate; document.getElementById('rentEndDate').value = item.rentEndDate; document.getElementById('rentValue').value = item.rentValue; document.getElementById('paymentDay').value = item.paymentDay;
                     showModal('rentItemModal');
                 }
                 
@@ -1317,27 +1204,18 @@
                 if (deleteButton) {
                     const itemId = parseInt(deleteButton.dataset.id);
                     const item = items.find(i => i.id === itemId);
-
                     if (item.rentedTo) {
-                        showConfirmModal(
-                            'Finalizar Aluguel',
-                            `Isso irá finalizar o aluguel do item "${item.name}" e o tornará disponível. Deseja continuar?`,
-                            () => {
-                                finalizeRental(itemId);
-                                saveData();
-                                renderAll();
-                            }
-                        );
+                        showConfirmModal('Finalizar Aluguel', `Isso irá finalizar o aluguel do item "${item.name}" e o tornará disponível. Deseja continuar?`, () => {
+                            finalizeRental(itemId);
+                            saveData();
+                            renderAll();
+                        });
                     } else {
-                        showConfirmModal(
-                            'Apagar Item',
-                            `Você tem certeza que deseja apagar o item "${item.name}"? Esta ação não pode ser desfeita.`,
-                            () => {
-                                items = items.filter(i => i.id !== itemId);
-                                saveData();
-                                renderAll();
-                            }
-                        );
+                        showConfirmModal('Apagar Item', `Você tem certeza que deseja apagar o item "${item.name}"? Esta ação não pode ser desfeita.`, () => {
+                            items = items.filter(i => i.id !== itemId);
+                            saveData();
+                            renderAll();
+                        });
                     }
                 }
                 
@@ -1346,32 +1224,15 @@
                     const itemId = parseInt(editItemButton.dataset.id);
                     const item = items.find(i => i.id === itemId);
                     document.getElementById('editItemId').value = item.id;
-                    document.getElementById('editItemName').value = item.name;
-                    document.getElementById('editItemDescription').value = item.description;
-                    document.getElementById('editItemValue').value = item.value;
-                    document.getElementById('editItemPaymentFrequency').value = item.paymentFrequency;
-
+                    document.getElementById('editItemName').value = item.name; document.getElementById('editItemDescription').value = item.description;
+                    document.getElementById('editItemValue').value = item.value; document.getElementById('editItemPaymentFrequency').value = item.paymentFrequency;
                     const categorySelect = document.getElementById('editItemCategorySelect');
-                    const otherWrapper = document.getElementById('editItemCategoryOtherWrapper');
-                    const otherInput = document.getElementById('editItemCategoryOther');
-                    const imovelWrapper = document.getElementById('editImovelFieldsWrapper');
-
+                    const otherWrapper = document.getElementById('editItemCategoryOtherWrapper'); const otherInput = document.getElementById('editItemCategoryOther'); const imovelWrapper = document.getElementById('editImovelFieldsWrapper');
                     const predefinedCategories = Array.from(categorySelect.options).map(opt => opt.value);
-                    if (predefinedCategories.includes(item.category) && item.category !== 'outro') {
-                        categorySelect.value = item.category;
-                        otherWrapper.classList.add('hidden');
-                    } else {
-                        categorySelect.value = 'outro';
-                        otherInput.value = item.category;
-                        otherWrapper.classList.remove('hidden');
-                    }
-                    
+                    if (predefinedCategories.includes(item.category) && item.category !== 'outro') { categorySelect.value = item.category; otherWrapper.classList.add('hidden'); } 
+                    else { categorySelect.value = 'outro'; otherInput.value = item.category; otherWrapper.classList.remove('hidden'); }
                     imovelWrapper.classList.toggle('hidden', categorySelect.value !== 'Imóvel');
-                    if(categorySelect.value === 'Imóvel') {
-                        document.getElementById('editItemEndereco').value = item.endereco || '';
-                        document.getElementById('editItemCep').value = item.cep || '';
-                    }
-
+                    if(categorySelect.value === 'Imóvel') { document.getElementById('editItemEndereco').value = item.endereco || ''; document.getElementById('editItemCep').value = item.cep || ''; }
                     showModal('editItemModal');
                 }
                 
@@ -1390,15 +1251,11 @@
                 if (deleteTransactionButton) {
                     const transactionId = parseInt(deleteTransactionButton.dataset.id);
                     const transaction = transactions.find(t => t.id === transactionId);
-                    showConfirmModal(
-                        'Excluir Transação',
-                        `Você tem certeza que deseja excluir a transação "${transaction.description}"? Esta ação não pode ser desfeita.`,
-                        () => {
-                            transactions = transactions.filter(t => t.id !== transactionId);
-                            saveData();
-                            renderAll();
-                        }
-                    );
+                    showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
+                        transactions = transactions.filter(t => t.id !== transactionId);
+                        saveData();
+                        renderAll();
+                    });
                 }
                 
                 const resolvePaymentBtn = e.target.closest('.resolve-payment-btn');
@@ -1448,43 +1305,23 @@
 
             addTransactionForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-
                 const selectedItemId = document.getElementById('transactionItemLink').value;
                 const description = document.getElementById('transactionDescription').value;
                 let finalDescription = description;
-
-                if (selectedItemId) {
-                    const selectedItem = items.find(i => i.id === parseInt(selectedItemId));
-                    if (selectedItem) {
-                        finalDescription = `[${selectedItem.name}] ${description}`;
-                    }
-                }
-
+                if (selectedItemId) { const selectedItem = items.find(i => i.id === parseInt(selectedItemId)); if (selectedItem) finalDescription = `[${selectedItem.name}] ${description}`; }
                 const newTransaction = {
                     id: Date.now(),
-                    type: document.getElementById('transactionType').value,
-                    description: finalDescription,
-                    amount: parseFloat(document.getElementById('transactionAmount').value),
-                    date: document.getElementById('transactionDate').value,
-                    itemId: selectedItemId ? parseInt(selectedItemId) : null
+                    type: document.getElementById('transactionType').value, description: finalDescription, amount: parseFloat(document.getElementById('transactionAmount').value),
+                    date: document.getElementById('transactionDate').value, itemId: selectedItemId ? parseInt(selectedItemId) : null
                 };
                 transactions.push(newTransaction);
 
                 const addFee = document.getElementById('addManagementFee').checked;
                 const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
-
                 if (addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
-                    const feeTransaction = {
-                        id: Date.now() + 1,
-                        type: 'management_fee',
-                        description: `Taxa de Gerência - ${finalDescription}`,
-                        amount: feeAmount,
-                        date: newTransaction.date,
-                        itemId: newTransaction.itemId
-                    };
+                    const feeTransaction = { id: Date.now() + 1, type: 'management_fee', description: `Taxa de Gerência - ${finalDescription}`, amount: feeAmount, date: newTransaction.date, itemId: newTransaction.itemId };
                     transactions.push(feeTransaction);
                 }
-
                 saveData();
                 renderAll();
                 hideModal('addTransactionModal');
@@ -1492,7 +1329,6 @@
             });
             
             // --- Handlers para Modais de Alerta ---
-
             document.getElementById('paymentReceivedBtn').addEventListener('click', () => {
                 const itemId = parseInt(document.getElementById('paymentAlertItemId').value);
                 const item = items.find(i => i.id === itemId);
@@ -1504,13 +1340,10 @@
                 switchTab('finance');
                 
                 document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita';
-                document.getElementById('transactionType').value = 'revenue';
-                document.getElementById('managementFeeContainer').style.display = 'block';
-                addTransactionForm.reset();
-                document.getElementById('transactionDate').value = getTodayDateString();
+                document.getElementById('transactionType').value = 'revenue'; document.getElementById('managementFeeContainer').style.display = 'block';
+                addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString();
                 populateTransactionItemSelect('transactionItemLink', item.id);
-                document.getElementById('transactionDescription').value = `Recebimento aluguel: ${item.name}`;
-                document.getElementById('transactionAmount').value = item.rentValue;
+                document.getElementById('transactionDescription').value = `Recebimento aluguel: ${item.name}`; document.getElementById('transactionAmount').value = item.rentValue;
                 showModal('addTransactionModal');
 
                 renderAll();
@@ -1538,10 +1371,8 @@
                 hideModal('paymentAlertModal');
             });
             
-            document.getElementById('setPaymentPendingBtn').addEventListener('click', () => {
-                hideModal('paymentAlertModal');
-            });
-
+            document.getElementById('setPaymentPendingBtn').addEventListener('click', () => hideModal('paymentAlertModal'));
+            
             document.getElementById('renewContractBtn').addEventListener('click', () => {
                 const itemId = parseInt(document.getElementById('contractEndItemId').value);
                 const item = items.find(i => i.id === itemId);
@@ -1551,14 +1382,10 @@
                 hideModal('contractEndModal');
                 
                 document.getElementById('rentModalTitle').textContent = "Renovar Aluguel";
-                document.getElementById('rentItemId').value = item.id;
-                document.getElementById('rentValue').value = item.rentValue;
-                const newStartDate = new Date(item.rentEndDate + 'T00:00:00');
-                newStartDate.setDate(newStartDate.getDate() + 1);
-                document.getElementById('rentStartDate').value = dateToYMD(newStartDate);
-                document.getElementById('rentEndDate').value = '';
-                document.getElementById('tenantName').value = item.rentedTo;
-                document.getElementById('paymentDay').value = item.paymentDay;
+                document.getElementById('rentItemId').value = item.id; document.getElementById('rentValue').value = item.rentValue;
+                const newStartDate = new Date(item.rentEndDate + 'T00:00:00'); newStartDate.setDate(newStartDate.getDate() + 1);
+                document.getElementById('rentStartDate').value = dateToYMD(newStartDate); document.getElementById('rentEndDate').value = '';
+                document.getElementById('tenantName').value = item.rentedTo; document.getElementById('paymentDay').value = item.paymentDay;
                 showModal('rentItemModal');
                 renderAll();
             });
@@ -1583,18 +1410,8 @@
                 hideModal('contractEndModal');
             });
             
-            document.getElementById('confirmActionConfirm').addEventListener('click', () => {
-                if (typeof onConfirm === 'function') {
-                    onConfirm();
-                }
-                hideModal('confirmActionModal');
-                onConfirm = null;
-            });
-
-            document.getElementById('confirmActionCancel').addEventListener('click', () => {
-                hideModal('confirmActionModal');
-                onConfirm = null;
-            });
+            document.getElementById('confirmActionConfirm').addEventListener('click', () => { if (typeof onConfirm === 'function') onConfirm(); hideModal('confirmActionModal'); onConfirm = null; });
+            document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionModal'); onConfirm = null; });
 
             // Carga Inicial
             loadData();
