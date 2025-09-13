@@ -219,7 +219,7 @@
 
             <!-- Aba Financeiro -->
             <div id="finance-content" class="tab-content hidden">
-                 <div class="flex space-x-4 mb-6">
+                 <div class="flex flex-wrap gap-4 mb-6">
                      <button id="openAddTransactionModalRevenue" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
                         <i data-lucide="trending-up" class="mr-2 h-5 w-5"></i>
                         <span>Adicionar Receita</span>
@@ -227,6 +227,10 @@
                     <button id="openAddTransactionModalExpense" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
                         <i data-lucide="trending-down" class="mr-2 h-5 w-5"></i>
                         <span>Adicionar Despesa</span>
+                    </button>
+                    <button id="openTaxReportModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
+                        <i data-lucide="file-text" class="mr-2 h-5 w-5"></i>
+                        <span>Planilha de Imposto de Renda</span>
                     </button>
                  </div>
 
@@ -329,6 +333,18 @@
                             <label for="itemCep" class="block mb-1 font-medium">CEP (Opcional)</label>
                             <input type="text" id="itemCep" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
                         </div>
+                        <div>
+                            <label for="itemManagedBy" class="block mb-1 font-medium">Gerido por: (Opcional)</label>
+                            <select id="itemManagedBy" class="itemManagedBySelect w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+                                <option value="particular" selected>Particular</option>
+                                <option value="imobiliaria">Imobiliária</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="itemManagerNameWrapper hidden">
+                            <label for="itemManagerName" class="block mb-1 font-medium">Nome da Imobiliária/Outro</label>
+                            <input type="text" id="itemManagerName" class="itemManagerNameInput w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+                        </div>
                     </div>
                     <div>
                         <label for="itemValue" class="block mb-1 font-medium">Valor Padrão do Aluguel (R$)</label>
@@ -389,6 +405,18 @@
                         <div>
                             <label for="editItemCep" class="block mb-1 font-medium">CEP (Opcional)</label>
                             <input type="text" id="editItemCep" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+                        </div>
+                        <div>
+                            <label for="editItemManagedBy" class="block mb-1 font-medium">Gerido por: (Opcional)</label>
+                            <select id="editItemManagedBy" class="itemManagedBySelect w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+                                <option value="particular">Particular</option>
+                                <option value="imobiliaria">Imobiliária</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="itemManagerNameWrapper hidden">
+                            <label for="editItemManagerName" class="block mb-1 font-medium">Nome da Imobiliária/Outro</label>
+                            <input type="text" id="editItemManagerName" class="itemManagerNameInput w-full bg-gray-700 border border-gray-600 rounded-md p-2">
                         </div>
                     </div>
                     <div>
@@ -577,6 +605,28 @@
              </div>
         </div>
     </div>
+
+    <!-- Modal Relatório de Imposto de Renda -->
+    <div id="taxReportModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl p-6">
+            <h2 class="text-2xl font-bold mb-4">Relatório para Imposto de Renda</h2>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 p-4 bg-gray-700 rounded-lg">
+                <label for="taxReportMonth" class="text-sm font-medium">Selecione o Período:</label>
+                <div class="flex items-center gap-2">
+                    <select id="taxReportMonth" class="bg-gray-600 border border-gray-500 rounded-md px-3 py-1 text-sm"></select>
+                    <select id="taxReportYear" class="bg-gray-600 border border-gray-500 rounded-md px-3 py-1 text-sm"></select>
+                </div>
+                <button id="generateTaxReportBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm">Gerar Relatório</button>
+            </div>
+            <div id="taxReportResult" class="bg-gray-900 p-4 rounded-md max-h-[60vh] overflow-y-auto">
+                <p class="text-gray-400">Selecione um mês e ano e clique em "Gerar Relatório" para ver os recebimentos de aluguéis de imóveis.</p>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Fechar</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Modal Confirmar Ação -->
     <div id="confirmActionModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4">
@@ -770,36 +820,27 @@
 
                 const getSortPriority = (item) => {
                     const endDate = new Date(item.rentEndDate + 'T00:00:00');
-                    // Priority 1: Contract overdue
                     if (today > endDate && !item.renewalPending) {
                         return { priority: 1, date: endDate };
                     }
-
-                    // Priority 2: Payment overdue
                     const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
                     const lastPaymentDate = item.lastPaymentAlertDate ? new Date(item.lastPaymentAlertDate) : null;
                     if (today >= paymentDueDateThisMonth && (!lastPaymentDate || lastPaymentDate < paymentDueDateThisMonth)) {
                         return { priority: 2, date: paymentDueDateThisMonth };
                     }
-                    
-                    // Priority 3: Awaiting renewal
                     if (item.renewalPending) {
                         return { priority: 3, date: endDate };
                     }
-
-                    // Priority 4: Normal active rental
                     return { priority: 4, date: endDate };
                 };
 
                 rentedItems.sort((a, b) => {
                     const aSort = getSortPriority(a);
                     const bSort = getSortPriority(b);
-
                     if (aSort.priority !== bSort.priority) {
-                        return aSort.priority - bSort.priority; // Sort by main priority
+                        return aSort.priority - bSort.priority;
                     }
-                    
-                    return aSort.date - bSort.date; // Then by date within the same priority
+                    return aSort.date - bSort.date;
                 });
 
 
@@ -833,6 +874,14 @@
                     if (item.renewalPending) borderColor = 'border-pink-500';
                     else if (isOverdue) borderColor = 'border-red-500';
 
+                    let paymentStatusHTML = '';
+                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const monthName = today.toLocaleString('pt-BR', { month: 'long' });
+
+                    if (item.paymentsMade && item.paymentsMade.includes(currentMonthYear)) {
+                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${monthName} OK</span></p>`;
+                    }
+
                     const card = `
                         <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
                             <div class="flex-grow">
@@ -847,6 +896,7 @@
                                     <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
                                     <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
                                     <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isOverdue ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                                    ${paymentStatusHTML}
                                 </div>
                             </div>
                             ${actionButtons}
@@ -1064,6 +1114,7 @@
                     item.renewalPending = false;
                     item.tenantPhone = null;
                     item.tenantCPF = null;
+                    item.paymentsMade = [];
                 }
             };
             
@@ -1085,14 +1136,133 @@
                 monthSelect.addEventListener('change', updateDashboardView); yearSelect.addEventListener('change', updateDashboardView);
             }
 
+            // --- Handlers para Relatório de Imposto de Renda ---
+            const initTaxReportFilters = () => {
+                const monthSelect = document.getElementById('taxReportMonth');
+                const yearSelect = document.getElementById('taxReportYear');
+                const now = new Date();
+                
+                if(monthSelect.options.length === 0){
+                    for(let i=0; i<12; i++) { 
+                        const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}); 
+                        monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`; 
+                    }
+                }
+                
+                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))];
+                if (!years.includes(now.getFullYear())) {
+                    years.push(now.getFullYear());
+                }
+                years.sort((a,b) => b-a);
+                
+                yearSelect.innerHTML = ''; 
+                years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
+
+                monthSelect.value = now.getMonth();
+                yearSelect.value = now.getFullYear();
+            };
+
+            const generateTaxReport = () => {
+                const month = parseInt(document.getElementById('taxReportMonth').value);
+                const year = parseInt(document.getElementById('taxReportYear').value);
+                const resultDiv = document.getElementById('taxReportResult');
+                resultDiv.innerHTML = '';
+
+                const relevantTransactions = transactions.filter(t => {
+                    const tDate = new Date(t.date);
+                    const item = items.find(i => i.id === t.itemId);
+                    return t.type === 'revenue' && 
+                        item && 
+                        item.category === 'Imóvel' &&
+                        tDate.getMonth() === month &&
+                        tDate.getFullYear() === year;
+                });
+
+                if (relevantTransactions.length === 0) {
+                    resultDiv.innerHTML = '<p class="text-gray-400">Nenhum recebimento de aluguel de imóvel encontrado para este período.</p>';
+                    return;
+                }
+
+                const reportData = relevantTransactions.map(rev => {
+                    const item = items.find(i => i.id === rev.itemId);
+                    const feeTransaction = transactions.find(t => 
+                        t.type === 'management_fee' && 
+                        t.date === rev.date && 
+                        t.itemId === rev.itemId &&
+                        t.description.includes(`[${item.name}]`)
+                    );
+
+                    let netValue = rev.amount;
+                    let valueString = formatCurrency(rev.amount);
+                    if (feeTransaction) {
+                        netValue -= feeTransaction.amount;
+                        valueString = `${formatCurrency(rev.amount)} - ${formatCurrency(feeTransaction.amount)} = <strong class="text-green-400">${formatCurrency(netValue)}</strong>`;
+                    } else {
+                        valueString = `<strong class="text-green-400">${formatCurrency(netValue)}</strong>`
+                    }
+
+                    return {
+                        managedBy: item.managedBy || 'particular',
+                        managerName: item.managerName || 'N/A',
+                        tenantName: item.rentedTo,
+                        tenantCPF: item.tenantCPF || 'Não informado',
+                        address: item.endereco || 'Não informado',
+                        valueString: valueString
+                    };
+                });
+
+                const groupedData = reportData.reduce((acc, data) => {
+                    const key = data.managedBy === 'particular' ? 'Particular' : `${data.managedBy}: ${data.managerName}`;
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push(data);
+                    return acc;
+                }, {});
+
+                const order = { 'particular': 1, 'outros': 2, 'imobiliaria': 3 };
+                const sortedKeys = Object.keys(groupedData).sort((a, b) => {
+                    const typeA = a.split(':')[0].toLowerCase();
+                    const typeB = b.split(':')[0].toLowerCase();
+                    
+                    if (order[typeA] !== order[typeB]) {
+                        return order[typeA] - order[typeB];
+                    }
+                    return a.localeCompare(b);
+                });
+
+
+                let reportHTML = '';
+                sortedKeys.forEach(key => {
+                    const groupName = key.replace('particular', 'Particular').replace('imobiliaria', 'Imobiliária').replace('outros', 'Outros');
+                    reportHTML += `<h3 class="text-lg font-semibold text-cyan-400 mt-4 mb-2 border-b border-gray-700 pb-1">${groupName}</h3>`;
+                    
+                    groupedData[key].forEach(entry => {
+                        reportHTML += `
+                            <div class="mb-4 p-3 bg-gray-800 rounded-md">
+                                <p class="font-bold">${entry.tenantName}</p>
+                                <p class="text-sm text-gray-400">CPF: ${entry.tenantCPF}</p>
+                                <p class="text-sm text-gray-400">${entry.address}</p>
+                                <p class="text-md mt-1">Valor Recebido: ${entry.valueString}</p>
+                            </div>
+                        `;
+                    });
+                });
+                
+                resultDiv.innerHTML = reportHTML;
+            };
+
             // --- Manipuladores de Eventos ---
             tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
             document.getElementById('openAddItemModal').addEventListener('click', () => { addItemForm.reset(); document.getElementById('itemCategorySelect').value = ""; document.getElementById('imovelFieldsWrapper').classList.add('hidden'); document.getElementById('itemCategoryOtherWrapper').classList.add('hidden'); showModal('addItemModal'); });
             document.getElementById('openAddTransactionModalRevenue').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita'; document.getElementById('transactionType').value = 'revenue'; document.getElementById('managementFeeContainer').style.display = 'block'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
             document.getElementById('openAddTransactionModalExpense').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Despesa'; document.getElementById('transactionType').value = 'expense'; document.getElementById('managementFeeContainer').style.display = 'none'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
+            document.getElementById('openTaxReportModal').addEventListener('click', () => { initTaxReportFilters(); showModal('taxReportModal'); });
+            document.getElementById('generateTaxReportBtn').addEventListener('click', generateTaxReport);
             modals.forEach(modal => { modal.addEventListener('click', (e) => { if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close-btn')) hideModal(modal.id); }); });
             document.getElementById('itemCategorySelect').addEventListener('change', (e) => { document.getElementById('itemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro'); document.getElementById('imovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel'); });
             document.getElementById('editItemCategorySelect').addEventListener('change', (e) => { document.getElementById('editItemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro'); document.getElementById('editImovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel'); });
+            document.querySelectorAll('.itemManagedBySelect').forEach(select => { select.addEventListener('change', (e) => { const wrapper = e.target.closest('form').querySelector('.itemManagerNameWrapper'); const show = e.target.value === 'imobiliaria' || e.target.value === 'outros'; wrapper.classList.toggle('hidden', !show); }); });
             ['filterDescription', 'filterType', 'filterStartDate'].forEach(id => { document.getElementById(id).addEventListener('input', applyFiltersAndRender); });
             document.getElementById('clearFiltersBtn').addEventListener('click', () => { document.getElementById('filterDescription').value = ''; document.getElementById('filterType').value = 'all'; document.getElementById('filterStartDate').value = ''; applyFiltersAndRender(); });
             document.getElementById('addTransactionModal').addEventListener('change', (e) => { if (e.target.id === 'addManagementFee') document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked); if (e.target.id === 'transactionItemLink') { const itemId = e.target.value; if (itemId) { const item = items.find(i => i.id === parseInt(itemId)); if (item) document.getElementById('transactionAmount').value = item.rentedTo ? item.rentValue : item.value; } } });
@@ -1105,11 +1275,24 @@
                 if (!categorySelect.value) { alert('Por favor, selecione uma categoria.'); return; }
                 let category = categorySelect.value;
                 if (category === 'outro') category = document.getElementById('itemCategoryOther').value || 'Outro';
+                
+                let managedBy = null;
+                let managerName = null;
+                if (category === 'Imóvel') {
+                    managedBy = document.getElementById('itemManagedBy').value;
+                    if (managedBy === 'imobiliaria' || managedBy === 'outros') {
+                        managerName = document.getElementById('itemManagerName').value;
+                    }
+                }
+
                 const newItem = {
                     id: Date.now(),
                     name: document.getElementById('itemName').value, description: document.getElementById('itemDescription').value, category: category,
                     value: parseFloat(document.getElementById('itemValue').value), paymentFrequency: document.getElementById('itemPaymentFrequency').value, rentedTo: null,
-                    endereco: category === 'Imóvel' ? document.getElementById('itemEndereco').value : null, cep: category === 'Imóvel' ? document.getElementById('itemCep').value : null,
+                    endereco: category === 'Imóvel' ? document.getElementById('itemEndereco').value : null, 
+                    cep: category === 'Imóvel' ? document.getElementById('itemCep').value : null,
+                    managedBy: managedBy,
+                    managerName: managerName,
                 };
                 items.push(newItem);
                 saveData();
@@ -1134,8 +1317,19 @@
                     item.category = category;
                     item.value = parseFloat(document.getElementById('editItemValue').value);
                     item.paymentFrequency = document.getElementById('editItemPaymentFrequency').value;
-                    item.endereco = category === 'Imóvel' ? document.getElementById('editItemEndereco').value : null;
-                    item.cep = category === 'Imóvel' ? document.getElementById('editItemCep').value : null;
+                    
+                    if (category === 'Imóvel') {
+                        item.endereco = document.getElementById('editItemEndereco').value;
+                        item.cep = document.getElementById('editItemCep').value;
+                        item.managedBy = document.getElementById('editItemManagedBy').value;
+                        if (item.managedBy === 'imobiliaria' || item.managedBy === 'outros') {
+                            item.managerName = document.getElementById('editItemManagerName').value;
+                        } else {
+                            item.managerName = null;
+                        }
+                    } else {
+                        item.endereco = null; item.cep = null; item.managedBy = null; item.managerName = null;
+                    }
                 }
                 saveData();
                 renderAll();
@@ -1231,8 +1425,21 @@
                     const predefinedCategories = Array.from(categorySelect.options).map(opt => opt.value);
                     if (predefinedCategories.includes(item.category) && item.category !== 'outro') { categorySelect.value = item.category; otherWrapper.classList.add('hidden'); } 
                     else { categorySelect.value = 'outro'; otherInput.value = item.category; otherWrapper.classList.remove('hidden'); }
-                    imovelWrapper.classList.toggle('hidden', categorySelect.value !== 'Imóvel');
-                    if(categorySelect.value === 'Imóvel') { document.getElementById('editItemEndereco').value = item.endereco || ''; document.getElementById('editItemCep').value = item.cep || ''; }
+                    
+                    const isImovel = categorySelect.value === 'Imóvel';
+                    imovelWrapper.classList.toggle('hidden', !isImovel);
+                    if(isImovel) { 
+                        document.getElementById('editItemEndereco').value = item.endereco || ''; 
+                        document.getElementById('editItemCep').value = item.cep || ''; 
+                        const managedBySelect = document.getElementById('editItemManagedBy');
+                        const managerNameWrapper = document.getElementById('editItemManagerName').parentElement;
+                        managedBySelect.value = item.managedBy || 'particular';
+                        const showManagerName = managedBySelect.value === 'imobiliaria' || managedBySelect.value === 'outros';
+                        managerNameWrapper.classList.toggle('hidden', !showManagerName);
+                        if (showManagerName) {
+                            document.getElementById('editItemManagerName').value = item.managerName || '';
+                        }
+                    }
                     showModal('editItemModal');
                 }
                 
@@ -1290,12 +1497,12 @@
                 item.rentValue = parseFloat(document.getElementById('rentValue').value);
                 item.paymentDay = parseInt(document.getElementById('paymentDay').value);
                 
-                const isNewRental = !item.endOfContractNotified;
-                if(isNewRental){
-                    item.lastPaymentAlertDate = null;
-                    item.endOfContractNotified = false;
-                    item.renewalPending = false;
+                if (!item.paymentsMade) {
+                    item.paymentsMade = [];
                 }
+                item.lastPaymentAlertDate = null;
+                item.endOfContractNotified = false;
+                item.renewalPending = false;
                 
                 saveData();
                 renderAll();
@@ -1314,6 +1521,17 @@
                     type: document.getElementById('transactionType').value, description: finalDescription, amount: parseFloat(document.getElementById('transactionAmount').value),
                     date: document.getElementById('transactionDate').value, itemId: selectedItemId ? parseInt(selectedItemId) : null
                 };
+
+                if (newTransaction.type === 'revenue' && selectedItemId) {
+                    const item = items.find(i => i.id === parseInt(selectedItemId));
+                    if (item && item.rentedTo) { 
+                        const transactionDate = new Date(newTransaction.date + 'T00:00:00');
+                        const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
+                        if (!item.paymentsMade) item.paymentsMade = [];
+                        if (!item.paymentsMade.includes(paymentPeriod)) item.paymentsMade.push(paymentPeriod);
+                    }
+                }
+
                 transactions.push(newTransaction);
 
                 const addFee = document.getElementById('addManagementFee').checked;
