@@ -1099,32 +1099,76 @@
             };
             
             const renderBalanceCard = (year, month) => {
-                const balance = transactions.reduce((acc, t) => {
-                    const tDate = new Date(t.date);
-                    if (tDate.getMonth() === month && tDate.getFullYear() === year) {
-                        return acc + (t.type === 'revenue' ? t.amount : -t.amount);
-                    }
-                    return acc;
-                }, 0);
                 const monthName = new Date(year, month).toLocaleString('pt-BR', { month: 'long' });
-                document.getElementById('month-balance-title').textContent = `Saldo de ${monthName}/${year}`;
-                document.getElementById('month-balance').textContent = formatCurrency(balance);
-            }
 
-            const renderChart = (year) => {
-                const ctx = document.getElementById('financialChart').getContext('2d');
-                let labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                let revenueData = Array(12).fill(0), expenseData = Array(12).fill(0), managementFeeData = Array(12).fill(0);
-                
+                let balance = 0;
+                let totalExpenses = 0;
+                let totalFees = 0;
+
                 transactions.forEach(t => {
                     const tDate = new Date(t.date);
-                    if (tDate.getFullYear() === year) {
-                        const monthIndex = tDate.getMonth();
-                        if (t.type === 'revenue') revenueData[monthIndex] += t.amount;
-                        else if (t.type === 'expense') expenseData[monthIndex] += t.amount;
-                        else if (t.type === 'management_fee') managementFeeData[monthIndex] += t.amount;
+                    if (tDate.getMonth() === month && tDate.getFullYear() === year) {
+                        if(t.type === 'revenue') {
+                            balance += t.amount;
+                        } else if (t.type === 'expense') {
+                            balance -= t.amount;
+                            totalExpenses += t.amount;
+                        } else if (t.type === 'management_fee') {
+                            balance -= t.amount;
+                            totalFees += t.amount;
+                        }
                     }
                 });
+
+                document.getElementById('month-balance-title').textContent = `Saldo de ${monthName}/${year}`;
+                document.getElementById('month-balance').textContent = formatCurrency(balance);
+
+                document.getElementById('month-expense-title').textContent = `Despesas de ${monthName}/${year}`;
+                document.getElementById('month-expense').textContent = formatCurrency(totalExpenses);
+
+                document.getElementById('month-fee-title').textContent = `Taxa de Gerência de ${monthName}/${year}`;
+                document.getElementById('month-fee').textContent = formatCurrency(totalFees);
+            }
+
+            const renderChart = (year, view) => {
+                const ctx = document.getElementById('financialChart').getContext('2d');
+                let labels = [];
+                let revenueData = [], expenseData = [], managementFeeData = [];
+
+                if (view === 'monthly') {
+                    labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                    revenueData = Array(12).fill(0);
+                    expenseData = Array(12).fill(0);
+                    managementFeeData = Array(12).fill(0);
+                    
+                    transactions.forEach(t => {
+                        const tDate = new Date(t.date);
+                        if (tDate.getFullYear() === year) {
+                            const monthIndex = tDate.getMonth();
+                            if (t.type === 'revenue') revenueData[monthIndex] += t.amount;
+                            else if (t.type === 'expense') expenseData[monthIndex] += t.amount;
+                            else if (t.type === 'management_fee') managementFeeData[monthIndex] += t.amount;
+                        }
+                    });
+                } else { // yearly
+                    const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean).sort();
+                    if (years.length === 0) years.push(new Date().getFullYear());
+                    labels = years.map(String);
+                    revenueData = Array(years.length).fill(0);
+                    expenseData = Array(years.length).fill(0);
+                    managementFeeData = Array(years.length).fill(0);
+
+                    transactions.forEach(t => {
+                        const tYear = new Date(t.date).getFullYear();
+                        const index = years.indexOf(tYear);
+                        if (index !== -1) {
+                            if (t.type === 'revenue') revenueData[index] += t.amount;
+                            else if (t.type === 'expense') expenseData[index] += t.amount;
+                            else if (t.type === 'management_fee') managementFeeData[index] += t.amount;
+                        }
+                    });
+                }
+
 
                 if (financialChart) financialChart.destroy();
                 financialChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'Receitas', data: revenueData, backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 2, tension: 0.1, fill: true }, { label: 'Despesas', data: expenseData, backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 2, tension: 0.1, fill: true }, { label: 'Taxa de Gerência', data: managementFeeData, backgroundColor: 'rgba(252, 211, 77, 0.2)', borderColor: 'rgba(252, 211, 77, 1)', borderWidth: 2, tension: 0.1, fill: true } ] }, options: { scales: { y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }, x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } } }, plugins: { legend: { labels: { color: '#d1d5db' } } }, responsive: true, maintainAspectRatio: false } });
@@ -1204,10 +1248,17 @@
             };
             
             const updateDashboardView = () => {
+                const view = document.getElementById('chart-view').value;
                 const year = parseInt(document.getElementById('filterYear').value);
                 const month = parseInt(document.getElementById('filterMonth').value);
-                renderBalanceCard(year, month);
-                renderChart(year);
+                document.getElementById('monthly-filters').classList.toggle('hidden', view === 'yearly');
+                
+                if (view === 'monthly') {
+                    renderBalanceCard(year, month);
+                    renderChart(year, 'monthly');
+                } else {
+                    renderChart(null, 'yearly');
+                }
             }
             
             const initDashboardFilters = () => {
@@ -1221,7 +1272,9 @@
                 years.sort((a,b) => b-a);
                 years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
                 monthSelect.value = now.getMonth(); yearSelect.value = now.getFullYear();
-                monthSelect.addEventListener('change', updateDashboardView); yearSelect.addEventListener('change', updateDashboardView);
+                monthSelect.addEventListener('change', updateDashboardView);
+                yearSelect.addEventListener('change', updateDashboardView);
+                document.getElementById('chart-view').addEventListener('change', updateDashboardView);
             }
 
             // --- Handlers para Relatório de Imposto de Renda ---
