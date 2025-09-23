@@ -1486,6 +1486,20 @@
                     const transactionId = parseInt(deleteTransactionButton.dataset.id);
                     const transaction = transactions.find(t => t.id === transactionId);
                     showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
+                        const txToDelete = transactions.find(t => t.id === transactionId);
+                        if (txToDelete && txToDelete.type === 'revenue' && txToDelete.itemId) {
+                            const item = items.find(i => i.id === txToDelete.itemId);
+                            if (item && item.paymentsMade) {
+                                const transactionDate = new Date(txToDelete.date + 'T00:00:00');
+                                const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
+                                
+                                const index = item.paymentsMade.indexOf(paymentPeriod);
+                                if (index > -1) {
+                                    item.paymentsMade.splice(index, 1);
+                                }
+                            }
+                        }
+
                         transactions = transactions.filter(t => t.id !== transactionId);
                         saveData();
                         renderAll();
