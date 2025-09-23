@@ -820,18 +820,43 @@
 
                 const getSortPriority = (item) => {
                     const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+                    const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+
+                    // P1: Contract overdue
                     if (today > endDate && !item.renewalPending) {
                         return { priority: 1, date: endDate };
                     }
-                    const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
-                    const lastPaymentDate = item.lastPaymentAlertDate ? new Date(item.lastPaymentAlertDate) : null;
-                    if (today >= paymentDueDateThisMonth && (!lastPaymentDate || lastPaymentDate < paymentDueDateThisMonth)) {
+                    
+                    // P2: Payment overdue this month
+                    const startDate = new Date(item.rentStartDate + 'T00:00:00');
+                    let firstPaymentDueDate = new Date(startDate);
+                    if (item.paymentFrequency === 'monthly') {
+                        firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
+                        firstPaymentDueDate.setDate(item.paymentDay);
+                    }
+                    if (today >= paymentDueDateThisMonth && !isPaidThisMonth && today >= firstPaymentDueDate) {
                         return { priority: 2, date: paymentDueDateThisMonth };
                     }
+                    
+                    // P3: Awaiting renewal
                     if (item.renewalPending) {
                         return { priority: 3, date: endDate };
                     }
-                    return { priority: 4, date: endDate };
+                    
+                    // P4: Upcoming payment (not paid this month)
+                    if (!isPaidThisMonth) {
+                       return { priority: 4, date: paymentDueDateThisMonth };
+                    }
+                   
+                    // P5: Paid this month
+                    if (isPaidThisMonth) {
+                        return { priority: 5, date: endDate };
+                    }
+
+                    // Fallback
+                    return { priority: 6, date: endDate };
                 };
 
                 rentedItems.sort((a, b) => {
@@ -1128,8 +1153,10 @@
             const initDashboardFilters = () => {
                 const monthSelect = document.getElementById('filterMonth'), yearSelect = document.getElementById('filterYear'), now = new Date();
                 for(let i=0; i<12; i++) { const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}); monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`; }
-                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))];
-                if (!years.includes(now.getFullYear())) years.push(now.getFullYear());
+                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean);
+                if (!years.includes(now.getFullYear())) {
+                    years.push(now.getFullYear());
+                }
                 years.sort((a,b) => b-a);
                 years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
                 monthSelect.value = now.getMonth(); yearSelect.value = now.getFullYear();
@@ -1149,7 +1176,7 @@
                     }
                 }
                 
-                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))];
+                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean);
                 if (!years.includes(now.getFullYear())) {
                     years.push(now.getFullYear());
                 }
@@ -1629,7 +1656,7 @@
             });
             
             document.getElementById('confirmActionConfirm').addEventListener('click', () => { if (typeof onConfirm === 'function') onConfirm(); hideModal('confirmActionModal'); onConfirm = null; });
-            document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionModal'); onConfirm = null; });
+            document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionCancel'); onConfirm = null; });
 
             // Carga Inicial
             loadData();
