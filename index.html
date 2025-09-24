@@ -96,6 +96,12 @@
         .animate-shake {
             animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
         }
+
+        /* Bottom Nav Active State */
+        .bottom-nav-btn.active-tab {
+            color: #22d3ee; /* cyan-400 */
+        }
+        
     </style>
      <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -119,7 +125,7 @@
         </div>
     </div>
 
-    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 hidden">
+    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 hidden pb-24 md:pb-8">
         
         <!-- Cabeçalho -->
         <header class="flex justify-between items-center mb-6">
@@ -129,21 +135,19 @@
             </button>
         </header>
 
-        <!-- Navegação Principal -->
-        <div class="mb-6">
+        <!-- Navegação Principal (Desktop) -->
+        <div class="mb-6 hidden md:block">
             <div class="border-b border-gray-700">
-                <div class="overflow-x-auto no-scrollbar">
-                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                        <button class="tab-button active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-cyan-500 text-cyan-400" data-tab="dashboard">Painel</button>
-                        <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items">Meus Itens</button>
-                        <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals">Meus Aluguéis</button>
-                        <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="finance">Financeiro</button>
-                        <button id="notifications-tab-btn" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500 relative" data-tab="notifications">
-                            Notificações
-                            <span class="notification-badge absolute top-3 -right-4 ml-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
-                        </button>
-                    </nav>
-                </div>
+                <nav id="top-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button class="tab-button active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-cyan-500 text-cyan-400" data-tab="dashboard">Painel</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items">Meus Itens</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals">Meus Aluguéis</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="finance">Financeiro</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500 relative" data-tab="notifications">
+                        Notificações
+                        <span id="top-nav-badge" class="notification-badge absolute top-3 -right-4 ml-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
+                    </button>
+                </nav>
             </div>
         </div>
 
@@ -151,30 +155,48 @@
         <main>
             <!-- Aba Painel -->
             <div id="dashboard-content" class="tab-content">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 class="text-sm font-medium text-gray-400">Total de Itens</h3>
-                        <p id="total-items" class="mt-1 text-3xl font-semibold">0</p>
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+                    <div class="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg flex items-center gap-4">
+                        <i data-lucide="package" class="h-8 w-8 text-cyan-400"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-400">Total de Itens</h3>
+                            <p id="total-items" class="mt-1 text-2xl sm:text-3xl font-semibold">0</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 class="text-sm font-medium text-gray-400">Itens Alugados</h3>
-                        <p id="rented-items" class="mt-1 text-3xl font-semibold">0</p>
+                    <div class="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg flex items-center gap-4">
+                         <i data-lucide="package-x" class="h-8 w-8 text-cyan-400"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-400">Alugados</h3>
+                            <p id="rented-items" class="mt-1 text-2xl sm:text-3xl font-semibold">0</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 class="text-sm font-medium text-gray-400">Itens Disponíveis</h3>
-                        <p id="available-items" class="mt-1 text-3xl font-semibold">0</p>
+                    <div class="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg flex items-center gap-4">
+                        <i data-lucide="package-check" class="h-8 w-8 text-cyan-400"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-400">Disponíveis</h3>
+                            <p id="available-items" class="mt-1 text-2xl sm:text-3xl font-semibold">0</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 id="month-balance-title" class="text-sm font-medium text-gray-400">Saldo do Mês</h3>
-                        <p id="month-balance" class="mt-1 text-3xl font-semibold">R$ 0,00</p>
+                    <div class="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg flex items-center gap-4">
+                        <i data-lucide="scale" class="h-8 w-8 text-green-400"></i>
+                        <div>
+                            <h3 id="month-balance-title" class="text-sm font-medium text-gray-400">Saldo do Mês</h3>
+                            <p id="month-balance" class="mt-1 text-2xl sm:text-3xl font-semibold">R$ 0,00</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 id="month-expense-title" class="text-sm font-medium text-gray-400">Despesas do Mês</h3>
-                        <p id="month-expense" class="mt-1 text-3xl font-semibold text-red-400">R$ 0,00</p>
+                    <div class="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg flex items-center gap-4">
+                        <i data-lucide="trending-down" class="h-8 w-8 text-red-400"></i>
+                        <div>
+                             <h3 id="month-expense-title" class="text-sm font-medium text-gray-400">Despesas</h3>
+                            <p id="month-expense" class="mt-1 text-2xl sm:text-3xl font-semibold text-red-400">R$ 0,00</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                        <h3 id="month-fee-title" class="text-sm font-medium text-gray-400">Taxa de Gerência do Mês</h3>
-                        <p id="month-fee" class="mt-1 text-3xl font-semibold text-yellow-400">R$ 0,00</p>
+                    <div class="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg flex items-center gap-4">
+                        <i data-lucide="receipt" class="h-8 w-8 text-yellow-400"></i>
+                        <div>
+                            <h3 id="month-fee-title" class="text-sm font-medium text-gray-400">Taxa Gerência</h3>
+                            <p id="month-fee" class="mt-1 text-2xl sm:text-3xl font-semibold text-yellow-400">R$ 0,00</p>
+                        </div>
                     </div>
                 </div>
 
@@ -314,6 +336,32 @@
             </div>
         </main>
     </div>
+
+    <!-- Navegação Inferior (Mobile) -->
+    <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 flex justify-around p-2 z-40">
+        <button class="tab-button bottom-nav-btn active-tab flex flex-col items-center text-gray-400 p-2" data-tab="dashboard">
+            <i data-lucide="layout-dashboard" class="h-6 w-6"></i>
+            <span class="text-xs mt-1">Painel</span>
+        </button>
+        <button class="tab-button bottom-nav-btn flex flex-col items-center text-gray-400 p-2" data-tab="items">
+            <i data-lucide="archive" class="h-6 w-6"></i>
+            <span class="text-xs mt-1">Itens</span>
+        </button>
+        <button class="tab-button bottom-nav-btn flex flex-col items-center text-gray-400 p-2" data-tab="rentals">
+            <i data-lucide="calendar-clock" class="h-6 w-6"></i>
+            <span class="text-xs mt-1">Aluguéis</span>
+        </button>
+        <button class="tab-button bottom-nav-btn flex flex-col items-center text-gray-400 p-2" data-tab="finance">
+            <i data-lucide="piggy-bank" class="h-6 w-6"></i>
+            <span class="text-xs mt-1">Financeiro</span>
+        </button>
+        <button class="tab-button bottom-nav-btn flex flex-col items-center text-gray-400 p-2 relative" data-tab="notifications">
+            <i data-lucide="bell" class="h-6 w-6"></i>
+            <span class="text-xs mt-1">Notificações</span>
+            <span id="bottom-nav-badge" class="notification-badge absolute top-1 right-3 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
+        </button>
+    </nav>
+
 
     <!-- Modal Adicionar Item -->
     <div id="addItemModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4">
@@ -1037,8 +1085,8 @@
 
             const checkAlerts = () => {
                 const container = document.getElementById('alerts-container');
-                const notificationBadge = document.querySelector('#notifications-tab-btn .notification-badge');
-                const notificationsTabBtn = document.getElementById('notifications-tab-btn');
+                const notificationBadges = document.querySelectorAll('.notification-badge');
+                const notificationsTabBtns = document.querySelectorAll('.tab-button[data-tab="notifications"]');
                 container.innerHTML = '';
                 let alertCount = 0;
 
@@ -1093,11 +1141,17 @@
                     }
                 });
 
-                notificationBadge.textContent = alertCount;
-                if (alertCount > 0) {
-                    notificationsTabBtn.classList.add('has-notifications');
-                } else {
-                    notificationsTabBtn.classList.remove('has-notifications');
+                notificationBadges.forEach(badge => badge.textContent = alertCount);
+
+                notificationsTabBtns.forEach(btn => {
+                    if (alertCount > 0) {
+                        btn.classList.add('has-notifications');
+                    } else {
+                        btn.classList.remove('has-notifications');
+                    }
+                });
+                
+                if (alertCount === 0) {
                     container.innerHTML = `<p class="text-gray-400">Nenhum alerta no momento.</p>`;
                 }
             };
@@ -1601,7 +1655,6 @@
                     document.getElementById('transactionDescription').value = `Recebimento aluguel: ${item.name}`;
                     document.getElementById('transactionAmount').value = item.rentValue;
                     
-                    // Auto-check and fill management fee if applicable
                     if (item.hasManagementFee && item.managementFeePercentage > 0) {
                         const feeCheckbox = document.getElementById('addManagementFee');
                         const feeDiv = document.getElementById('managementFeeDiv');
@@ -1902,5 +1955,4 @@
     </script>
 </body>
 </html>
-
 
