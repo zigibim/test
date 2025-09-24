@@ -646,22 +646,26 @@
     </div>
 
     <!-- Modal Relatório de Imposto de Renda -->
-    <div id="taxReportModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4">
-        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl p-6">
-            <h2 class="text-2xl font-bold mb-4">Relatório para Imposto de Renda</h2>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 p-4 bg-gray-700 rounded-lg">
-                <label for="taxReportMonth" class="text-sm font-medium">Selecione o Período:</label>
-                <div class="flex items-center gap-2">
-                    <select id="taxReportMonth" class="bg-gray-600 border border-gray-500 rounded-md px-3 py-1 text-sm"></select>
-                    <select id="taxReportYear" class="bg-gray-600 border border-gray-500 rounded-md px-3 py-1 text-sm"></select>
+    <div id="taxReportModal" class="modal fixed inset-0 bg-gray-900 z-50 p-0">
+        <div class="bg-gray-800 w-full h-full p-4 sm:p-8 overflow-y-auto">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-bold">Relatório para Imposto de Renda</h2>
+                    <button type="button" class="modal-close-btn p-2 rounded-full bg-gray-700 hover:bg-gray-600">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
                 </div>
-                <button id="generateTaxReportBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm">Gerar Relatório</button>
-            </div>
-            <div id="taxReportResult" class="bg-gray-900 p-4 rounded-md max-h-[60vh] overflow-y-auto">
-                <p class="text-gray-400">Selecione um mês e ano e clique em "Gerar Relatório" para ver os recebimentos de aluguéis de imóveis.</p>
-            </div>
-            <div class="mt-6 flex justify-end">
-                <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Fechar</button>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 p-4 bg-gray-700 rounded-lg">
+                    <label for="taxReportMonth" class="text-sm font-medium">Selecione o Período:</label>
+                    <div class="flex items-center gap-2">
+                        <select id="taxReportMonth" class="bg-gray-600 border border-gray-500 rounded-md px-3 py-1 text-sm"></select>
+                        <select id="taxReportYear" class="bg-gray-600 border border-gray-500 rounded-md px-3 py-1 text-sm"></select>
+                    </div>
+                    <button id="generateTaxReportBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm">Gerar Relatório</button>
+                </div>
+                <div id="taxReportResult" class="bg-gray-900 p-4 rounded-md">
+                    <p class="text-gray-400">Selecione um mês e ano e clique em "Gerar Relatório" para ver os recebimentos de aluguéis de imóveis.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -1342,13 +1346,16 @@
                         valueString = `<strong class="text-green-400">${formatCurrency(netValue)}</strong>`
                     }
 
+                    const netValueForCopy = netValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
                     return {
                         managedBy: item.managedBy || 'particular',
                         managerName: item.managerName || 'N/A',
                         tenantName: item.rentedTo,
                         tenantCPF: item.tenantCPF || 'Não informado',
                         address: item.endereco || 'Não informado',
-                        valueString: valueString
+                        valueString: valueString,
+                        netValueForCopy: netValueForCopy
                     };
                 });
 
@@ -1374,23 +1381,48 @@
 
 
                 let reportHTML = '';
+                let copyIdCounter = 0;
                 sortedKeys.forEach(key => {
                     const groupName = key.replace('particular', 'Particular').replace('imobiliaria', 'Imobiliária').replace('outros', 'Outros');
-                    reportHTML += `<h3 class="text-lg font-semibold text-cyan-400 mt-4 mb-2 border-b border-gray-700 pb-1">${groupName}</h3>`;
+                    reportHTML += `<h3 class="text-xl font-semibold text-cyan-400 mt-6 mb-3 border-b border-gray-700 pb-2">${groupName}</h3>`;
                     
                     groupedData[key].forEach(entry => {
+                        const cpfId = `copy-cpf-${copyIdCounter}`;
+                        const addressId = `copy-address-${copyIdCounter}`;
+                        const valueId = `copy-value-${copyIdCounter}`;
+                        
                         reportHTML += `
-                            <div class="mb-4 p-3 bg-gray-800 rounded-md">
-                                <p class="font-bold">${entry.tenantName}</p>
-                                <p class="text-sm text-gray-400">CPF: ${entry.tenantCPF}</p>
-                                <p class="text-sm text-gray-400">${entry.address}</p>
-                                <p class="text-md mt-1">Valor Recebido: ${entry.valueString}</p>
+                            <div class="py-6 border-b-2 border-gray-700 space-y-2">
+                                <p class="text-2xl font-bold text-white">${entry.tenantName}</p>
+                                
+                                <div class="flex items-center gap-3">
+                                    <p class="text-lg text-gray-300"><strong class="text-gray-400">CPF:</strong> <span id="${cpfId}">${entry.tenantCPF}</span></p>
+                                    <button data-copy-target="${cpfId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar CPF">
+                                        <i data-lucide="copy" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <p class="text-lg text-gray-300" id="${addressId}">${entry.address}</p>
+                                    <button data-copy-target="${addressId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar Endereço">
+                                        <i data-lucide="copy" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <p class="text-2xl font-semibold" ><span id="${valueId}" class="hidden">${entry.netValueForCopy}</span>${entry.valueString}</p>
+                                     <button data-copy-target="${valueId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar Valor">
+                                        <i data-lucide="copy" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
                             </div>
                         `;
+                        copyIdCounter++;
                     });
                 });
                 
                 resultDiv.innerHTML = reportHTML;
+                lucide.createIcons();
             };
 
             // --- Manipuladores de Eventos ---
@@ -1400,7 +1432,44 @@
             document.getElementById('openAddTransactionModalExpense').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Despesa'; document.getElementById('transactionType').value = 'expense'; document.getElementById('managementFeeContainer').style.display = 'none'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
             document.getElementById('openTaxReportModal').addEventListener('click', () => { initTaxReportFilters(); showModal('taxReportModal'); });
             document.getElementById('generateTaxReportBtn').addEventListener('click', generateTaxReport);
-            modals.forEach(modal => { modal.addEventListener('click', (e) => { if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close-btn')) hideModal(modal.id); }); });
+            document.body.addEventListener('click', (e) => { 
+                const copyButton = e.target.closest('.copy-btn');
+                if (copyButton) {
+                    const targetId = copyButton.dataset.copyTarget;
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        const textToCopy = targetElement.textContent.trim();
+                        
+                        const textArea = document.createElement("textarea");
+                        textArea.value = textToCopy;
+                        textArea.style.position = "fixed"; 
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        
+                        try {
+                            document.execCommand('copy');
+                            copyButton.innerHTML = '<i data-lucide="check" class="h-5 w-5 text-green-400"></i>';
+                            lucide.createIcons();
+                            setTimeout(() => {
+                                copyButton.innerHTML = '<i data-lucide="copy" class="h-5 w-5"></i>';
+                                lucide.createIcons();
+                            }, 1500);
+                        } catch (err) {
+                            console.error('Falha ao copiar texto: ', err);
+                        }
+
+                        document.body.removeChild(textArea);
+                    }
+                }
+            });
+            modals.forEach(modal => { 
+                modal.addEventListener('click', (e) => { 
+                    if (e.target.classList.contains('modal') || e.target.closest('.modal-close-btn')) {
+                        hideModal(modal.id);
+                    }
+                }); 
+            });
             document.getElementById('itemCategorySelect').addEventListener('change', (e) => { document.getElementById('itemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro'); document.getElementById('imovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel'); });
             document.getElementById('editItemCategorySelect').addEventListener('change', (e) => { document.getElementById('editItemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro'); document.getElementById('editImovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel'); });
             document.querySelectorAll('.itemManagedBySelect').forEach(select => { select.addEventListener('change', (e) => { const wrapper = e.target.closest('form').querySelector('.itemManagerNameWrapper'); const feeWrapper = e.target.closest('form').querySelector('.itemFeeWrapper'); const show = e.target.value === 'imobiliaria' || e.target.value === 'outros'; wrapper.classList.toggle('hidden', !show); feeWrapper.classList.toggle('hidden', !show);}); });
@@ -1502,7 +1571,7 @@
                 hideModal('editTransactionModal');
             });
             
-            app.addEventListener('click', (e) => {
+            appContainer.addEventListener('click', (e) => {
                 const rentButton = e.target.closest('.rent-btn');
                 if (rentButton) {
                     const itemId = parseInt(rentButton.dataset.id);
@@ -1833,4 +1902,5 @@
     </script>
 </body>
 </html>
+
 
