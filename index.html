@@ -1068,7 +1068,7 @@
                     
                     let displayDescription = t.description;
                     // Simplifica a descrição para recebimentos de aluguel
-                    if (t.type === 'revenue' && t.itemId && t.description === 'Recebimento de Aluguel') {
+                    if (t.type === 'revenue' && t.itemId && (t.description.startsWith('Recebimento aluguel:') || t.description === 'Recebimento de Aluguel')) {
                         const item = items.find(i => i.id === t.itemId);
                         if (item && item.rentedTo) {
                             displayDescription = `${item.name} - ${item.rentedTo}`;
@@ -1528,10 +1528,6 @@
                         document.body.removeChild(textArea);
                     }
                 }
-
-                if (e.target.closest('#logoutBtn')) {
-                    window.location.reload();
-                }
             });
 
             tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
@@ -1974,6 +1970,7 @@
             
             document.getElementById('confirmActionConfirm').addEventListener('click', () => { if (typeof onConfirm === 'function') onConfirm(); hideModal('confirmActionModal'); onConfirm = null; });
             document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionModal'); onConfirm = null; });
+            
 
             // Carga Inicial
             loadData();
