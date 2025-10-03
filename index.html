@@ -1047,6 +1047,7 @@
                 const list = document.getElementById('transactions-list');
                 list.innerHTML = '';
                 
+                // Ordena as transações pela data e hora de criação (ID), da mais recente para a mais antiga.
                 const sortedTransactions = [...transactionsToRender].sort((a,b) => b.id - a.id);
 
                 if(sortedTransactions.length === 0){
@@ -1066,6 +1067,7 @@
                     }
                     
                     let displayDescription = t.description;
+                    // Simplifica a descrição para recebimentos de aluguel
                     if (t.type === 'revenue' && t.itemId && t.description.startsWith('Recebimento aluguel:')) {
                         const item = items.find(i => i.id === t.itemId);
                         if (item && item.rentedTo) {
@@ -1496,6 +1498,10 @@
             };
 
             // --- Manipuladores de Eventos ---
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                window.location.reload();
+            });
+
             document.body.addEventListener('click', (e) => { 
                 const copyButton = e.target.closest('.copy-btn');
                 if (copyButton) {
@@ -1525,10 +1531,6 @@
 
                         document.body.removeChild(textArea);
                     }
-                }
-
-                if (e.target.closest('#logoutBtn')) {
-                    window.location.reload();
                 }
             });
 
@@ -1847,12 +1849,14 @@
                 e.preventDefault();
                 const selectedItemId = document.getElementById('transactionItemLink').value;
                 const description = document.getElementById('transactionDescription').value;
-                let finalDescription = description;
-                if (selectedItemId) { const selectedItem = items.find(i => i.id === parseInt(selectedItemId)); if (selectedItem) finalDescription = `[${selectedItem.name}] ${description}`; }
+                
                 const newTransaction = {
                     id: Date.now(),
-                    type: document.getElementById('transactionType').value, description: finalDescription, amount: parseFloat(document.getElementById('transactionAmount').value),
-                    date: document.getElementById('transactionDate').value, itemId: selectedItemId ? parseInt(selectedItemId) : null
+                    type: document.getElementById('transactionType').value, 
+                    description: description, 
+                    amount: parseFloat(document.getElementById('transactionAmount').value),
+                    date: document.getElementById('transactionDate').value, 
+                    itemId: selectedItemId ? parseInt(selectedItemId) : null
                 };
 
                 if (newTransaction.type === 'revenue' && selectedItemId) {
@@ -1870,7 +1874,7 @@
                 const addFee = document.getElementById('addManagementFee').checked;
                 const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
                 if (addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
-                    const feeTransaction = { id: Date.now() + 1, type: 'management_fee', description: `Taxa de Gerência - ${finalDescription}`, amount: feeAmount, date: newTransaction.date, itemId: newTransaction.itemId };
+                    const feeTransaction = { id: Date.now() + 1, type: 'management_fee', description: `Taxa de Gerência - ${description}`, amount: feeAmount, date: newTransaction.date, itemId: newTransaction.itemId };
                     transactions.push(feeTransaction);
                 }
                 saveData();
