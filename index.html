@@ -1068,7 +1068,7 @@
                     
                     let displayDescription = t.description;
                     // Simplifica a descrição para recebimentos de aluguel
-                    if (t.type === 'revenue' && t.itemId && t.description.startsWith('Recebimento aluguel:')) {
+                    if (t.type === 'revenue' && t.itemId && t.description === 'Recebimento de Aluguel') {
                         const item = items.find(i => i.id === t.itemId);
                         if (item && item.rentedTo) {
                             displayDescription = `${item.name} - ${item.rentedTo}`;
@@ -1498,10 +1498,6 @@
             };
 
             // --- Manipuladores de Eventos ---
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                window.location.reload();
-            });
-
             document.body.addEventListener('click', (e) => { 
                 const copyButton = e.target.closest('.copy-btn');
                 if (copyButton) {
@@ -1531,6 +1527,10 @@
 
                         document.body.removeChild(textArea);
                     }
+                }
+
+                if (e.target.closest('#logoutBtn')) {
+                    window.location.reload();
                 }
             });
 
@@ -1849,11 +1849,16 @@
                 e.preventDefault();
                 const selectedItemId = document.getElementById('transactionItemLink').value;
                 const description = document.getElementById('transactionDescription').value;
-                
+                let finalDescription = description;
+
+                if (selectedItemId && description.startsWith('Recebimento aluguel:')) {
+                    finalDescription = 'Recebimento de Aluguel';
+                }
+
                 const newTransaction = {
                     id: Date.now(),
                     type: document.getElementById('transactionType').value, 
-                    description: description, 
+                    description: finalDescription, 
                     amount: parseFloat(document.getElementById('transactionAmount').value),
                     date: document.getElementById('transactionDate').value, 
                     itemId: selectedItemId ? parseInt(selectedItemId) : null
@@ -1874,7 +1879,9 @@
                 const addFee = document.getElementById('addManagementFee').checked;
                 const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
                 if (addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
-                    const feeTransaction = { id: Date.now() + 1, type: 'management_fee', description: `Taxa de Gerência - ${description}`, amount: feeAmount, date: newTransaction.date, itemId: newTransaction.itemId };
+                     const item = items.find(i => i.id === parseInt(selectedItemId));
+                     const feeDescription = `Taxa de Gerência - ${item ? item.name : description}`;
+                     const feeTransaction = { id: Date.now() + 1, type: 'management_fee', description: feeDescription, amount: feeAmount, date: newTransaction.date, itemId: newTransaction.itemId };
                     transactions.push(feeTransaction);
                 }
                 saveData();
@@ -1967,9 +1974,6 @@
             
             document.getElementById('confirmActionConfirm').addEventListener('click', () => { if (typeof onConfirm === 'function') onConfirm(); hideModal('confirmActionModal'); onConfirm = null; });
             document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionModal'); onConfirm = null; });
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                window.location.reload();
-            });
 
             // Carga Inicial
             loadData();
