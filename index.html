@@ -923,6 +923,7 @@
                     const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
                     const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
                     const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+                    const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
 
                     // P1: Contract overdue
                     if (today > endDate && !item.renewalPending) {
@@ -936,7 +937,7 @@
                         firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
                         firstPaymentDueDate.setDate(item.paymentDay);
                     }
-                    if (today >= paymentDueDateThisMonth && !isPaidThisMonth && today >= firstPaymentDueDate) {
+                    if (isPaymentOverdue && today >= firstPaymentDueDate) {
                         return { priority: 2, date: paymentDueDateThisMonth };
                     }
                     
@@ -993,19 +994,31 @@
                     `;
 
                     const endDate = new Date(item.rentEndDate);
-                    const isOverdue = new Date() > endDate;
+                    const isContractOverdue = new Date() > endDate;
                     
-                    let borderColor = 'border-yellow-500';
-                    if (item.renewalPending) borderColor = 'border-pink-500';
-                    else if (isOverdue) borderColor = 'border-red-500';
+                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+                    const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+                    const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
+                    
+                    let borderColor = 'border-gray-600'; // Default for upcoming
+                    if (isContractOverdue && !item.renewalPending) {
+                        borderColor = 'border-red-500';
+                    } else if (item.renewalPending) {
+                        borderColor = 'border-pink-500';
+                    } else if (isPaymentOverdue) {
+                        borderColor = 'border-yellow-500';
+                    } else if (isPaidThisMonth) {
+                        borderColor = 'border-green-500';
+                    }
 
                     let paymentStatusHTML = '';
-                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
                     const monthName = today.toLocaleString('pt-BR', { month: 'long' });
 
-                    if (item.paymentsMade && item.paymentsMade.includes(currentMonthYear)) {
+                    if (isPaidThisMonth) {
                         paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${monthName} OK</span></p>`;
-                        borderColor = 'border-green-500'; // Override border color if paid
+                    } else if (isPaymentOverdue) {
+                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido</span></p>`;
                     }
 
                     let managementInfoHTML = '';
@@ -1032,7 +1045,7 @@
                                     <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
                                     ${managementInfoHTML}
                                     <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
-                                    <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isOverdue ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                                    <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
                                     ${paymentStatusHTML}
                                 </div>
                             </div>
@@ -1047,7 +1060,6 @@
                 const list = document.getElementById('transactions-list');
                 list.innerHTML = '';
                 
-                // Ordena as transações pela data e hora de criação (ID), da mais recente para a mais antiga.
                 const sortedTransactions = [...transactionsToRender].sort((a,b) => b.id - a.id);
 
                 if(sortedTransactions.length === 0){
@@ -1528,6 +1540,9 @@
                         document.body.removeChild(textArea);
                     }
                 }
+                if (e.target.closest('#logoutBtn')) {
+                    window.location.reload();
+                }
             });
 
             tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
@@ -1970,7 +1985,6 @@
             
             document.getElementById('confirmActionConfirm').addEventListener('click', () => { if (typeof onConfirm === 'function') onConfirm(); hideModal('confirmActionModal'); onConfirm = null; });
             document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionModal'); onConfirm = null; });
-            
 
             // Carga Inicial
             loadData();
