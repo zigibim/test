@@ -2498,49 +2498,44 @@
                 document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
                 document.getElementById('openAddItemModal').style.display = isManager ? 'none' : 'inline-flex';
                 
-                const adminOnlyTabs = ['notifications', 'gestores'];
+                const adminOnlyTabs = ['notifications']; // 'gestores' é tratado separadamente
 
                 document.querySelectorAll('#top-nav .tab-button, #bottom-nav .tab-button').forEach(tab => {
                     const tabName = tab.dataset.tab;
+                    if (tabName === 'gestores') return; // Pula a aba de gestores neste loop
+
                     const isTopNav = tab.closest('#top-nav');
                     const textSpan = tab.querySelector('span:not(.notification-badge)');
 
                     if (isManager) {
-                        if (adminOnlyTabs.includes(tabName)) {
-                            tab.style.display = 'none';
-                        } else {
-                            tab.style.display = 'flex';
-                             if (isTopNav) {
-                                const textNode = Array.from(tab.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
-                                if (textNode) {
-                                    if (tabName === 'items') textNode.textContent = 'Itens';
-                                    if (tabName === 'rentals') textNode.textContent = 'Aluguéis';
-                                }
-                            } else if (textSpan) {
-                                if (tabName === 'items') textSpan.textContent = 'Itens';
-                                if (tabName === 'rentals') textSpan.textContent = 'Aluguéis';
-                            }
-                        }
+                        tab.style.display = adminOnlyTabs.includes(tabName) ? 'none' : 'flex';
                     } else { // Admin
-                        tab.style.display = 'flex'; // Reset display
-                        if (isTopNav) {
-                             const textNode = Array.from(tab.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
-                             if (textNode) {
-                                if (tabName === 'items') textNode.textContent = 'Meus Itens';
-                                if (tabName === 'rentals') textNode.textContent = 'Meus Aluguéis';
-                             }
-                        } else if (textSpan) {
-                            if (tabName === 'items') textSpan.textContent = 'Itens';
-                            if (tabName === 'rentals') textSpan.textContent = 'Aluguéis';
+                        tab.style.display = 'flex';
+                    }
+                    
+                    // Altera o texto das abas
+                    if (isTopNav) {
+                        const textNode = Array.from(tab.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+                        if (textNode) {
+                            if (tabName === 'items') textNode.textContent = isManager ? 'Itens' : 'Meus Itens';
+                            if (tabName === 'rentals') textNode.textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
                         }
+                    } else if (textSpan) {
+                        if (tabName === 'items') textSpan.textContent = 'Itens';
+                        if (tabName === 'rentals') textSpan.textContent = 'Aluguéis';
                     }
                 });
                 
-                if (!isManager) {
-                    const gestoresTab = document.getElementById('gestores-main-tab');
-                    const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
+                // Trata a visibilidade da aba 'gestores' explicitamente
+                const gestoresMainTab = document.getElementById('gestores-main-tab');
+                const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
+                
+                if (isManager) {
+                    gestoresMainTab.style.display = 'none';
+                    gestoresBottomTab.style.display = 'none';
+                } else { // Admin
                     const shouldShow = managers.length > 0;
-                    gestoresTab.style.display = shouldShow ? 'flex' : 'none';
+                    gestoresMainTab.style.display = shouldShow ? 'flex' : 'none';
                     gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
                 }
 
@@ -2558,6 +2553,7 @@
     </script>
 </body>
 </html>
+
 
 
 
