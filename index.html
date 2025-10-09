@@ -2498,7 +2498,7 @@
             const customizeUIForUser = () => {
                 const isManager = currentUser.type === 'manager';
                 
-                document.getElementById('app-title').textContent = isManager ? `Gestor: ${currentUser.name}` : 'Meu Gestor de Aluguéis';
+                document.getElementById('app-title').textContent = isManager ? currentUser.name : 'Meu Gestor de Aluguéis';
                 document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
                 document.getElementById('openAddItemModal').style.display = isManager ? 'none' : 'inline-flex';
                 
@@ -2562,5 +2562,6 @@
     </script>
 </body>
 </html>
+
 
 
