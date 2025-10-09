@@ -2514,13 +2514,23 @@
                         tab.style.display = 'flex';
                     }
 
-                    // Altera o texto das abas APENAS NA NAVEGAÇÃO SUPERIOR (DESKTOP)
-                    if (tab.closest('#top-nav')) {
-                         const textSpan = tab.querySelector('span:not(.notification-badge)');
-                         if(textSpan) {
-                            if (tabName === 'items') textSpan.textContent = isManager ? 'Itens' : 'Meus Itens';
-                            if (tabName === 'rentals') textSpan.textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
-                         }
+                    // Altera o texto das abas
+                    const textSpan = tab.querySelector('span:not(.notification-badge)');
+                    if (textSpan) {
+                       if (tabName === 'items') {
+                            if (isManager) {
+                                textSpan.textContent = 'Itens';
+                            } else {
+                                textSpan.textContent = tab.closest('#top-nav') ? 'Meus Itens' : 'Itens';
+                            }
+                       }
+                       if (tabName === 'rentals') {
+                           if (isManager) {
+                                textSpan.textContent = 'Aluguéis';
+                           } else {
+                               textSpan.textContent = tab.closest('#top-nav') ? 'Meus Aluguéis' : 'Aluguéis';
+                           }
+                       }
                     }
                 });
 
@@ -2530,18 +2540,19 @@
                 
                 if (isManager) {
                     // Gestor nunca vê a aba de gestores
-                    gestoresMainTab.style.display = 'none';
-                    gestoresBottomTab.style.display = 'none';
+                    if(gestoresMainTab) gestoresMainTab.style.display = 'none';
+                    if(gestoresBottomTab) gestoresBottomTab.style.display = 'none';
                 } else { 
                     // Admin só vê se houver gestores cadastrados
                     const shouldShow = managers.length > 0;
-                    gestoresMainTab.style.display = shouldShow ? 'flex' : 'none';
-                    gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
+                    if(gestoresMainTab) gestoresMainTab.style.display = shouldShow ? 'flex' : 'none';
+                    if(gestoresBottomTab) gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
                 }
 
                 // 4. Textos dos Títulos nos Conteúdos das Abas
                 document.getElementById('total-items-title').textContent = isManager ? 'Itens Gerenciados' : 'Total de Itens';
                 document.getElementById('rentals-title').textContent = isManager ? 'Aluguéis Ativos' : 'Aluguéis Ativos (por pendência)';
+                document.getElementById('financial-overview-title').textContent = isManager ? 'Visão Geral (Gerência)' : 'Visão Geral Financeira';
             };
 
 
@@ -2554,5 +2565,6 @@
     </script>
 </body>
 </html>
+
 
 
