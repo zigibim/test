@@ -2497,6 +2497,7 @@
 
                 // --- 1. Personalização do Cabeçalho ---
                 document.getElementById('app-title').textContent = isManager ? (currentUser.name || 'Gestor') : 'Meu Gestor de Aluguéis';
+                // A linha abaixo garante que o botão de configurações seja removido para o Gerenciador
                 document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
                 document.getElementById('openAddItemModal').style.display = isManager ? 'none' : 'inline-flex';
 
@@ -2568,5 +2569,6 @@
     </script>
 </body>
 </html>
+
 
 
