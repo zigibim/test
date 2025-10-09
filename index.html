@@ -2493,52 +2493,63 @@
 
             const customizeUIForUser = () => {
                 const isManager = currentUser.type === 'manager';
-                
+
+                // 1. Título da Aplicação e Botões do Cabeçalho
                 document.getElementById('app-title').textContent = isManager ? currentUser.name : 'Meu Gestor de Aluguéis';
                 document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
                 document.getElementById('openAddItemModal').style.display = isManager ? 'none' : 'inline-flex';
-                
-                const adminOnlyTabs = ['notifications']; // 'gestores' é tratado separadamente
+
+                // 2. Visibilidade e Textos das Abas
+                const adminOnlyTabs = ['notifications']; // Abas que só o admin vê
 
                 document.querySelectorAll('#top-nav .tab-button, #bottom-nav .tab-button').forEach(tab => {
                     const tabName = tab.dataset.tab;
-                    if (tabName === 'gestores') return; // Pula a aba de gestores neste loop
+                    
+                    // Lógica para a aba 'gestores' é tratada separadamente abaixo
+                    if (tabName === 'gestores') return;
 
-                    const isTopNav = tab.closest('#top-nav');
-                    const textSpan = tab.querySelector('span:not(.notification-badge)');
-
-                    if (isManager) {
-                        tab.style.display = adminOnlyTabs.includes(tabName) ? 'none' : 'flex';
-                    } else { // Admin
+                    // Oculta abas específicas para o gestor
+                    if (isManager && adminOnlyTabs.includes(tabName)) {
+                        tab.style.display = 'none';
+                    } else {
                         tab.style.display = 'flex';
                     }
-                    
-                    // Altera o texto das abas
+
+                    // Altera o texto das abas para corresponder ao usuário
+                    const isTopNav = tab.closest('#top-nav');
                     if (isTopNav) {
+                        // Para a navegação superior, buscamos o nó de texto diretamente
                         const textNode = Array.from(tab.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
-                        if (textNode) {
+                        if(textNode) {
                             if (tabName === 'items') textNode.textContent = isManager ? 'Itens' : 'Meus Itens';
                             if (tabName === 'rentals') textNode.textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
                         }
-                    } else if (textSpan) {
-                        if (tabName === 'items') textSpan.textContent = 'Itens';
-                        if (tabName === 'rentals') textSpan.textContent = 'Aluguéis';
+                    } else {
+                        // Para a navegação inferior, buscamos o span
+                        const textSpan = tab.querySelector('span:not(.notification-badge)');
+                        if (textSpan) {
+                           if (tabName === 'items') textSpan.textContent = isManager ? 'Itens' : 'Meus Itens';
+                           if (tabName === 'rentals') textSpan.textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
+                        }
                     }
                 });
-                
-                // Trata a visibilidade da aba 'gestores' explicitamente
+
+                // 3. Lógica Específica para a Aba 'Gestores'
                 const gestoresMainTab = document.getElementById('gestores-main-tab');
                 const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
                 
                 if (isManager) {
+                    // Gestor nunca vê a aba de gestores
                     gestoresMainTab.style.display = 'none';
                     gestoresBottomTab.style.display = 'none';
-                } else { // Admin
+                } else { 
+                    // Admin só vê se houver gestores cadastrados
                     const shouldShow = managers.length > 0;
                     gestoresMainTab.style.display = shouldShow ? 'flex' : 'none';
                     gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
                 }
 
+                // 4. Textos dos Títulos nos Conteúdos das Abas
                 document.getElementById('total-items-title').textContent = isManager ? 'Itens Gerenciados' : 'Total de Itens';
                 document.getElementById('rentals-title').textContent = isManager ? 'Aluguéis Ativos' : 'Aluguéis Ativos (por pendência)';
             };
@@ -2553,6 +2564,7 @@
     </script>
 </body>
 </html>
+
 
 
 
