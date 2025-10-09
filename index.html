@@ -910,171 +910,171 @@
             };
 
             const renderRentals = () => {
-                const sortedRentalsList = document.getElementById('sorted-rentals-list');
-                sortedRentalsList.innerHTML = '';
+            const sortedRentalsList = document.getElementById('sorted-rentals-list');
+            sortedRentalsList.innerHTML = '';
 
-                const rentedItems = items.filter(item => item.rentedTo);
+            const rentedItems = items.filter(item => item.rentedTo);
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const getSortPriority = (item) => {
+                const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+                const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+                const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
+
+                // P1: Contract overdue
+                if (today > endDate && !item.renewalPending) {
+                    return { priority: 1, date: endDate };
+                }
                 
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                const getSortPriority = (item) => {
-                    const endDate = new Date(item.rentEndDate + 'T00:00:00');
-                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-                    const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
-                    const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
-                    const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
-
-                    // P1: Contract overdue
-                    if (today > endDate && !item.renewalPending) {
-                        return { priority: 1, date: endDate };
-                    }
-                    
-                    // P2: Payment overdue this month
-                    const startDate = new Date(item.rentStartDate + 'T00:00:00');
-                    let firstPaymentDueDate = new Date(startDate);
-                    if (item.paymentFrequency === 'monthly') {
-                        firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
-                        firstPaymentDueDate.setDate(item.paymentDay);
-                    }
-                    if (isPaymentOverdue && today >= firstPaymentDueDate) {
-                        return { priority: 2, date: paymentDueDateThisMonth };
-                    }
-                    
-                    // P3: Awaiting renewal
-                    if (item.renewalPending) {
-                        return { priority: 3, date: endDate };
-                    }
-                    
-                    // P4: Upcoming payment (not paid this month)
-                    if (!isPaidThisMonth) {
-                       return { priority: 4, date: paymentDueDateThisMonth };
-                    }
-                    
-                    // P5: Paid this month
-                    if (isPaidThisMonth) {
-                        return { priority: 5, date: endDate };
-                    }
-
-                    // Fallback
-                    return { priority: 6, date: endDate };
-                };
-
-                rentedItems.sort((a, b) => {
-                    const aSort = getSortPriority(a);
-                    const bSort = getSortPriority(b);
-                    if (aSort.priority !== bSort.priority) {
-                        return aSort.priority - bSort.priority;
-                    }
-                    return aSort.date - bSort.date;
-                });
-
-
-                if (rentedItems.length === 0) {
-                    sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
-                    return;
+                // P2: Payment overdue this month
+                const startDate = new Date(item.rentStartDate + 'T00:00:00');
+                let firstPaymentDueDate = new Date(startDate);
+                if (item.paymentFrequency === 'monthly') {
+                    firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
+                    firstPaymentDueDate.setDate(item.paymentDay);
+                }
+                if (isPaymentOverdue && today >= firstPaymentDueDate) {
+                    return { priority: 2, date: paymentDueDateThisMonth };
+                }
+                
+                // P3: Awaiting renewal
+                if (item.renewalPending) {
+                    return { priority: 3, date: endDate };
+                }
+                
+                // P4: Upcoming payment (not paid this month)
+                if (!isPaidThisMonth) {
+                   return { priority: 4, date: paymentDueDateThisMonth };
+                }
+                
+                // P5: Paid this month
+                if (isPaidThisMonth) {
+                    return { priority: 5, date: endDate };
                 }
 
-                rentedItems.forEach(item => {
-                    const actionButtons = `
-                        <div class="mt-4 flex justify-end items-center space-x-2">
-                            <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita">
-                                <i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita
-                            </button>
-                            <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
-                                <i data-lucide="file-signature" class="h-5 w-5"></i>
-                            </button>
-                            <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel">
-                                <i data-lucide="clipboard-edit" class="h-5 w-5"></i>
-                            </button>
-                            <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel">
-                                <i data-lucide="trash-2" class="h-5 w-5"></i>
-                            </button>
-                        </div>
-                    `;
-
-                    // // MODIFICAÇÃO INICIADA: Lógica de status de pagamento ajustada.
-                    const endDate = new Date(item.rentEndDate + 'T00:00:00');
-                    const isContractOverdue = today > endDate;
-                    
-                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-                    const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
-                    const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
-                    
-                    const startDate = new Date(item.rentStartDate + 'T00:00:00');
-                    let firstPaymentDueDate = new Date(startDate);
-
-                    if (item.paymentFrequency === 'monthly') {
-                        firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
-                        firstPaymentDueDate.setDate(item.paymentDay);
-                    } else if (item.paymentFrequency === 'weekly') {
-                        firstPaymentDueDate.setDate(firstPaymentDueDate.getDate() + 7);
-                    } else if (item.paymentFrequency === 'daily') {
-                         firstPaymentDueDate.setDate(firstPaymentDueDate.getDate() + 1);
-                    }
-
-                    const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
-                    const isActuallyOverdue = isPaymentOverdue && today >= firstPaymentDueDate;
-
-                    let borderColor = 'border-gray-600'; // Default for upcoming
-                    if (isContractOverdue && !item.renewalPending) {
-                        borderColor = 'border-red-500';
-                    } else if (item.renewalPending) {
-                        borderColor = 'border-pink-500';
-                    } else if (isActuallyOverdue) {
-                        borderColor = 'border-yellow-500';
-                    } else if (isPaidThisMonth) {
-                        borderColor = 'border-green-500';
-                    }
-
-                    let paymentStatusHTML = '';
-                    const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
-
-                    if (isPaidThisMonth) {
-                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
-                    } else if (isActuallyOverdue) {
-                        const overdueMonthName = paymentDueDateThisMonth.toLocaleString('pt-BR', { month: 'long' });
-                        const capitalizedMonth = overdueMonthName.charAt(0).toUpperCase() + overdueMonthName.slice(1);
-                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido (${capitalizedMonth})</span></p>`;
-                    }
-                    // // MODIFICAÇÃO FINALIZADA
-
-                    let managementInfoHTML = '';
-                    if (item.category === 'Imóvel' && item.managedBy) {
-                        if (item.managedBy === 'particular') {
-                            managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> Particular</p>`;
-                        } else if ((item.managedBy === 'imobiliaria' || item.managedBy === 'outros') && item.managerName) {
-                            managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> ${item.managerName} (${item.managedBy.charAt(0).toUpperCase() + item.managedBy.slice(1)})</p>`;
-                        }
-                    }
-
-
-                    const card = `
-                        <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
-                            <div class="flex-grow">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h3 class="font-bold text-lg">${item.name}</h3>
-                                        <p class="text-sm text-gray-400">${item.category}</p>
-                                    </div>
-                                    <span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span>
-                                </div>
-                                <div class="mt-3 text-sm space-y-1">
-                                    <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
-                                    ${managementInfoHTML}
-                                    <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
-                                    <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
-                                    ${paymentStatusHTML}
-                                </div>
-                            </div>
-                            ${actionButtons}
-                        </div>
-                    `;
-                    sortedRentalsList.innerHTML += card;
-                });
+                // Fallback
+                return { priority: 6, date: endDate };
             };
-            
-            const renderTransactions = (transactionsToRender) => {
+
+            rentedItems.sort((a, b) => {
+                const aSort = getSortPriority(a);
+                const bSort = getSortPriority(b);
+                if (aSort.priority !== bSort.priority) {
+                    return aSort.priority - bSort.priority;
+                }
+                return aSort.date - bSort.date;
+            });
+
+
+            if (rentedItems.length === 0) {
+                sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
+                return;
+            }
+
+            rentedItems.forEach(item => {
+                const actionButtons = `
+                    <div class="mt-4 flex justify-end items-center space-x-2">
+                        <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita">
+                            <i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita
+                        </button>
+                        <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
+                            <i data-lucide="file-signature" class="h-5 w-5"></i>
+                        </button>
+                        <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel">
+                            <i data-lucide="clipboard-edit" class="h-5 w-5"></i>
+                        </button>
+                        <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel">
+                            <i data-lucide="trash-2" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                `;
+
+                const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                const isContractOverdue = today > endDate;
+                
+                let paymentStatusHTML = '';
+                const overdueMonths = [];
+
+                if (item.paymentFrequency === 'monthly') {
+                    const startDate = new Date(item.rentStartDate + 'T00:00:00');
+                    let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+                    while (checkDate <= today && checkDate <= endDate) {
+                        const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
+                        
+                        if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
+                            const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                            if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
+                                const monthName = checkDate.toLocaleString('pt-BR', { month: 'long' });
+                                overdueMonths.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
+                            }
+                        }
+                        checkDate.setMonth(checkDate.getMonth() + 1);
+                    }
+                }
+
+                const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+
+                let borderColor = 'border-gray-600'; // Default for upcoming
+                if (isContractOverdue && !item.renewalPending) {
+                    borderColor = 'border-red-500';
+                } else if (item.renewalPending) {
+                    borderColor = 'border-pink-500';
+                } else if (overdueMonths.length > 0) {
+                    borderColor = 'border-yellow-500';
+                } else if (isPaidThisMonth) {
+                    borderColor = 'border-green-500';
+                }
+
+                if (overdueMonths.length > 0) {
+                    const debtCount = overdueMonths.length;
+                    paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido (${overdueMonths.join(', ')}) (${debtCount} débito${debtCount > 1 ? 's' : ''})</span></p>`;
+                } else if (isPaidThisMonth) {
+                    const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
+                    paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
+                }
+                
+                let managementInfoHTML = '';
+                if (item.category === 'Imóvel' && item.managedBy) {
+                    if (item.managedBy === 'particular') {
+                        managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> Particular</p>`;
+                    } else if ((item.managedBy === 'imobiliaria' || item.managedBy === 'outros') && item.managerName) {
+                        managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> ${item.managerName} (${item.managedBy.charAt(0).toUpperCase() + item.managedBy.slice(1)})</p>`;
+                    }
+                }
+
+
+                const card = `
+                    <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg">${item.name}</h3>
+                                    <p class="text-sm text-gray-400">${item.category}</p>
+                                </div>
+                                <span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span>
+                            </div>
+                            <div class="mt-3 text-sm space-y-1">
+                                <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
+                                ${managementInfoHTML}
+                                <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
+                                <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                                ${paymentStatusHTML}
+                            </div>
+                        </div>
+                        ${actionButtons}
+                    </div>
+                `;
+                sortedRentalsList.innerHTML += card;
+            });
+        };
+        
+        const renderTransactions = (transactionsToRender) => {
                 const list = document.getElementById('transactions-list');
                 list.innerHTML = '';
                 
@@ -1167,10 +1167,13 @@
                         return; 
                     }
 
+                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+
                     const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
                     const lastPaymentDate = item.lastPaymentAlertDate ? new Date(item.lastPaymentAlertDate) : null;
 
-                    if (today >= paymentDueDateThisMonth && (!lastPaymentDate || lastPaymentDate < paymentDueDateThisMonth)) {
+                    if (today >= paymentDueDateThisMonth && !isPaidThisMonth && (!lastPaymentDate || lastPaymentDate < paymentDueDateThisMonth)) {
                         alertCount++;
                         const alertHTML = `
                             <div class="bg-yellow-900/50 border border-yellow-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3">
@@ -2013,3 +2016,4 @@
     </script>
 </body>
 </html>
+
