@@ -149,15 +149,15 @@
         <div class="mb-6 hidden md:block">
             <div class="border-b border-gray-700">
                 <nav id="top-nav" class="-mb-px flex space-x-6 overflow-x-auto no-scrollbar" aria-label="Tabs">
-                    <button class="tab-button active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-cyan-500 text-cyan-400" data-tab="dashboard"><span>Painel</span></button>
-                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items"><span>Meus Itens</span></button>
-                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals"><span>Meus Aluguéis</span></button>
-                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="finance"><span>Financeiro</span></button>
+                    <button class="tab-button active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-cyan-500 text-cyan-400" data-tab="dashboard">Painel</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items">Meus Itens</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals">Meus Aluguéis</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="finance">Financeiro</button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500 relative" data-tab="notifications">
-                        <span>Notificações</span>
+                        Notificações
                         <span id="top-nav-badge" class="notification-badge absolute top-3 -right-4 ml-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
                     </button>
-                    <button id="gestores-main-tab" class="tab-button hidden whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="gestores"><span>Gestores</span></button>
+                    <button id="gestores-main-tab" class="tab-button hidden whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="gestores">Gestores</button>
                 </nav>
             </div>
         </div>
@@ -2495,18 +2495,20 @@
                 const isManager = currentUser.type === 'manager';
 
                 // 1. Título da Aplicação e Botões do Cabeçalho
-                document.getElementById('app-title').textContent = isManager ? (currentUser.name || 'Gestor') : 'Meu Gestor de Aluguéis';
+                document.getElementById('app-title').textContent = isManager ? currentUser.name : 'Meu Gestor de Aluguéis';
                 document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
                 document.getElementById('openAddItemModal').style.display = isManager ? 'none' : 'inline-flex';
 
                 // 2. Visibilidade e Textos das Abas
-                const adminOnlyTabs = ['notifications'];
+                const adminOnlyTabs = ['notifications']; // Abas que só o admin vê
 
                 document.querySelectorAll('#top-nav .tab-button, #bottom-nav .tab-button').forEach(tab => {
                     const tabName = tab.dataset.tab;
                     
+                    // Lógica para a aba 'gestores' é tratada separadamente abaixo
                     if (tabName === 'gestores') return;
 
+                    // Oculta abas específicas para o gestor
                     if (isManager && adminOnlyTabs.includes(tabName)) {
                         tab.style.display = 'none';
                     } else {
@@ -2514,10 +2516,21 @@
                     }
 
                     // Altera o texto das abas para corresponder ao usuário
-                    const textSpan = tab.querySelector('span:not(.notification-badge)');
-                    if (textSpan) {
-                       if (tabName === 'items') textSpan.textContent = isManager ? 'Itens' : 'Meus Itens';
-                       if (tabName === 'rentals') textSpan.textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
+                    const isTopNav = tab.closest('#top-nav');
+                    if (isTopNav) {
+                        // Para a navegação superior, buscamos o nó de texto diretamente
+                        const textNode = Array.from(tab.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+                        if(textNode) {
+                            if (tabName === 'items') textNode.textContent = isManager ? 'Itens' : 'Meus Itens';
+                            if (tabName === 'rentals') textNode.textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
+                        }
+                    } else {
+                        // Para a navegação inferior, buscamos o span
+                        const textSpan = tab.querySelector('span:not(.notification-badge)');
+                        if (textSpan) {
+                           if (tabName === 'items') textSpan.textContent = isManager ? 'Itens' : 'Meus Itens';
+                           if (tabName === 'rentals') textSpan.textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
+                        }
                     }
                 });
 
@@ -2526,9 +2539,11 @@
                 const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
                 
                 if (isManager) {
+                    // Gestor nunca vê a aba de gestores
                     gestoresMainTab.style.display = 'none';
                     gestoresBottomTab.style.display = 'none';
                 } else { 
+                    // Admin só vê se houver gestores cadastrados
                     const shouldShow = managers.length > 0;
                     gestoresMainTab.style.display = shouldShow ? 'flex' : 'none';
                     gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
@@ -2549,4 +2564,10 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
 
