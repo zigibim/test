@@ -134,7 +134,7 @@
         
         <!-- Cabeçalho -->
         <header class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl sm:text-3xl font-bold text-cyan-400">Meu Gestor de Aluguéis</h1>
+            <h1 id="app-title" class="text-2xl sm:text-3xl font-bold text-cyan-400">Meu Gestor de Aluguéis</h1>
             <div class="flex items-center space-x-2">
                 <button id="settingsBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold p-2 rounded-lg flex items-center transition-colors" title="Configurações">
                     <i data-lucide="settings" class="h-5 w-5"></i>
@@ -148,7 +148,7 @@
         <!-- Navegação Principal (Desktop) -->
         <div class="mb-6 hidden md:block">
             <div class="border-b border-gray-700">
-                <nav id="top-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
+                <nav id="top-nav" class="-mb-px flex space-x-6 overflow-x-auto no-scrollbar" aria-label="Tabs">
                     <button class="tab-button active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-cyan-500 text-cyan-400" data-tab="dashboard">Painel</button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items">Meus Itens</button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals">Meus Aluguéis</button>
@@ -157,6 +157,7 @@
                         Notificações
                         <span id="top-nav-badge" class="notification-badge absolute top-3 -right-4 ml-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
                     </button>
+                    <button id="gestores-main-tab" class="tab-button hidden whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="gestores">Gestores</button>
                 </nav>
             </div>
         </div>
@@ -169,7 +170,7 @@
                     <div class="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg flex items-center gap-4">
                         <i data-lucide="package" class="h-8 w-8 text-cyan-400"></i>
                         <div>
-                            <h3 class="text-sm font-medium text-gray-400">Total de Itens</h3>
+                            <h3 id="total-items-title" class="text-sm font-medium text-gray-400">Total de Itens</h3>
                             <p id="total-items" class="mt-1 text-xl sm:text-3xl font-semibold">0</p>
                         </div>
                     </div>
@@ -262,7 +263,7 @@
 
             <!-- Aba Meus Aluguéis -->
             <div id="rentals-content" class="tab-content hidden">
-                <h2 class="text-xl sm:text-2xl font-semibold mb-4 flex items-center"><i data-lucide="calendar-clock" class="mr-3 text-cyan-400"></i>Aluguéis Ativos (por pendência)</h2>
+                <h2 id="rentals-title" class="text-xl sm:text-2xl font-semibold mb-4 flex items-center"><i data-lucide="calendar-clock" class="mr-3 text-cyan-400"></i>Aluguéis Ativos (por pendência)</h2>
                 <div id="sorted-rentals-list" class="space-y-4">
                     <!-- Sorted rented items will be inserted here -->
                 </div>
@@ -344,11 +345,19 @@
                      </div>
                 </div>
             </div>
+
+            <!-- Aba Gestores (Admin view) -->
+            <div id="gestores-content" class="tab-content hidden">
+                 <h2 class="text-xl sm:text-2xl font-semibold mb-4">Painel de Gestores</h2>
+                 <div id="admin-managers-dashboard" class="space-y-6">
+                    <!-- Cards de resumo dos gestores serão inseridos aqui -->
+                 </div>
+            </div>
         </main>
     </div>
 
     <!-- Navegação Inferior (Mobile) -->
-    <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 flex justify-around p-2 z-40">
+    <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 flex justify-around p-2 z-40 overflow-x-auto no-scrollbar">
         <button class="tab-button bottom-nav-btn active-tab flex flex-col items-center text-gray-400 p-2" data-tab="dashboard">
             <i data-lucide="layout-dashboard" class="h-6 w-6"></i>
             <span class="text-xs mt-1">Painel</span>
@@ -369,6 +378,10 @@
             <i data-lucide="bell" class="h-6 w-6"></i>
             <span class="text-xs mt-1">Notificações</span>
             <span id="bottom-nav-badge" class="notification-badge absolute top-1 right-3 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
+        </button>
+         <button id="gestores-bottom-tab" class="tab-button bottom-nav-btn hidden flex-col items-center text-gray-400 p-2" data-tab="gestores">
+            <i data-lucide="users" class="h-6 w-6"></i>
+            <span class="text-xs mt-1">Gestores</span>
         </button>
     </nav>
 
@@ -793,11 +806,12 @@
         </div>
     </div>
 
-     <!-- Modal Adicionar Gestor -->
-    <div id="addManagerModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
+     <!-- Modal Adicionar/Editar Gestor -->
+    <div id="managerModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]">
-            <form id="addManagerForm">
-                <h2 class="text-2xl font-bold mb-6">Adicionar Novo Gestor</h2>
+            <form id="managerForm">
+                <h2 id="managerModalTitle" class="text-2xl font-bold mb-6">Adicionar Novo Gestor</h2>
+                <input type="hidden" id="managerId">
                 <div class="space-y-4">
                     <div>
                         <label for="managerType" class="block mb-1 font-medium">Tipo de Gestor</label>
@@ -812,8 +826,8 @@
                         <input type="text" id="managerName" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
                     </div>
                     <div>
-                        <label for="managerPassword" class="block mb-1 font-medium">Senha de Acesso para o Gestor</label>
-                        <input type="password" id="managerPassword" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                        <label for="managerPassword" class="block mb-1 font-medium">Senha de Acesso</label>
+                        <input type="text" id="managerPassword" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
                     </div>
                     <div class="border-t border-gray-700 pt-4">
                         <label class="block mb-2 font-medium">Selecionar Aluguéis para Administrar</label>
@@ -824,7 +838,7 @@
                 </div>
                 <div class="mt-8 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-2 space-y-reverse sm:space-y-0">
                     <button type="button" class="modal-close-btn w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
-                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-md font-semibold">Salvar Gestor</button>
+                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-md font-semibold">Salvar</button>
                 </div>
             </form>
         </div>
@@ -848,6 +862,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         let settings = { password: 'davi' };
         let managers = [];
+        let currentUser = null;
 
         const loadSettings = () => {
             const storedSettings = localStorage.getItem('rentalManagerSettings');
@@ -862,6 +877,9 @@
 
         const saveSettings = () => {
             localStorage.setItem('rentalManagerSettings', JSON.stringify(settings));
+        };
+
+        const saveManagers = () => {
             localStorage.setItem('rentalManagerManagers', JSON.stringify(managers));
         };
         
@@ -875,22 +893,36 @@
 
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (passwordInput.value === settings.password) {
-                loginScreen.classList.add('hidden');
-                appContainer.classList.remove('hidden');
+            const enteredPassword = passwordInput.value;
+
+            if (enteredPassword === settings.password) {
+                currentUser = { type: 'admin' };
                 initializeApp();
             } else {
-                loginError.classList.remove('hidden');
-                passwordInput.value = '';
-                passwordInput.focus();
-                loginForm.classList.add('animate-shake');
-                setTimeout(() => {
-                    loginForm.classList.remove('animate-shake');
-                }, 500);
+                const manager = managers.find(m => m.password === enteredPassword);
+                if (manager) {
+                    currentUser = { type: 'manager', ...manager };
+                    initializeApp();
+                } else {
+                    loginError.classList.remove('hidden');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                    loginForm.classList.add('animate-shake');
+                    setTimeout(() => {
+                        loginForm.classList.remove('animate-shake');
+                    }, 500);
+                }
             }
         });
 
+        passwordInput.addEventListener('input', () => {
+            loginError.classList.add('hidden');
+        });
+
         function initializeApp() {
+            loginScreen.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+
             // Inicialização dos Ícones Lucide
             lucide.createIcons();
 
@@ -915,7 +947,8 @@
             const saveData = () => {
                 localStorage.setItem('rentalManagerItems', JSON.stringify(items));
                 localStorage.setItem('rentalManagerTransactions', JSON.stringify(transactions));
-                saveSettings(); // Gestores são salvos junto com as configurações
+                saveSettings();
+                saveManagers();
             };
 
             const loadData = () => {
@@ -926,36 +959,73 @@
                 loadSettings();
             };
 
+            const getDataForCurrentUser = () => {
+                if (currentUser.type === 'admin') {
+                    return { currentItems: items, currentTransactions: transactions };
+                }
+                
+                if (currentUser.type === 'manager') {
+                    const currentItems = items.filter(item => currentUser.assignedItemIds.includes(item.id));
+                    const currentItemIds = currentItems.map(item => item.id);
+                    const currentTransactions = transactions.filter(t => t.itemId && currentItemIds.includes(t.itemId));
+                    return { currentItems, currentTransactions };
+                }
+                return { currentItems: [], currentTransactions: [] };
+            };
+
             // --- Funções de Renderização ---
             const renderAll = () => {
-                renderSummaryCards();
-                renderItems();
-                renderRentals();
-                applyFiltersAndRender(); 
-                checkAlerts();
-                updateDashboardView();
-                renderManagers();
+                const { currentItems, currentTransactions } = getDataForCurrentUser();
+                customizeUIForUser();
+                
+                renderDashboard(currentItems, currentTransactions);
+                renderItems(currentItems);
+                renderRentals(currentItems);
+                renderTransactions(currentTransactions); // Initial render with all transactions
+                
+                if(currentUser.type === 'admin') {
+                    checkAlerts();
+                    renderManagers();
+                    renderAdminManagersDashboard();
+                }
+                
                 lucide.createIcons();
             };
 
-            const renderSummaryCards = () => {
-                const rentedCount = items.filter(item => item.rentedTo).length;
-                document.getElementById('total-items').textContent = items.length;
+            const renderDashboard = (dashboardItems, dashboardTransactions) => {
+                renderSummaryCards(dashboardItems);
+
+                const view = document.getElementById('chart-view').value;
+                const year = parseInt(document.getElementById('filterYear').value, 10);
+                const month = parseInt(document.getElementById('filterMonth').value, 10);
+                
+                if (view === 'monthly') {
+                    renderBalanceCard(year, month, dashboardTransactions);
+                    renderChart(year, 'monthly', dashboardTransactions);
+                } else {
+                    renderChart(null, 'yearly', dashboardTransactions);
+                }
+            };
+
+
+            const renderSummaryCards = (summaryItems) => {
+                const rentedCount = summaryItems.filter(item => item.rentedTo).length;
+                document.getElementById('total-items').textContent = summaryItems.length;
                 document.getElementById('rented-items').textContent = rentedCount;
-                document.getElementById('available-items').textContent = items.length - rentedCount;
+                document.getElementById('available-items').textContent = summaryItems.length - rentedCount;
             };
             
-            const renderItems = () => {
+            const renderItems = (itemsToRender) => {
                 const availableList = document.getElementById('available-list');
                 const rentedList = document.getElementById('rented-list');
                 availableList.innerHTML = '';
                 rentedList.innerHTML = '';
 
-                if (items.length === 0) {
+                if (itemsToRender.length === 0) {
                     availableList.innerHTML = `<p class="text-gray-400">Nenhum item cadastrado.</p>`;
                 }
 
-                items.forEach(item => {
+                itemsToRender.forEach(item => {
                     const actionButtons = `
                         <div class="mt-4 flex justify-end items-center space-x-2">
                             <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
@@ -1044,172 +1114,146 @@
                 if (availableList.innerHTML === '') availableList.innerHTML = `<p class="text-gray-400">Nenhum item disponível no momento.</p>`;
             };
 
-            const renderRentals = () => {
-            const sortedRentalsList = document.getElementById('sorted-rentals-list');
-            sortedRentalsList.innerHTML = '';
+            const renderRentals = (rentedItemsToRender) => {
+                const sortedRentalsList = document.getElementById('sorted-rentals-list');
+                sortedRentalsList.innerHTML = '';
 
-            const rentedItems = items.filter(item => item.rentedTo);
+                const rentedItems = rentedItemsToRender.filter(item => item.rentedTo);
             
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-            const getSortPriority = (item) => {
-                const endDate = new Date(item.rentEndDate + 'T00:00:00');
-                const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
-                const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
-                const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
+                const getSortPriority = (item) => {
+                    const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+                    const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+                    const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
 
-                // P1: Contract overdue
-                if (today > endDate && !item.renewalPending) {
-                    return { priority: 1, date: endDate };
-                }
-                
-                // P2: Payment overdue this month
-                const startDate = new Date(item.rentStartDate + 'T00:00:00');
-                let firstPaymentDueDate = new Date(startDate);
-                if (item.paymentFrequency === 'monthly') {
-                    firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
-                    firstPaymentDueDate.setDate(item.paymentDay);
-                }
-                if (isPaymentOverdue && today >= firstPaymentDueDate) {
-                    return { priority: 2, date: paymentDueDateThisMonth };
-                }
-                
-                // P3: Awaiting renewal
-                if (item.renewalPending) {
-                    return { priority: 3, date: endDate };
-                }
-                
-                // P4: Upcoming payment (not paid this month)
-                if (!isPaidThisMonth) {
-                   return { priority: 4, date: paymentDueDateThisMonth };
-                }
-                
-                // P5: Paid this month
-                if (isPaidThisMonth) {
-                    return { priority: 5, date: endDate };
-                }
-
-                // Fallback
-                return { priority: 6, date: endDate };
-            };
-
-            rentedItems.sort((a, b) => {
-                const aSort = getSortPriority(a);
-                const bSort = getSortPriority(b);
-                if (aSort.priority !== bSort.priority) {
-                    return aSort.priority - bSort.priority;
-                }
-                return aSort.date - bSort.date;
-            });
-
-
-            if (rentedItems.length === 0) {
-                sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
-                return;
-            }
-
-            rentedItems.forEach(item => {
-                const actionButtons = `
-                    <div class="mt-4 flex justify-end items-center space-x-2">
-                        <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita">
-                            <i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita
-                        </button>
-                        <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
-                            <i data-lucide="file-signature" class="h-5 w-5"></i>
-                        </button>
-                        <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel">
-                            <i data-lucide="clipboard-edit" class="h-5 w-5"></i>
-                        </button>
-                        <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel">
-                            <i data-lucide="trash-2" class="h-5 w-5"></i>
-                        </button>
-                    </div>
-                `;
-
-                const endDate = new Date(item.rentEndDate + 'T00:00:00');
-                const isContractOverdue = today > endDate;
-                
-                let paymentStatusHTML = '';
-                const overdueMonths = [];
-
-                if (item.paymentFrequency === 'monthly') {
+                    if (today > endDate && !item.renewalPending) return { priority: 1, date: endDate };
+                    
                     const startDate = new Date(item.rentStartDate + 'T00:00:00');
-                    let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-
-                    while (checkDate <= today && checkDate <= endDate) {
-                        const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
-                        
-                        if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
-                            const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
-                            if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
-                                const monthName = checkDate.toLocaleString('pt-BR', { month: 'long' });
-                                overdueMonths.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
-                            }
-                        }
-                        checkDate.setMonth(checkDate.getMonth() + 1);
+                    let firstPaymentDueDate = new Date(startDate);
+                    if (item.paymentFrequency === 'monthly') {
+                        firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
+                        firstPaymentDueDate.setDate(item.paymentDay);
                     }
-                }
+                    if (isPaymentOverdue && today >= firstPaymentDueDate) return { priority: 2, date: paymentDueDateThisMonth };
+                    if (item.renewalPending) return { priority: 3, date: endDate };
+                    if (!isPaidThisMonth) return { priority: 4, date: paymentDueDateThisMonth };
+                    if (isPaidThisMonth) return { priority: 5, date: endDate };
 
-                const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+                    return { priority: 6, date: endDate };
+                };
 
-                let borderColor = 'border-gray-600'; // Default for upcoming
-                if (isContractOverdue && !item.renewalPending) {
-                    borderColor = 'border-red-500';
-                } else if (item.renewalPending) {
-                    borderColor = 'border-pink-500';
-                } else if (overdueMonths.length > 0) {
-                    borderColor = 'border-yellow-500';
-                } else if (isPaidThisMonth) {
-                    borderColor = 'border-green-500';
-                }
-
-                if (overdueMonths.length > 0) {
-                    const debtCount = overdueMonths.length;
-                    paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido (${overdueMonths.join(', ')}) (${debtCount} débito${debtCount > 1 ? 's' : ''})</span></p>`;
-                } else if (isPaidThisMonth) {
-                    const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
-                    paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
-                }
-                
-                let managementInfoHTML = '';
-                if (item.category === 'Imóvel' && item.managedBy) {
-                    if (item.managedBy === 'particular') {
-                        managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> Particular</p>`;
-                    } else if ((item.managedBy === 'imobiliaria' || item.managedBy === 'outros') && item.managerName) {
-                        managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> ${item.managerName} (${item.managedBy.charAt(0).toUpperCase() + item.managedBy.slice(1)})</p>`;
+                rentedItems.sort((a, b) => {
+                    const aSort = getSortPriority(a);
+                    const bSort = getSortPriority(b);
+                    if (aSort.priority !== bSort.priority) {
+                        return aSort.priority - bSort.priority;
                     }
+                    return aSort.date - bSort.date;
+                });
+
+                if (rentedItems.length === 0) {
+                    sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
+                    return;
                 }
 
-
-                const card = `
-                    <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
-                        <div class="flex-grow">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-lg">${item.name}</h3>
-                                    <p class="text-sm text-gray-400">${item.category}</p>
-                                </div>
-                                <span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span>
-                            </div>
-                            <div class="mt-3 text-sm space-y-1">
-                                <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
-                                ${managementInfoHTML}
-                                <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
-                                <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
-                                ${paymentStatusHTML}
-                            </div>
+                rentedItems.forEach(item => {
+                    const actionButtons = `
+                        <div class="mt-4 flex justify-end items-center space-x-2">
+                            <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita">
+                                <i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita
+                            </button>
+                            <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
+                                <i data-lucide="file-signature" class="h-5 w-5"></i>
+                            </button>
+                            <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel">
+                                <i data-lucide="clipboard-edit" class="h-5 w-5"></i>
+                            </button>
+                            <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel">
+                                <i data-lucide="trash-2" class="h-5 w-5"></i>
+                            </button>
                         </div>
-                        ${actionButtons}
-                    </div>
-                `;
-                sortedRentalsList.innerHTML += card;
-            });
-        };
-        
-        const renderTransactions = (transactionsToRender) => {
+                    `;
+
+                    const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                    const isContractOverdue = today > endDate;
+                    
+                    let paymentStatusHTML = '';
+                    const overdueMonths = [];
+
+                    if (item.paymentFrequency === 'monthly') {
+                        const startDate = new Date(item.rentStartDate + 'T00:00:00');
+                        let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+                        while (checkDate <= today && checkDate <= endDate) {
+                            const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
+                            
+                            if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
+                                const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                                if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
+                                    const monthName = checkDate.toLocaleString('pt-BR', { month: 'long' });
+                                    overdueMonths.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
+                                }
+                            }
+                            checkDate.setMonth(checkDate.getMonth() + 1);
+                        }
+                    }
+
+                    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                    const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+
+                    let borderColor = 'border-gray-600';
+                    if (isContractOverdue && !item.renewalPending) borderColor = 'border-red-500';
+                    else if (item.renewalPending) borderColor = 'border-pink-500';
+                    else if (overdueMonths.length > 0) borderColor = 'border-yellow-500';
+                    else if (isPaidThisMonth) borderColor = 'border-green-500';
+
+                    if (overdueMonths.length > 0) {
+                        const debtCount = overdueMonths.length;
+                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido (${overdueMonths.join(', ')}) (${debtCount} débito${debtCount > 1 ? 's' : ''})</span></p>`;
+                    } else if (isPaidThisMonth) {
+                        const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
+                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
+                    }
+                    
+                    let managementInfoHTML = '';
+                    if (item.category === 'Imóvel' && item.managedBy) {
+                        if (item.managedBy === 'particular') {
+                            managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> Particular</p>`;
+                        } else if ((item.managedBy === 'imobiliaria' || item.managedBy === 'outros') && item.managerName) {
+                            managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> ${item.managerName} (${item.managedBy.charAt(0).toUpperCase() + item.managedBy.slice(1)})</p>`;
+                        }
+                    }
+
+                    const card = `
+                        <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-lg">${item.name}</h3>
+                                        <p class="text-sm text-gray-400">${item.category}</p>
+                                    </div>
+                                    <span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span>
+                                </div>
+                                <div class="mt-3 text-sm space-y-1">
+                                    <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
+                                    ${managementInfoHTML}
+                                    <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
+                                    <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                                    ${paymentStatusHTML}
+                                </div>
+                            </div>
+                            ${actionButtons}
+                        </div>
+                    `;
+                    sortedRentalsList.innerHTML += card;
+                });
+            };
+            
+            const renderTransactions = (transactionsToRender) => {
                 const list = document.getElementById('transactions-list');
                 list.innerHTML = '';
                 
@@ -1232,14 +1276,12 @@
                     }
                     
                     let displayDescription = t.description;
-                    // Simplifica a descrição para recebimentos de aluguel
                     if (t.type === 'revenue' && t.itemId && (t.description.startsWith('Recebimento aluguel:') || t.description === 'Recebimento de Aluguel')) {
                         const item = items.find(i => i.id === t.itemId);
                         if (item && item.rentedTo) {
                             displayDescription = `${item.name} - ${item.rentedTo}`;
                         }
                     }
-
 
                     const row = `
                         <tr class="border-b border-gray-700">
@@ -1334,40 +1376,134 @@
                     container.innerHTML = `<p class="text-gray-400">Nenhum alerta no momento.</p>`;
                 }
             };
+
+            const renderManagers = () => {
+                const list = document.getElementById('managers-list');
+                list.innerHTML = '';
+                if (managers.length === 0) {
+                    list.innerHTML = '<p class="text-gray-400">Nenhum gestor cadastrado.</p>';
+                    return;
+                }
+
+                managers.forEach(manager => {
+                    const assignedItems = items.filter(item => manager.assignedItemIds.includes(item.id));
+                    const card = `
+                        <div class="bg-gray-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div>
+                                <p class="font-bold text-lg">${manager.name}</p>
+                                <p class="text-sm text-gray-300">${manager.type} - <span class="text-cyan-400">${assignedItems.length} alugu(éis)</span></p>
+                            </div>
+                            <div class="flex items-center space-x-2 self-end sm:self-center">
+                                <button data-id="${manager.id}" class="edit-manager-btn bg-gray-600 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-lg flex items-center text-sm">
+                                    <i data-lucide="edit" class="h-4 w-4 mr-2"></i> Editar
+                                </button>
+                                <button data-id="${manager.id}" class="delete-manager-btn bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg flex items-center text-sm">
+                                    <i data-lucide="trash-2" class="h-4 w-4 mr-2"></i> Excluir
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += card;
+                });
+                 lucide.createIcons();
+            };
+
+            const renderAdminManagersDashboard = () => {
+                const dashboard = document.getElementById('admin-managers-dashboard');
+                dashboard.innerHTML = '';
+                if (managers.length === 0) {
+                    dashboard.innerHTML = '<p class="text-gray-400">Nenhum gestor cadastrado. Adicione gestores na aba de Configurações.</p>';
+                    return;
+                }
+
+                managers.forEach(manager => {
+                    const assignedItems = items.filter(item => manager.assignedItemIds.includes(item.id));
+                    const rentedCount = assignedItems.filter(item => item.rentedTo).length;
+                    
+                    const now = new Date();
+                    const currentMonth = now.getMonth();
+                    const currentYear = now.getFullYear();
+
+                    const managerTransactions = transactions.filter(t => 
+                        t.itemId && manager.assignedItemIds.includes(t.itemId) &&
+                        new Date(t.date).getMonth() === currentMonth &&
+                        new Date(t.date).getFullYear() === currentYear
+                    );
+
+                    const revenue = managerTransactions.filter(t => t.type === 'revenue').reduce((sum, t) => sum + t.amount, 0);
+                    const fees = managerTransactions.filter(t => t.type === 'management_fee').reduce((sum, t) => sum + t.amount, 0);
+
+                    const card = `
+                        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                            <h3 class="text-xl font-bold text-cyan-400 mb-4">${manager.name} <span class="text-base font-normal text-gray-400">- ${manager.type}</span></h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="bg-gray-700/50 p-4 rounded-lg">
+                                    <h4 class="text-sm font-medium text-gray-400">Aluguéis Gerenciados</h4>
+                                    <p class="mt-1 text-2xl font-semibold">${assignedItems.length}</p>
+                                </div>
+                                <div class="bg-gray-700/50 p-4 rounded-lg">
+                                    <h4 class="text-sm font-medium text-gray-400">Atualmente Alugados</h4>
+                                    <p class="mt-1 text-2xl font-semibold">${rentedCount}</p>
+                                </div>
+                                <div class="bg-gray-700/50 p-4 rounded-lg">
+                                    <h4 class="text-sm font-medium text-gray-400">Receita do Mês</h4>
+                                    <p class="mt-1 text-2xl font-semibold text-green-400">${formatCurrency(revenue)}</p>
+                                </div>
+                                <div class="bg-gray-700/50 p-4 rounded-lg">
+                                    <h4 class="text-sm font-medium text-gray-400">Ganho com Taxas (Mês)</h4>
+                                    <p class="mt-1 text-2xl font-semibold text-yellow-400">${formatCurrency(fees)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    dashboard.innerHTML += card;
+                });
+            };
             
-            const renderBalanceCard = (year, month) => {
+            const renderBalanceCard = (year, month, transactionsForBalance) => {
                 const monthName = new Date(year, month).toLocaleString('pt-BR', { month: 'long' });
 
                 let balance = 0;
                 let totalExpenses = 0;
                 let totalFees = 0;
+                let totalRevenue = 0;
 
-                transactions.forEach(t => {
+                transactionsForBalance.forEach(t => {
                     const tDate = new Date(t.date);
                     if (tDate.getMonth() === month && tDate.getFullYear() === year) {
                         if(t.type === 'revenue') {
-                            balance += t.amount;
+                            totalRevenue += t.amount;
                         } else if (t.type === 'expense') {
-                            balance -= t.amount;
                             totalExpenses += t.amount;
                         } else if (t.type === 'management_fee') {
-                            balance -= t.amount;
                             totalFees += t.amount;
                         }
                     }
                 });
 
-                document.getElementById('month-balance-title').textContent = `Saldo de ${monthName}/${year}`;
+                balance = totalRevenue - totalExpenses - totalFees;
+                
+                const balanceTitle = document.getElementById('month-balance-title');
+                const expenseTitle = document.getElementById('month-expense-title');
+                const feeTitle = document.getElementById('month-fee-title');
+                
+                if (currentUser.type === 'manager') {
+                    balanceTitle.textContent = `Saldo Proprietário (${monthName})`;
+                    expenseTitle.textContent = `Despesas da Gerência (${monthName})`;
+                    feeTitle.textContent = `Ganho c/ Taxas (${monthName})`;
+                    document.getElementById('month-fee').textContent = formatCurrency(totalFees);
+                } else {
+                    balanceTitle.textContent = `Saldo de ${monthName}/${year}`;
+                    expenseTitle.textContent = `Despesas de ${monthName}/${year}`;
+                    feeTitle.textContent = `Taxa de Gerência de ${monthName}/${year}`;
+                    document.getElementById('month-fee').textContent = formatCurrency(totalFees);
+                }
+
                 document.getElementById('month-balance').textContent = formatCurrency(balance);
-
-                document.getElementById('month-expense-title').textContent = `Despesas de ${monthName}/${year}`;
                 document.getElementById('month-expense').textContent = formatCurrency(totalExpenses);
-
-                document.getElementById('month-fee-title').textContent = `Taxa de Gerência de ${monthName}/${year}`;
-                document.getElementById('month-fee').textContent = formatCurrency(totalFees);
             }
 
-            const renderChart = (year, view) => {
+            const renderChart = (year, view, transactionsForChart) => {
                 const ctx = document.getElementById('financialChart').getContext('2d');
                 let labels = [];
                 let revenueData = [], expenseData = [], managementFeeData = [];
@@ -1378,7 +1514,7 @@
                     expenseData = Array(12).fill(0);
                     managementFeeData = Array(12).fill(0);
                     
-                    transactions.forEach(t => {
+                    transactionsForChart.forEach(t => {
                         const tDate = new Date(t.date);
                         if (tDate.getFullYear() === year) {
                             const monthIndex = tDate.getMonth();
@@ -1388,14 +1524,14 @@
                         }
                     });
                 } else { // yearly
-                    const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean).sort();
+                    const years = [...new Set(transactionsForChart.map(t => new Date(t.date).getFullYear()))].filter(Boolean).sort();
                     if (years.length === 0) years.push(new Date().getFullYear());
                     labels = years.map(String);
                     revenueData = Array(years.length).fill(0);
                     expenseData = Array(years.length).fill(0);
                     managementFeeData = Array(years.length).fill(0);
 
-                    transactions.forEach(t => {
+                    transactionsForChart.forEach(t => {
                         const tYear = new Date(t.date).getFullYear();
                         const index = years.indexOf(tYear);
                         if (index !== -1) {
@@ -1412,10 +1548,11 @@
             };
             
             const applyFiltersAndRender = () => {
+                const { currentTransactions } = getDataForCurrentUser();
                 const description = document.getElementById('filterDescription').value.toLowerCase();
                 const type = document.getElementById('filterType').value;
                 const startDate = document.getElementById('filterStartDate').value;
-                let filtered = transactions.filter(t => {
+                let filtered = currentTransactions.filter(t => {
                     const tDate = new Date(t.date + 'T00:00:00');
                     const start = startDate ? new Date(startDate + 'T00:00:00') : null;
                     return t.description.toLowerCase().includes(description) && (type === 'all' || t.type === type) && (!start || tDate >= start);
@@ -1424,7 +1561,7 @@
             };
 
             // --- Funções de Utilitários ---
-            const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+            const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
             const formatDate = (dateString) => { if(!dateString) return ''; const date = new Date(dateString); return new Date(date.getTime() + (date.getTimezoneOffset() * 60000)).toLocaleDateString('pt-BR'); };
             const dateToYMD = (date) => date.toISOString().split('T')[0];
             const getTodayDateString = () => dateToYMD(new Date());
@@ -1432,10 +1569,11 @@
             const hideModal = (modalId) => document.getElementById(modalId).classList.remove('active');
 
             const populateTransactionItemSelect = (selectElementId, selectedId) => {
+                const { currentItems } = getDataForCurrentUser();
                 const select = document.getElementById(selectElementId);
                 select.innerHTML = '<option value="">Nenhum / Outra</option>';
-                const rentedItems = items.filter(item => item.rentedTo);
-                const availableItems = items.filter(item => !item.rentedTo);
+                const rentedItems = currentItems.filter(item => item.rentedTo);
+                const availableItems = currentItems.filter(item => !item.rentedTo);
                 if (rentedItems.length > 0) {
                     const rentedGroup = document.createElement('optgroup');
                     rentedGroup.label = 'Alugados';
@@ -1459,7 +1597,7 @@
             };
 
             const switchTab = (tabId) => {
-                tabButtons.forEach(btn => {
+                document.querySelectorAll('.tab-button').forEach(btn => {
                     const isCorrectTab = btn.dataset.tab === tabId;
                     btn.classList.toggle('active-tab', isCorrectTab);
                     
@@ -1492,30 +1630,24 @@
             };
             
             const updateDashboardView = () => {
-                const view = document.getElementById('chart-view').value;
-                const year = parseInt(document.getElementById('filterYear').value);
-                const month = parseInt(document.getElementById('filterMonth').value);
-                document.getElementById('monthly-filters').classList.toggle('hidden', view === 'yearly');
-                
-                if (view === 'monthly') {
-                    renderBalanceCard(year, month);
-                    renderChart(year, 'monthly');
-                } else {
-                    renderChart(null, 'yearly');
-                }
+                const { currentItems, currentTransactions } = getDataForCurrentUser();
+                renderDashboard(currentItems, currentTransactions);
             }
             
             const initDashboardFilters = () => {
                 const monthSelect = document.getElementById('filterMonth'), yearSelect = document.getElementById('filterYear'), now = new Date();
                 if (monthSelect.options.length > 0) return; // Evita repopular
                 for(let i=0; i<12; i++) { const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}); monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`; }
-                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean);
+                
+                const { currentTransactions } = getDataForCurrentUser();
+                const years = [...new Set(currentTransactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean);
                 if (!years.includes(now.getFullYear())) {
                     years.push(now.getFullYear());
                 }
                 years.sort((a,b) => b-a);
                 years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
                 monthSelect.value = now.getMonth(); yearSelect.value = now.getFullYear();
+                
                 monthSelect.addEventListener('change', updateDashboardView);
                 yearSelect.addEventListener('change', updateDashboardView);
                 document.getElementById('chart-view').addEventListener('change', updateDashboardView);
@@ -1700,41 +1832,9 @@
                 lucide.createIcons();
             };
             
-            // --- Renderização de Gestores ---
-            const renderManagers = () => {
-                const list = document.getElementById('managers-list');
-                list.innerHTML = '';
-                if (managers.length === 0) {
-                    list.innerHTML = '<p class="text-gray-400">Nenhum gestor cadastrado.</p>';
-                    return;
-                }
-
-                managers.forEach(manager => {
-                    const assignedItems = manager.assignedItemIds
-                        .map(itemId => items.find(i => i.id === itemId))
-                        .filter(Boolean) // Filtra itens que possam ter sido deletados
-                        .map(item => `<li class="text-sm text-gray-300">${item.name}</li>`)
-                        .join('');
-
-                    const card = `
-                        <div class="bg-gray-700 p-4 rounded-lg flex justify-between items-start">
-                           <div>
-                                <h4 class="font-bold text-lg">${manager.name} <span class="text-xs font-medium bg-cyan-800 text-cyan-200 px-2 py-1 rounded-full ml-2">${manager.type}</span></h4>
-                                <p class="text-sm text-gray-400 mt-2">Aluguéis administrados:</p>
-                                <ul class="list-disc list-inside mt-1">
-                                    ${assignedItems || '<li class="text-sm text-gray-400">Nenhum</li>'}
-                                </ul>
-                           </div>
-                           <button data-id="${manager.id}" class="delete-manager-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Excluir Gestor">
-                               <i data-lucide="trash-2" class="h-5 w-5"></i>
-                           </button>
-                        </div>
-                    `;
-                    list.innerHTML += card;
-                });
-                lucide.createIcons();
-            };
-
+            // --- Handlers para Gestores ---
+            // A função `customizeUIForUser` foi movida para o final do script para evitar o erro de declaração duplicada.
+            
             // --- Manipuladores de Eventos ---
             document.body.addEventListener('click', (e) => { 
                 const copyButton = e.target.closest('.copy-btn');
@@ -1778,8 +1878,39 @@
                         showConfirmModal('Excluir Gestor', `Você tem certeza que deseja excluir o gestor "${manager.name}"?`, () => {
                             managers = managers.filter(m => m.id !== managerId);
                             saveData();
-                            renderManagers();
+                            renderAll();
                         });
+                    }
+                }
+
+                const editManagerBtn = e.target.closest('.edit-manager-btn');
+                if(editManagerBtn) {
+                    const managerId = parseInt(editManagerBtn.dataset.id);
+                    const manager = managers.find(m => m.id === managerId);
+                    if(manager) {
+                        document.getElementById('managerModalTitle').textContent = 'Editar Gestor';
+                        document.getElementById('managerId').value = manager.id;
+                        document.getElementById('managerType').value = manager.type;
+                        document.getElementById('managerName').value = manager.name;
+                        document.getElementById('managerPassword').value = manager.password;
+                        
+                        const rentalsListDiv = document.getElementById('managerRentalsList');
+                        rentalsListDiv.innerHTML = '';
+                        const rentedItems = items.filter(item => item.rentedTo);
+                        
+                        rentedItems.forEach(item => {
+                            const checkboxId = `manager-item-edit-${item.id}`;
+                            const isChecked = manager.assignedItemIds.includes(item.id);
+                            const label = document.createElement('label');
+                            label.htmlFor = checkboxId;
+                            label.className = 'flex items-center space-x-3 p-2 rounded-md hover:bg-gray-600/50 cursor-pointer';
+                            label.innerHTML = `
+                                <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isChecked ? 'checked' : ''}>
+                                <span>${item.name} <span class="text-xs text-gray-400">(${item.rentedTo})</span></span>
+                            `;
+                            rentalsListDiv.appendChild(label);
+                        });
+                        showModal('managerModal');
                     }
                 }
             });
@@ -1813,6 +1944,11 @@
                 if (!categorySelect.value) { alert('Por favor, selecione uma categoria.'); return; }
                 let category = categorySelect.value;
                 if (category === 'outro') category = document.getElementById('itemCategoryOther').value || 'Outro';
+
+                if(currentUser.type === 'manager' && currentUser.type === 'Imobiliária' && category !== 'Imóvel'){
+                    alert('Gestores do tipo Imobiliária só podem cadastrar itens da categoria "Imóvel".');
+                    return;
+                }
                 
                 let managedBy = null, managerName = null, hasManagementFee = false, managementFeePercentage = 0;
                 if (category === 'Imóvel') {
@@ -1835,6 +1971,13 @@
                     managedBy, managerName, hasManagementFee, managementFeePercentage
                 };
                 items.push(newItem);
+
+                if(currentUser.type === 'manager'){
+                    currentUser.assignedItemIds.push(newItem.id);
+                    const managerInDb = managers.find(m => m.id === currentUser.id);
+                    if(managerInDb) managerInDb.assignedItemIds.push(newItem.id);
+                }
+
                 saveData();
                 renderAll();
                 hideModal('addItemModal');
@@ -1967,6 +2110,10 @@
                     } else {
                         showConfirmModal('Apagar Item', `Você tem certeza que deseja apagar o item "${item.name}"? Esta ação não pode ser desfeita.`, () => {
                             items = items.filter(i => i.id !== itemId);
+                            // Also remove from any manager
+                            managers.forEach(m => {
+                                m.assignedItemIds = m.assignedItemIds.filter(id => id !== itemId);
+                            });
                             saveData();
                             renderAll();
                         });
@@ -2231,7 +2378,7 @@
             const settingsTabContents = document.querySelectorAll('.settings-tab-content');
             const changePasswordForm = document.getElementById('changePasswordForm');
             const passwordChangeFeedback = document.getElementById('passwordChangeFeedback');
-            const addManagerForm = document.getElementById('addManagerForm');
+            const managerForm = document.getElementById('managerForm');
 
             settingsBtn.addEventListener('click', () => {
                 showModal('settingsModal');
@@ -2240,6 +2387,10 @@
             });
 
             document.getElementById('openAddManagerModal').addEventListener('click', () => {
+                document.getElementById('managerModalTitle').textContent = 'Adicionar Novo Gestor';
+                managerForm.reset();
+                document.getElementById('managerId').value = '';
+
                 const rentalsListDiv = document.getElementById('managerRentalsList');
                 rentalsListDiv.innerHTML = '';
                 const rentedItems = items.filter(item => item.rentedTo);
@@ -2248,7 +2399,7 @@
                     rentalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum aluguel ativo para associar.</p>';
                 } else {
                     rentedItems.forEach(item => {
-                        const checkboxId = `manager-item-${item.id}`;
+                        const checkboxId = `manager-item-add-${item.id}`;
                         const label = document.createElement('label');
                         label.htmlFor = checkboxId;
                         label.className = 'flex items-center space-x-3 p-2 rounded-md hover:bg-gray-600/50 cursor-pointer';
@@ -2259,27 +2410,37 @@
                         rentalsListDiv.appendChild(label);
                     });
                 }
-                addManagerForm.reset();
-                showModal('addManagerModal');
+                showModal('managerModal');
             });
 
-            addManagerForm.addEventListener('submit', (e) => {
+            managerForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const assignedItemsCheckboxes = document.querySelectorAll('#managerRentalsList input[type="checkbox"]:checked');
                 const assignedItemIds = Array.from(assignedItemsCheckboxes).map(cb => parseInt(cb.value));
+                const managerId = parseInt(document.getElementById('managerId').value);
 
-                const newManager = {
-                    id: Date.now(),
-                    type: document.getElementById('managerType').value,
-                    name: document.getElementById('managerName').value,
-                    password: document.getElementById('managerPassword').value,
-                    assignedItemIds: assignedItemIds
-                };
-
-                managers.push(newManager);
+                if (managerId) { // Edit
+                    const manager = managers.find(m => m.id === managerId);
+                    if (manager) {
+                        manager.type = document.getElementById('managerType').value;
+                        manager.name = document.getElementById('managerName').value;
+                        manager.password = document.getElementById('managerPassword').value;
+                        manager.assignedItemIds = assignedItemIds;
+                    }
+                } else { // Add
+                    const newManager = {
+                        id: Date.now(),
+                        type: document.getElementById('managerType').value,
+                        name: document.getElementById('managerName').value,
+                        password: document.getElementById('managerPassword').value,
+                        assignedItemIds: assignedItemIds
+                    };
+                    managers.push(newManager);
+                }
+                
                 saveData();
-                renderManagers();
-                hideModal('addManagerModal');
+                renderAll();
+                hideModal('managerModal');
             });
 
 
@@ -2329,6 +2490,63 @@
                 passwordChangeFeedback.classList.add('text-green-400');
                 changePasswordForm.reset();
             });
+
+            const customizeUIForUser = () => {
+                const isManager = currentUser.type === 'manager';
+                
+                document.getElementById('app-title').textContent = isManager ? `Gestor: ${currentUser.name}` : 'Meu Gestor de Aluguéis';
+                document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
+                
+                const adminOnlyTabs = ['notifications', 'gestores'];
+
+                document.querySelectorAll('#top-nav .tab-button, #bottom-nav .tab-button').forEach(tab => {
+                    const tabName = tab.dataset.tab;
+                    const isTopNav = tab.closest('#top-nav');
+                    const textSpan = tab.querySelector('span:not(.notification-badge)');
+
+                    if (isManager) {
+                        if (adminOnlyTabs.includes(tabName)) {
+                            tab.style.display = 'none';
+                        } else {
+                            tab.style.display = 'flex';
+                             if (isTopNav) {
+                                const textNode = Array.from(tab.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+                                if (textNode) {
+                                    if (tabName === 'items') textNode.textContent = 'Itens';
+                                    if (tabName === 'rentals') textNode.textContent = 'Aluguéis';
+                                }
+                            } else if (textSpan) {
+                                if (tabName === 'items') textSpan.textContent = 'Itens';
+                                if (tabName === 'rentals') textSpan.textContent = 'Aluguéis';
+                            }
+                        }
+                    } else { // Admin
+                        tab.style.display = 'flex'; // Reset display
+                        if (isTopNav) {
+                             const textNode = Array.from(tab.childNodes).find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+                             if (textNode) {
+                                if (tabName === 'items') textNode.textContent = 'Meus Itens';
+                                if (tabName === 'rentals') textNode.textContent = 'Meus Aluguéis';
+                             }
+                        } else if (textSpan) {
+                            if (tabName === 'items') textSpan.textContent = 'Itens';
+                            if (tabName === 'rentals') textSpan.textContent = 'Aluguéis';
+                        }
+                    }
+                });
+                
+                if (!isManager) {
+                     const gestoresTab = document.getElementById('gestores-main-tab');
+                    const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
+                    const shouldShow = managers.length > 0;
+                    gestoresTab.classList.toggle('hidden', !shouldShow);
+                    gestoresBottomTab.classList.toggle('hidden', !shouldShow);
+                    gestoresBottomTab.classList.toggle('flex', shouldShow);
+                }
+
+
+                document.getElementById('total-items-title').textContent = isManager ? 'Itens Gerenciados' : 'Total de Itens';
+            };
 
 
             // Carga Inicial
