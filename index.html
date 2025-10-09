@@ -1438,20 +1438,12 @@
                     const feeTransaction = transactions.find(t => 
                         t.type === 'management_fee' && 
                         t.date === rev.date && 
-                        t.itemId === rev.itemId &&
-                        t.description.includes(`[${item.name}]`)
+                        t.itemId === rev.itemId
                     );
 
-                    let netValue = rev.amount;
-                    let valueString = formatCurrency(rev.amount);
-                    if (feeTransaction) {
-                        netValue -= feeTransaction.amount;
-                        valueString = `${formatCurrency(rev.amount)} - ${formatCurrency(feeTransaction.amount)} = <strong class="text-green-400">${formatCurrency(netValue)}</strong>`;
-                    } else {
-                        valueString = `<strong class="text-green-400">${formatCurrency(netValue)}</strong>`
-                    }
-
-                    const netValueForCopy = netValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    const grossValue = rev.amount;
+                    const feeValue = feeTransaction ? feeTransaction.amount : 0;
+                    const netValue = grossValue - feeValue;
 
                     return {
                         managedBy: item.managedBy || 'particular',
@@ -1459,13 +1451,17 @@
                         tenantName: item.rentedTo,
                         tenantCPF: item.tenantCPF || 'Não informado',
                         address: item.endereco || 'Não informado',
-                        valueString: valueString,
-                        netValueForCopy: netValueForCopy
+                        grossValue: grossValue,
+                        feeValue: feeValue,
+                        netValue: netValue,
+                        grossValueForCopy: grossValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                        feeValueForCopy: feeValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                        netValueForCopy: netValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
                     };
                 });
 
                 const groupedData = reportData.reduce((acc, data) => {
-                    const key = data.managedBy === 'particular' ? 'Particular' : `${data.managedBy}: ${data.managerName}`;
+                    const key = data.managedBy === 'particular' ? 'Particular' : `${data.managerName} (${data.managedBy === 'imobiliaria' ? 'Imobiliária' : 'Outros'})`;
                     if (!acc[key]) {
                         acc[key] = [];
                     }
@@ -1473,29 +1469,63 @@
                     return acc;
                 }, {});
 
-                const order = { 'particular': 1, 'outros': 2, 'imobiliaria': 3 };
+                const order = { 'Particular': 1, 'Outros': 2, 'Imobiliária': 3 };
                 const sortedKeys = Object.keys(groupedData).sort((a, b) => {
-                    const typeA = a.split(':')[0].toLowerCase();
-                    const typeB = b.split(':')[0].toLowerCase();
-                    
-                    if (order[typeA] !== order[typeB]) {
-                        return order[typeA] - order[typeB];
-                    }
-                    return a.localeCompare(b);
+                    const typeA = a.split(' (')[0];
+                    const typeB = b.split(' (')[0];
+                    return order[typeA] - order[typeB] || a.localeCompare(b);
                 });
 
 
                 let reportHTML = '';
                 let copyIdCounter = 0;
                 sortedKeys.forEach(key => {
-                    const groupName = key.replace('particular', 'Particular').replace('imobiliaria', 'Imobiliária').replace('outros', 'Outros');
-                    reportHTML += `<h3 class="text-xl font-semibold text-cyan-400 mt-6 mb-3 border-b border-gray-700 pb-2">${groupName}</h3>`;
+                    reportHTML += `<h3 class="text-xl font-semibold text-cyan-400 mt-6 mb-3 border-b border-gray-700 pb-2">${key}</h3>`;
                     
                     groupedData[key].forEach(entry => {
                         const cpfId = `copy-cpf-${copyIdCounter}`;
                         const addressId = `copy-address-${copyIdCounter}`;
-                        const valueId = `copy-value-${copyIdCounter}`;
+                        const grossValueId = `copy-gross-${copyIdCounter}`;
+                        const feeValueId = `copy-fee-${copyIdCounter}`;
+                        const netValueId = `copy-net-${copyIdCounter}`;
                         
+                        let valuesHTML = '';
+                        if (entry.feeValue > 0) {
+                            valuesHTML = `
+                                <div class="flex items-center gap-3">
+                                    <p class="text-lg text-gray-300"><strong class="text-gray-400">Valor do Aluguel:</strong> <span>${formatCurrency(entry.grossValue)}</span></p>
+                                    <span id="${grossValueId}" class="hidden">${entry.grossValueForCopy}</span>
+                                    <button data-copy-target="${grossValueId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar Valor do Aluguel">
+                                        <i data-lucide="copy" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <p class="text-lg text-gray-300"><strong class="text-gray-400">Taxa de Gerência:</strong> <span>${formatCurrency(entry.feeValue)}</span></p>
+                                    <span id="${feeValueId}" class="hidden">${entry.feeValueForCopy}</span>
+                                    <button data-copy-target="${feeValueId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar Taxa de Gerência">
+                                        <i data-lucide="copy" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <p class="text-2xl font-semibold"><strong class="text-gray-400 text-lg">Valor Líquido:</strong> <span class="text-green-400">${formatCurrency(entry.netValue)}</span></p>
+                                    <span id="${netValueId}" class="hidden">${entry.netValueForCopy}</span>
+                                    <button data-copy-target="${netValueId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar Valor Líquido">
+                                        <i data-lucide="copy" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            valuesHTML = `
+                                <div class="flex items-center gap-3">
+                                    <p class="text-2xl font-semibold"><strong class="text-gray-400 text-lg">Valor Recebido:</strong> <span class="text-green-400">${formatCurrency(entry.netValue)}</span></p>
+                                    <span id="${netValueId}" class="hidden">${entry.netValueForCopy}</span>
+                                    <button data-copy-target="${netValueId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar Valor Recebido">
+                                        <i data-lucide="copy" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+
                         reportHTML += `
                             <div class="py-6 border-b-2 border-gray-700 space-y-2">
                                 <p class="text-2xl font-bold text-white">${entry.tenantName}</p>
@@ -1514,12 +1544,7 @@
                                     </button>
                                 </div>
 
-                                <div class="flex items-center gap-3">
-                                    <p class="text-2xl font-semibold" ><span id="${valueId}" class="hidden">${entry.netValueForCopy}</span>${entry.valueString}</p>
-                                     <button data-copy-target="${valueId}" class="copy-btn text-gray-400 hover:text-cyan-400" title="Copiar Valor">
-                                        <i data-lucide="copy" class="h-5 w-5"></i>
-                                    </button>
-                                </div>
+                                ${valuesHTML}
                             </div>
                         `;
                         copyIdCounter++;
@@ -2016,4 +2041,5 @@
     </script>
 </body>
 </html>
+
 
