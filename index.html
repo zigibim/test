@@ -150,8 +150,8 @@
             <div class="border-b border-gray-700">
                 <nav id="top-nav" class="-mb-px flex space-x-6 overflow-x-auto no-scrollbar" aria-label="Tabs">
                     <button class="tab-button active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-cyan-500 text-cyan-400" data-tab="dashboard"><span>Painel</span></button>
-                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items"><span>Meus Itens</span></button>
-                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals"><span>Meus Aluguéis</span></button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="items"><span id="top-nav-items-text">Meus Itens</span></button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rentals"><span id="top-nav-rentals-text">Meus Aluguéis</span></button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="finance"><span>Financeiro</span></button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500 relative" data-tab="notifications">
                         <span>Notificações</span>
@@ -2499,57 +2499,28 @@
                 document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
                 document.getElementById('openAddItemModal').style.display = isManager ? 'none' : 'inline-flex';
 
-                // 2. Visibilidade e Textos das Abas
-                const adminOnlyTabs = ['notifications'];
-
-                document.querySelectorAll('#top-nav .tab-button, #bottom-nav .tab-button').forEach(tab => {
-                    const tabName = tab.dataset.tab;
-                    
-                    if (tabName === 'gestores') return; // Lógica de 'gestores' é tratada separadamente
-
-                    // Oculta abas específicas para o gestor
-                    if (isManager && adminOnlyTabs.includes(tabName)) {
+                // 2. Altera o texto das abas da navegação superior (Desktop)
+                document.getElementById('top-nav-items-text').textContent = isManager ? 'Itens' : 'Meus Itens';
+                document.getElementById('top-nav-rentals-text').textContent = isManager ? 'Aluguéis' : 'Meus Aluguéis';
+                
+                // 3. Visibilidade de abas específicas para o gestor
+                const managerHiddenTabs = ['notifications', 'gestores'];
+                document.querySelectorAll('.tab-button').forEach(tab => {
+                    if (isManager && managerHiddenTabs.includes(tab.dataset.tab)) {
                         tab.style.display = 'none';
-                    } else {
-                        tab.style.display = 'flex';
-                    }
-
-                    // Altera o texto das abas
-                    const textSpan = tab.querySelector('span:not(.notification-badge)');
-                    if (textSpan) {
-                       if (tabName === 'items') {
-                            if (isManager) {
-                                textSpan.textContent = 'Itens';
-                            } else {
-                                textSpan.textContent = tab.closest('#top-nav') ? 'Meus Itens' : 'Itens';
-                            }
-                       }
-                       if (tabName === 'rentals') {
-                           if (isManager) {
-                                textSpan.textContent = 'Aluguéis';
-                           } else {
-                               textSpan.textContent = tab.closest('#top-nav') ? 'Meus Aluguéis' : 'Aluguéis';
-                           }
-                       }
                     }
                 });
 
-                // 3. Lógica Específica para a Aba 'Gestores'
-                const gestoresMainTab = document.getElementById('gestores-main-tab');
-                const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
-                
-                if (isManager) {
-                    // Gestor nunca vê a aba de gestores
-                    if(gestoresMainTab) gestoresMainTab.style.display = 'none';
-                    if(gestoresBottomTab) gestoresBottomTab.style.display = 'none';
-                } else { 
-                    // Admin só vê se houver gestores cadastrados
+                // 4. Lógica da aba 'Gestores' para o Admin
+                if (!isManager) {
                     const shouldShow = managers.length > 0;
-                    if(gestoresMainTab) gestoresMainTab.style.display = shouldShow ? 'flex' : 'none';
-                    if(gestoresBottomTab) gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
+                    const gestoresMainTab = document.getElementById('gestores-main-tab');
+                    const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
+                    if (gestoresMainTab) gestoresMainTab.style.display = shouldShow ? 'flex' : 'none';
+                    if (gestoresBottomTab) gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
                 }
-
-                // 4. Textos dos Títulos nos Conteúdos das Abas
+                
+                // 5. Textos dos Títulos nos Conteúdos das Abas
                 document.getElementById('total-items-title').textContent = isManager ? 'Itens Gerenciados' : 'Total de Itens';
                 document.getElementById('rentals-title').textContent = isManager ? 'Aluguéis Ativos' : 'Aluguéis Ativos (por pendência)';
                 document.getElementById('financial-overview-title').textContent = isManager ? 'Visão Geral (Gerência)' : 'Visão Geral Financeira';
@@ -2565,6 +2536,4 @@
     </script>
 </body>
 </html>
-
-
 
