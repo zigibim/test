@@ -2536,12 +2536,11 @@
                 });
                 
                 if (!isManager) {
-                     const gestoresTab = document.getElementById('gestores-main-tab');
+                    const gestoresTab = document.getElementById('gestores-main-tab');
                     const gestoresBottomTab = document.getElementById('gestores-bottom-tab');
                     const shouldShow = managers.length > 0;
-                    gestoresTab.classList.toggle('hidden', !shouldShow);
-                    gestoresBottomTab.classList.toggle('hidden', !shouldShow);
-                    gestoresBottomTab.classList.toggle('flex', shouldShow);
+                    gestoresTab.style.display = shouldShow ? 'flex' : 'none';
+                    gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
                 }
 
 
@@ -2558,4 +2557,6 @@
     </script>
 </body>
 </html>
+
+
 
