@@ -101,6 +101,11 @@
         .bottom-nav-btn.active-tab {
             color: #22d3ee; /* cyan-400 */
         }
+
+        .settings-tab-button.active-settings-tab {
+            background-color: #374151;
+            color: #e5e7eb;
+        }
         
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -130,9 +135,14 @@
         <!-- Cabeçalho -->
         <header class="flex justify-between items-center mb-6">
             <h1 class="text-2xl sm:text-3xl font-bold text-cyan-400">Meu Gestor de Aluguéis</h1>
-            <button id="logoutBtn" class="bg-red-800 hover:bg-red-700 text-white font-bold p-2 rounded-lg flex items-center transition-colors" title="Sair">
-                <i data-lucide="log-out" class="h-5 w-5"></i>
-            </button>
+            <div class="flex items-center space-x-2">
+                <button id="settingsBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold p-2 rounded-lg flex items-center transition-colors" title="Configurações">
+                    <i data-lucide="settings" class="h-5 w-5"></i>
+                </button>
+                <button id="logoutBtn" class="bg-red-800 hover:bg-red-700 text-white font-bold p-2 rounded-lg flex items-center transition-colors" title="Sair">
+                    <i data-lucide="log-out" class="h-5 w-5"></i>
+                </button>
+            </div>
         </header>
 
         <!-- Navegação Principal (Desktop) -->
@@ -718,6 +728,64 @@
         </div>
     </div>
 
+    <!-- Modal Configurações -->
+    <div id="settingsModal" class="modal fixed inset-0 bg-gray-900 z-50 p-0">
+        <div class="bg-gray-800 w-full h-full p-4 sm:p-8 overflow-y-auto">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-bold">Configurações</h2>
+                    <button type="button" class="modal-close-btn p-2 rounded-full bg-gray-700 hover:bg-gray-600">
+                        <i data-lucide="x" class="h-6 w-6"></i>
+                    </button>
+                </div>
+
+                <div class="mb-6">
+                    <div class="border-b border-gray-700">
+                        <nav class="-mb-px flex space-x-6" aria-label="Settings Tabs">
+                            <button class="settings-tab-button active-settings-tab whitespace-nowrap py-3 px-4 rounded-t-md text-sm font-medium bg-gray-700 text-gray-100" data-tab="profile">Perfil</button>
+                            <button class="settings-tab-button whitespace-nowrap py-3 px-4 rounded-t-md text-sm font-medium text-gray-400 hover:bg-gray-700/50" data-tab="managers">Gestores</button>
+                        </nav>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Aba Perfil -->
+                    <div id="profile-settings-content" class="settings-tab-content">
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg">
+                            <h3 class="text-xl font-semibold mb-4">Alterar Senha</h3>
+                            <form id="changePasswordForm" class="space-y-4">
+                                <div>
+                                    <label for="currentPassword" class="block text-sm font-medium mb-1">Senha Atual</label>
+                                    <input type="password" id="currentPassword" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                                </div>
+                                <div>
+                                    <label for="newPassword" class="block text-sm font-medium mb-1">Nova Senha</label>
+                                    <input type="password" id="newPassword" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                                </div>
+                                <div>
+                                    <label for="confirmNewPassword" class="block text-sm font-medium mb-1">Confirmar Nova Senha</label>
+                                    <input type="password" id="confirmNewPassword" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                                </div>
+                                <div id="passwordChangeFeedback" class="text-sm pt-2"></div>
+                                <div class="text-right">
+                                    <button type="submit" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg">Salvar Alterações</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Aba Gestores -->
+                    <div id="managers-settings-content" class="settings-tab-content hidden">
+                         <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <h3 class="text-xl font-semibold mb-4">Gerenciar Gestores</h3>
+                            <p class="text-gray-400">Funcionalidade em desenvolvimento.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Modal Confirmar Ação -->
     <div id="confirmActionModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
@@ -734,7 +802,21 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        let settings = { password: 'davi' };
+
+        const loadSettings = () => {
+            const storedSettings = localStorage.getItem('rentalManagerSettings');
+            if (storedSettings) {
+                settings = JSON.parse(storedSettings);
+            }
+        };
+
+        const saveSettings = () => {
+            localStorage.setItem('rentalManagerSettings', JSON.stringify(settings));
+        };
         
+        loadSettings();
+
         const loginScreen = document.getElementById('login-screen');
         const appContainer = document.getElementById('app');
         const loginForm = document.getElementById('login-form');
@@ -743,7 +825,7 @@
 
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (passwordInput.value === 'davi') {
+            if (passwordInput.value === settings.password) {
                 loginScreen.classList.add('hidden');
                 appContainer.classList.remove('hidden');
                 initializeApp();
@@ -783,6 +865,7 @@
             const saveData = () => {
                 localStorage.setItem('rentalManagerItems', JSON.stringify(items));
                 localStorage.setItem('rentalManagerTransactions', JSON.stringify(transactions));
+                saveSettings(); // A senha é salva junto
             };
 
             const loadData = () => {
@@ -790,6 +873,7 @@
                 const storedTransactions = localStorage.getItem('rentalManagerTransactions');
                 items = storedItems ? JSON.parse(storedItems) : [];
                 transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
+                loadSettings();
             };
 
             // --- Funções de Renderização ---
@@ -2041,6 +2125,67 @@
             
             document.getElementById('confirmActionConfirm').addEventListener('click', () => { if (typeof onConfirm === 'function') onConfirm(); hideModal('confirmActionModal'); onConfirm = null; });
             document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionModal'); onConfirm = null; });
+
+            // --- Handlers para Configurações ---
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsTabButtons = document.querySelectorAll('.settings-tab-button');
+            const settingsTabContents = document.querySelectorAll('.settings-tab-content');
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            const passwordChangeFeedback = document.getElementById('passwordChangeFeedback');
+
+            settingsBtn.addEventListener('click', () => {
+                showModal('settingsModal');
+                passwordChangeFeedback.innerHTML = '';
+                changePasswordForm.reset();
+            });
+
+            const switchSettingsTab = (tabId) => {
+                settingsTabButtons.forEach(btn => {
+                    const isCorrectTab = btn.dataset.tab === tabId;
+                    btn.classList.toggle('active-settings-tab', isCorrectTab);
+                    btn.classList.toggle('text-gray-100', isCorrectTab);
+                    btn.classList.toggle('bg-gray-700', isCorrectTab);
+                    btn.classList.toggle('text-gray-400', !isCorrectTab);
+                     btn.classList.toggle('hover:bg-gray-700/50', !isCorrectTab);
+                });
+                settingsTabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(`${tabId}-settings-content`).classList.remove('hidden');
+            };
+
+            settingsTabButtons.forEach(button => button.addEventListener('click', () => switchSettingsTab(button.dataset.tab)));
+            
+            changePasswordForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+                passwordChangeFeedback.innerHTML = '';
+                passwordChangeFeedback.classList.remove('text-green-400', 'text-red-400');
+
+                if (currentPassword !== settings.password) {
+                    passwordChangeFeedback.textContent = 'A senha atual está incorreta.';
+                    passwordChangeFeedback.classList.add('text-red-400');
+                    return;
+                }
+                if (!newPassword || newPassword.length < 4) {
+                    passwordChangeFeedback.textContent = 'A nova senha deve ter pelo menos 4 caracteres.';
+                    passwordChangeFeedback.classList.add('text-red-400');
+                    return;
+                }
+                if (newPassword !== confirmNewPassword) {
+                    passwordChangeFeedback.textContent = 'As novas senhas não correspondem.';
+                    passwordChangeFeedback.classList.add('text-red-400');
+                    return;
+                }
+
+                settings.password = newPassword;
+                saveSettings();
+                passwordChangeFeedback.textContent = 'Senha alterada com sucesso!';
+                passwordChangeFeedback.classList.add('text-green-400');
+                changePasswordForm.reset();
+            });
+
 
             // Carga Inicial
             loadData();
