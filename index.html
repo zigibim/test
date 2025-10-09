@@ -103,7 +103,7 @@
         }
         
     </style>
-     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -218,7 +218,7 @@
                                 <label for="filterYear" class="text-sm">Ano:</label>
                                 <select id="filterYear" class="bg-gray-700 border border-gray-600 rounded-md px-2 sm:px-3 py-1 text-sm"></select>
                             </div>
-                         </div>
+                       </div>
                     </div>
                     <div class="h-[300px] sm:h-[350px]">
                         <canvas id="financialChart"></canvas>
@@ -233,12 +233,12 @@
                        <i data-lucide="plus-circle" class="h-5 w-5 mr-2"></i>
                        <span>Adicionar Item</span>
                    </button>
-               </div>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-semibold mb-4 flex items-center"><i data-lucide="package-check" class="mr-3 text-green-400"></i>Disponíveis para Alugar</h2>
                         <div id="available-list" class="space-y-4">
-                           <!-- Itens disponíveis aqui -->
+                            <!-- Itens disponíveis aqui -->
                         </div>
                     </div>
                     <div>
@@ -262,17 +262,17 @@
             <div id="finance-content" class="tab-content hidden">
                  <div class="flex flex-wrap gap-4 mb-6">
                      <button id="openAddTransactionModalRevenue" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
-                        <i data-lucide="trending-up" class="mr-2 h-5 w-5"></i>
-                        <span>Adicionar Receita</span>
-                    </button>
-                    <button id="openAddTransactionModalExpense" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
-                        <i data-lucide="trending-down" class="mr-2 h-5 w-5"></i>
-                        <span>Adicionar Despesa</span>
-                    </button>
-                    <button id="openTaxReportModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
-                        <i data-lucide="file-text" class="mr-2 h-5 w-5"></i>
-                        <span>Planilha de Imposto de Renda</span>
-                    </button>
+                         <i data-lucide="trending-up" class="mr-2 h-5 w-5"></i>
+                         <span>Adicionar Receita</span>
+                     </button>
+                     <button id="openAddTransactionModalExpense" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
+                         <i data-lucide="trending-down" class="mr-2 h-5 w-5"></i>
+                         <span>Adicionar Despesa</span>
+                     </button>
+                     <button id="openTaxReportModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105">
+                         <i data-lucide="file-text" class="mr-2 h-5 w-5"></i>
+                         <span>Planilha de Imposto de Renda</span>
+                     </button>
                  </div>
 
                  <!-- Filtros de Transações -->
@@ -307,20 +307,20 @@
                  <h2 class="text-xl sm:text-2xl font-semibold mb-4">Histórico de Transações</h2>
                  <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                      <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-700">
-                                <tr>
-                                    <th class="p-4">Data</th>
-                                    <th class="p-4">Descrição</th>
-                                    <th class="p-4">Tipo</th>
-                                    <th class="p-4 text-right">Valor</th>
-                                    <th class="p-4 text-center">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactions-list">
-                                <!-- Transações aqui -->
-                            </tbody>
-                        </table>
+                         <table class="w-full text-left">
+                             <thead class="bg-gray-700">
+                                 <tr>
+                                     <th class="p-4">Data</th>
+                                     <th class="p-4">Descrição</th>
+                                     <th class="p-4">Tipo</th>
+                                     <th class="p-4 text-right">Valor</th>
+                                     <th class="p-4 text-center">Ações</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="transactions-list">
+                                 <!-- Transações aqui -->
+                             </tbody>
+                         </table>
                      </div>
                  </div>
             </div>
@@ -659,16 +659,16 @@
              <p class="mb-4 text-gray-300">Item: <strong id="paymentAlertItemName" class="text-white"></strong></p>
              <input type="hidden" id="paymentAlertItemId">
              <div class="bg-gray-700 p-4 rounded-md">
-                <p class="mb-3">O pagamento mensal deste item já venceu. O que você gostaria de fazer?</p>
+                 <p class="mb-3">O pagamento mensal deste item já venceu. O que você gostaria de fazer?</p>
                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <button id="paymentReceivedBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">Recebido</button>
-                    <button id="snoozePaymentBtn" class="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded-md">Adiar 7 Dias</button>
-                    <button id="setPaymentPendingBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">Deixar Pendente</button>
-                    <button id="forgetReminderBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">Esquecer</button>
+                     <button id="paymentReceivedBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">Recebido</button>
+                     <button id="snoozePaymentBtn" class="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded-md">Adiar 7 Dias</button>
+                     <button id="setPaymentPendingBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">Deixar Pendente</button>
+                     <button id="forgetReminderBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">Esquecer</button>
                  </div>
              </div>
              <div class="mt-6 flex justify-end">
-                <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Fechar</button>
+                 <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Fechar</button>
              </div>
         </div>
     </div>
@@ -688,7 +688,7 @@
                 </div>
             </div>
              <div class="mt-6 flex justify-end">
-                <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Fechar</button>
+                 <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Fechar</button>
              </div>
         </div>
     </div>
@@ -950,7 +950,7 @@
                     if (!isPaidThisMonth) {
                        return { priority: 4, date: paymentDueDateThisMonth };
                     }
-                   
+                    
                     // P5: Paid this month
                     if (isPaidThisMonth) {
                         return { priority: 5, date: endDate };
@@ -993,33 +993,51 @@
                         </div>
                     `;
 
-                    const endDate = new Date(item.rentEndDate);
-                    const isContractOverdue = new Date() > endDate;
+                    // // MODIFICAÇÃO INICIADA: Lógica de status de pagamento ajustada.
+                    const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                    const isContractOverdue = today > endDate;
                     
                     const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
                     const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
                     const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
-                    const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
                     
+                    const startDate = new Date(item.rentStartDate + 'T00:00:00');
+                    let firstPaymentDueDate = new Date(startDate);
+
+                    if (item.paymentFrequency === 'monthly') {
+                        firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
+                        firstPaymentDueDate.setDate(item.paymentDay);
+                    } else if (item.paymentFrequency === 'weekly') {
+                        firstPaymentDueDate.setDate(firstPaymentDueDate.getDate() + 7);
+                    } else if (item.paymentFrequency === 'daily') {
+                         firstPaymentDueDate.setDate(firstPaymentDueDate.getDate() + 1);
+                    }
+
+                    const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
+                    const isActuallyOverdue = isPaymentOverdue && today >= firstPaymentDueDate;
+
                     let borderColor = 'border-gray-600'; // Default for upcoming
                     if (isContractOverdue && !item.renewalPending) {
                         borderColor = 'border-red-500';
                     } else if (item.renewalPending) {
                         borderColor = 'border-pink-500';
-                    } else if (isPaymentOverdue) {
+                    } else if (isActuallyOverdue) {
                         borderColor = 'border-yellow-500';
                     } else if (isPaidThisMonth) {
                         borderColor = 'border-green-500';
                     }
 
                     let paymentStatusHTML = '';
-                    const monthName = today.toLocaleString('pt-BR', { month: 'long' });
+                    const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
 
                     if (isPaidThisMonth) {
-                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${monthName} OK</span></p>`;
-                    } else if (isPaymentOverdue) {
-                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido</span></p>`;
+                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
+                    } else if (isActuallyOverdue) {
+                        const overdueMonthName = paymentDueDateThisMonth.toLocaleString('pt-BR', { month: 'long' });
+                        const capitalizedMonth = overdueMonthName.charAt(0).toUpperCase() + overdueMonthName.slice(1);
+                        paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido (${capitalizedMonth})</span></p>`;
                     }
+                    // // MODIFICAÇÃO FINALIZADA
 
                     let managementInfoHTML = '';
                     if (item.category === 'Imóvel' && item.managedBy) {
@@ -1045,7 +1063,7 @@
                                     <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
                                     ${managementInfoHTML}
                                     <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
-                                    <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                                    <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
                                     ${paymentStatusHTML}
                                 </div>
                             </div>
@@ -1995,4 +2013,3 @@
     </script>
 </body>
 </html>
-
