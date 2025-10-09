@@ -1610,10 +1610,6 @@
                 });
                 tabContents.forEach(content => content.classList.add('hidden'));
                 document.getElementById(`${tabId}-content`).classList.remove('hidden');
-
-                if (currentUser && currentUser.type === 'admin') {
-                    document.getElementById('settingsBtn').style.display = (tabId === 'gestores') ? 'none' : 'flex';
-                }
             };
             
             const finalizeRental = (itemId) => {
@@ -2562,6 +2558,7 @@
     </script>
 </body>
 </html>
+
 
 
 
