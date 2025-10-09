@@ -1417,6 +1417,7 @@
                 const year = parseInt(document.getElementById('taxReportYear').value);
                 const resultDiv = document.getElementById('taxReportResult');
                 resultDiv.innerHTML = '';
+                let totalNetValue = 0;
 
                 const relevantTransactions = transactions.filter(t => {
                     const tDate = new Date(t.date);
@@ -1444,6 +1445,8 @@
                     const grossValue = rev.amount;
                     const feeValue = feeTransaction ? feeTransaction.amount : 0;
                     const netValue = grossValue - feeValue;
+                    
+                    totalNetValue += netValue;
 
                     return {
                         managedBy: item.managedBy || 'particular',
@@ -1550,6 +1553,13 @@
                         copyIdCounter++;
                     });
                 });
+
+                reportHTML += `
+                    <div class="mt-8 pt-4 border-t-2 border-gray-600 text-right">
+                        <p class="text-lg font-medium text-gray-300">Soma Total Líquida do Mês:</p>
+                        <p class="text-3xl font-bold text-green-400">${formatCurrency(totalNetValue)}</p>
+                    </div>
+                `;
                 
                 resultDiv.innerHTML = reportHTML;
                 lucide.createIcons();
@@ -2041,5 +2051,4 @@
     </script>
 </body>
 </html>
-
 
