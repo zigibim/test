@@ -2496,6 +2496,7 @@
                 
                 document.getElementById('app-title').textContent = isManager ? `Gestor: ${currentUser.name}` : 'Meu Gestor de Aluguéis';
                 document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
+                document.getElementById('openAddItemModal').style.display = isManager ? 'none' : 'inline-flex';
                 
                 const adminOnlyTabs = ['notifications', 'gestores'];
 
@@ -2543,8 +2544,8 @@
                     gestoresBottomTab.style.display = shouldShow ? 'flex' : 'none';
                 }
 
-
                 document.getElementById('total-items-title').textContent = isManager ? 'Itens Gerenciados' : 'Total de Itens';
+                document.getElementById('rentals-title').textContent = isManager ? 'Aluguéis Ativos' : 'Aluguéis Ativos (por pendência)';
             };
 
 
@@ -2557,6 +2558,4 @@
     </script>
 </body>
 </html>
-
-
 
