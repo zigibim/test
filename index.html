@@ -50,17 +50,17 @@
 
         /* Responsive table for transactions */
         @media (max-width: 767px) {
-            #transactions-list thead, #acerto-transactions-list thead {
+            #transactions-list thead {
                 display: none;
             }
-            #transactions-list tr, #acerto-transactions-list tr {
+            #transactions-list tr {
                 display: block;
                 border: 1px solid #374151; /* gray-700 */
                 border-radius: 0.75rem; /* rounded-xl */
                 margin-bottom: 1rem;
                 background-color: #1f2937; /* gray-800 */
             }
-            #transactions-list td, #acerto-transactions-list td {
+            #transactions-list td {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -68,10 +68,10 @@
                 text-align: right;
                 border-bottom: 1px solid #374151; /* gray-700 */
             }
-            #transactions-list td:last-child, #acerto-transactions-list td:last-child {
+            #transactions-list td:last-child {
                 border-bottom: 0;
             }
-            #transactions-list td:before, #acerto-transactions-list td:before {
+            #transactions-list td:before{
                 content: attr(data-label);
                 font-weight: 600;
                 text-align: left;
@@ -158,7 +158,6 @@
                         <span id="top-nav-badge" class="notification-badge absolute top-3 -right-4 ml-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span>
                     </button>
                     <button id="gestores-main-tab" class="tab-button hidden whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="gestores"><span>Gestores</span></button>
-                    <button id="acerto-main-tab" class="tab-button hidden whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="acerto"><span>Acerto</span></button>
                 </nav>
             </div>
         </div>
@@ -242,8 +241,8 @@
             <div id="items-content" class="tab-content hidden">
                 <div class="mb-6 text-right">
                     <button id="openAddItemModal" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-transform transform hover:scale-105 inline-flex">
-                       <i data-lucide="plus-circle" class="h-5 w-5 mr-2"></i>
-                       <span>Adicionar Item</span>
+                        <i data-lucide="plus-circle" class="h-5 w-5 mr-2"></i>
+                        <span>Adicionar Item</span>
                    </button>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -351,53 +350,7 @@
             <div id="gestores-content" class="tab-content hidden">
                  <h2 class="text-xl sm:text-2xl font-semibold mb-4">Painel de Gestores</h2>
                  <div id="admin-managers-dashboard" class="space-y-6">
-                    <!-- Cards de resumo dos gestores serão inseridos aqui -->
-                 </div>
-            </div>
-
-            <!-- Aba Acerto (Manager view) -->
-            <div id="acerto-content" class="tab-content hidden">
-                <h2 class="text-xl sm:text-2xl font-semibold mb-4">Relatório de Acerto</h2>
-                <div class="bg-gray-800 p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-4 items-center">
-                    <label for="acerto-month-year" class="text-sm font-medium">Selecione o Período:</label>
-                    <div class="flex items-center gap-2">
-                        <select id="acertoMonth" class="bg-gray-700 border border-gray-600 rounded-md px-3 py-1 text-sm"></select>
-                        <select id="acertoYear" class="bg-gray-700 border border-gray-600 rounded-md px-3 py-1 text-sm"></select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-gray-800 p-6 rounded-xl text-center">
-                        <h3 class="text-lg font-medium text-gray-400">Receita Bruta</h3>
-                        <p id="acerto-receita-bruta" class="mt-2 text-3xl font-bold text-green-400">R$ 0,00</p>
-                    </div>
-                    <div class="bg-gray-800 p-6 rounded-xl text-center">
-                        <h3 class="text-lg font-medium text-gray-400">Sua Taxa de Gerência</h3>
-                        <p id="acerto-taxa-gerencia" class="mt-2 text-3xl font-bold text-yellow-400">R$ 0,00</p>
-                    </div>
-                    <div class="bg-gray-800 p-6 rounded-xl text-center">
-                        <h3 class="text-lg font-medium text-gray-400">Líquido para Repasse</h3>
-                        <p id="acerto-valor-liquido" class="mt-2 text-3xl font-bold text-cyan-400">R$ 0,00</p>
-                    </div>
-                </div>
-
-                <h3 class="text-lg font-semibold mb-4">Transações do Período</h3>
-                 <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                     <div class="overflow-x-auto">
-                         <table class="w-full text-left">
-                             <thead class="bg-gray-700">
-                                 <tr>
-                                     <th class="p-4">Data</th>
-                                     <th class="p-4">Descrição</th>
-                                     <th class="p-4">Tipo</th>
-                                     <th class="p-4 text-right">Valor</th>
-                                 </tr>
-                             </thead>
-                             <tbody id="acerto-transactions-list">
-                                 <!-- Transações do acerto aqui -->
-                             </tbody>
-                         </table>
-                     </div>
+                     <!-- Cards de resumo dos gestores serão inseridos aqui -->
                  </div>
             </div>
         </main>
@@ -429,10 +382,6 @@
          <button id="gestores-bottom-tab" class="tab-button bottom-nav-btn hidden flex-col items-center text-gray-400 p-2" data-tab="gestores">
             <i data-lucide="users" class="h-6 w-6"></i>
             <span class="text-xs mt-1">Gestores</span>
-        </button>
-        <button id="acerto-bottom-tab" class="tab-button bottom-nav-btn hidden flex-col items-center text-gray-400 p-2" data-tab="acerto">
-            <i data-lucide="scale" class="h-6 w-6"></i>
-            <span class="text-xs mt-1">Acerto</span>
         </button>
     </nav>
 
@@ -913,8 +862,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         let settings = { password: 'davi' };
         let managers = [];
-        let currentUser = null;
-
+        
         const loadSettings = () => {
             const storedSettings = localStorage.getItem('rentalManagerSettings');
             if (storedSettings) {
@@ -924,14 +872,6 @@
             if(storedManagers) {
                 managers = JSON.parse(storedManagers);
             }
-        };
-
-        const saveSettings = () => {
-            localStorage.setItem('rentalManagerSettings', JSON.stringify(settings));
-        };
-
-        const saveManagers = () => {
-            localStorage.setItem('rentalManagerManagers', JSON.stringify(managers));
         };
         
         loadSettings();
@@ -947,22 +887,15 @@
             const enteredPassword = passwordInput.value;
 
             if (enteredPassword === settings.password) {
-                currentUser = { type: 'admin' };
                 initializeApp();
             } else {
-                const manager = managers.find(m => m.password === enteredPassword);
-                if (manager) {
-                    currentUser = { type: 'manager', ...manager };
-                    initializeApp();
-                } else {
-                    loginError.classList.remove('hidden');
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                    loginForm.classList.add('animate-shake');
-                    setTimeout(() => {
-                        loginForm.classList.remove('animate-shake');
-                    }, 500);
-                }
+                loginError.classList.remove('hidden');
+                passwordInput.value = '';
+                passwordInput.focus();
+                loginForm.classList.add('animate-shake');
+                setTimeout(() => {
+                    loginForm.classList.remove('animate-shake');
+                }, 500);
             }
         });
 
@@ -973,82 +906,80 @@
         function initializeApp() {
             loginScreen.classList.add('hidden');
             appContainer.classList.remove('hidden');
-
-            // Inicialização dos Ícones Lucide
             lucide.createIcons();
 
-            // Estado da Aplicação
             let items = [];
             let transactions = [];
             let financialChart;
             let onConfirm = null;
 
-            // Elementos do DOM
             const modals = document.querySelectorAll('.modal');
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabContents = document.querySelectorAll('.tab-content');
-
             const addItemForm = document.getElementById('addItemForm');
             const editItemForm = document.getElementById('editItemForm');
             const rentItemForm = document.getElementById('rentItemForm');
             const addTransactionForm = document.getElementById('addTransactionForm');
             const editTransactionForm = document.getElementById('editTransactionForm');
             
-            // --- Funções de Persistência de Dados ---
             const saveData = () => {
                 localStorage.setItem('rentalManagerItems', JSON.stringify(items));
                 localStorage.setItem('rentalManagerTransactions', JSON.stringify(transactions));
-                saveSettings();
-                saveManagers();
+                localStorage.setItem('rentalManagerSettings', JSON.stringify(settings));
+                localStorage.setItem('rentalManagerManagers', JSON.stringify(managers));
             };
 
             const loadData = () => {
                 const storedItems = localStorage.getItem('rentalManagerItems');
-                const storedTransactions = localStorage.getItem('rentalManagerTransactions');
                 items = storedItems ? JSON.parse(storedItems) : [];
+                const storedTransactions = localStorage.getItem('rentalManagerTransactions');
                 transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
-                loadSettings();
+                loadSettings(); // managers and settings are re-loaded
             };
-
-            const getDataForCurrentUser = () => {
-                if (currentUser.type === 'admin') {
-                    return { currentItems: items, currentTransactions: transactions };
-                }
-                
-                if (currentUser.type === 'manager') {
-                    const currentItems = items.filter(item => currentUser.assignedItemIds.includes(item.id));
-                    const currentItemIds = currentItems.map(item => item.id);
-                    const currentTransactions = transactions.filter(t => t.itemId && currentItemIds.includes(t.itemId));
-                    return { currentItems, currentTransactions };
-                }
-                return { currentItems: [], currentTransactions: [] };
-            };
-
-            // --- Funções de Renderização ---
+            
             const renderAll = () => {
-                const { currentItems, currentTransactions } = getDataForCurrentUser();
-                
-                customizeUIForUser();
-                
-                if (currentUser.type === 'admin') {
-                    renderDashboard(currentItems, currentTransactions);
-                    renderTransactions(currentTransactions);
-                    checkAlerts();
-                    renderManagers();
-                    renderAdminManagersDashboard();
-                } else if (currentUser.type === 'manager') {
-                    renderAcerto();
-                }
-
-                renderItems(currentItems);
-                renderRentals(currentItems);
-                
+                customizeUIForAdmin();
+                renderDashboard(items, transactions);
+                renderTransactions(transactions);
+                checkAlerts();
+                renderManagers();
+                renderAdminManagersDashboard();
+                renderItems(items);
+                renderRentals(items);
                 lucide.createIcons();
+            };
+            
+            const customizeUIForAdmin = () => {
+                const showGestoresTab = managers.length > 0;
+                document.getElementById('gestores-main-tab').style.display = showGestoresTab ? 'flex' : 'none';
+                document.getElementById('gestores-bottom-tab').style.display = showGestoresTab ? 'flex' : 'none';
+            };
+
+            const updateDashboardView = () => {
+                renderDashboard(items, transactions);
+            };
+
+            const initDashboardFilters = () => {
+                const monthSelect = document.getElementById('filterMonth'), yearSelect = document.getElementById('filterYear'), now = new Date();
+                if (monthSelect.options.length > 0) return; // Evita repopular
+                for(let i=0; i<12; i++) { const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}); monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`; }
+                
+                const currentTransactions = transactions; 
+                const years = [...new Set(currentTransactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean);
+                if (!years.includes(now.getFullYear())) {
+                    years.push(now.getFullYear());
+                }
+                years.sort((a,b) => b-a);
+                years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
+                monthSelect.value = now.getMonth(); yearSelect.value = now.getFullYear();
+                
+                monthSelect.addEventListener('change', updateDashboardView);
+                yearSelect.addEventListener('change', updateDashboardView);
+                document.getElementById('chart-view').addEventListener('change', updateDashboardView);
             };
 
             const renderDashboard = (dashboardItems, dashboardTransactions) => {
                 renderSummaryCards(dashboardItems);
-
                 const view = document.getElementById('chart-view').value;
                 const year = parseInt(document.getElementById('filterYear').value, 10);
                 const month = parseInt(document.getElementById('filterMonth').value, 10);
@@ -1057,10 +988,10 @@
                     renderBalanceCard(year, month, dashboardTransactions);
                     renderChart(year, 'monthly', dashboardTransactions);
                 } else {
+                    renderBalanceCard(year, null, dashboardTransactions); 
                     renderChart(null, 'yearly', dashboardTransactions);
                 }
             };
-
 
             const renderSummaryCards = (summaryItems) => {
                 const rentedCount = summaryItems.filter(item => item.rentedTo).length;
@@ -1068,7 +999,7 @@
                 document.getElementById('rented-items').textContent = rentedCount;
                 document.getElementById('available-items').textContent = summaryItems.length - rentedCount;
             };
-            
+
             const renderItems = (itemsToRender) => {
                 const availableList = document.getElementById('available-list');
                 const rentedList = document.getElementById('rented-list');
@@ -1515,23 +1446,27 @@
             };
             
             const renderBalanceCard = (year, month, transactionsForBalance) => {
-                const monthName = new Date(year, month).toLocaleString('pt-BR', { month: 'long' });
+                const monthName = month !== null ? new Date(year, month).toLocaleString('pt-BR', { month: 'long' }) : '';
 
                 let balance = 0;
                 let totalExpenses = 0;
                 let totalFees = 0;
                 let totalRevenue = 0;
+                
+                const relevantTransactions = month === null 
+                    ? transactionsForBalance.filter(t => new Date(t.date).getFullYear() === year)
+                    : transactionsForBalance.filter(t => {
+                        const tDate = new Date(t.date);
+                        return tDate.getMonth() === month && tDate.getFullYear() === year;
+                    });
 
-                transactionsForBalance.forEach(t => {
-                    const tDate = new Date(t.date);
-                    if (tDate.getMonth() === month && tDate.getFullYear() === year) {
-                        if(t.type === 'revenue') {
-                            totalRevenue += t.amount;
-                        } else if (t.type === 'expense') {
-                            totalExpenses += t.amount;
-                        } else if (t.type === 'management_fee') {
-                            totalFees += t.amount;
-                        }
+                relevantTransactions.forEach(t => {
+                    if(t.type === 'revenue') {
+                        totalRevenue += t.amount;
+                    } else if (t.type === 'expense') {
+                        totalExpenses += t.amount;
+                    } else if (t.type === 'management_fee') {
+                        totalFees += t.amount;
                     }
                 });
 
@@ -1540,18 +1475,15 @@
                 const balanceTitle = document.getElementById('month-balance-title');
                 const expenseTitle = document.getElementById('month-expense-title');
                 const feeTitle = document.getElementById('month-fee-title');
-                
-                if (currentUser.type === 'manager') {
-                    // This part is now handled by renderAcerto
-                } else {
-                    balanceTitle.textContent = `Saldo de ${monthName}/${year}`;
-                    expenseTitle.textContent = `Despesas de ${monthName}/${year}`;
-                    feeTitle.textContent = `Taxa de Gerência de ${monthName}/${year}`;
-                    document.getElementById('month-fee').textContent = formatCurrency(totalFees);
-                }
+
+                const periodText = month !== null ? `de ${monthName}/${year}` : `de ${year}`;
+                balanceTitle.textContent = `Saldo ${periodText}`;
+                expenseTitle.textContent = `Despesas ${periodText}`;
+                feeTitle.textContent = `Taxa de Gerência ${periodText}`;
 
                 document.getElementById('month-balance').textContent = formatCurrency(balance);
                 document.getElementById('month-expense').textContent = formatCurrency(totalExpenses);
+                document.getElementById('month-fee').textContent = formatCurrency(totalFees);
             }
 
             const renderChart = (year, view, transactionsForChart) => {
@@ -1598,57 +1530,11 @@
                 financialChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'Receitas', data: revenueData, backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 2, tension: 0.1, fill: true }, { label: 'Despesas', data: expenseData, backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 2, tension: 0.1, fill: true }, { label: 'Taxa de Gerência', data: managementFeeData, backgroundColor: 'rgba(252, 211, 77, 0.2)', borderColor: 'rgba(252, 211, 77, 1)', borderWidth: 2, tension: 0.1, fill: true } ] }, options: { scales: { y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }, x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } } }, plugins: { legend: { labels: { color: '#d1d5db' } } }, responsive: true, maintainAspectRatio: false } });
             };
             
-            const renderAcerto = () => {
-                const { currentTransactions } = getDataForCurrentUser();
-                const month = parseInt(document.getElementById('acertoMonth').value);
-                const year = parseInt(document.getElementById('acertoYear').value);
-
-                const transactionsInPeriod = currentTransactions.filter(t => {
-                    const tDate = new Date(t.date);
-                    return tDate.getMonth() === month && tDate.getFullYear() === year;
-                });
-                
-                const receitaBruta = transactionsInPeriod.filter(t => t.type === 'revenue').reduce((sum, t) => sum + t.amount, 0);
-                const taxaGerencia = transactionsInPeriod.filter(t => t.type === 'management_fee').reduce((sum, t) => sum + t.amount, 0);
-                const valorLiquido = receitaBruta - taxaGerencia;
-
-                document.getElementById('acerto-receita-bruta').textContent = formatCurrency(receitaBruta);
-                document.getElementById('acerto-taxa-gerencia').textContent = formatCurrency(taxaGerencia);
-                document.getElementById('acerto-valor-liquido').textContent = formatCurrency(valorLiquido);
-                
-                const list = document.getElementById('acerto-transactions-list');
-                list.innerHTML = '';
-                 if(transactionsInPeriod.length === 0){
-                    list.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">Nenhuma transação no período selecionado.</td></tr>`;
-                    return;
-                }
-                transactionsInPeriod.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
-                    let typeClass = '', typeText = '', amountClass = '', amountPrefix = '';
-                    if (t.type === 'revenue') {
-                        typeClass = 'bg-green-900 text-green-300'; typeText = 'Receita'; amountClass = 'text-green-400'; amountPrefix = '+';
-                    } else if (t.type === 'expense') {
-                        typeClass = 'bg-red-900 text-red-300'; typeText = 'Despesa'; amountClass = 'text-red-400'; amountPrefix = '-';
-                    } else if (t.type === 'management_fee') {
-                        typeClass = 'bg-yellow-900 text-yellow-300'; typeText = 'Taxa Gerência'; amountClass = 'text-yellow-400'; amountPrefix = '-';
-                    }
-                    const row = `
-                        <tr class="border-b border-gray-700">
-                            <td data-label="Data" class="p-4">${formatDate(t.date)}</td>
-                            <td data-label="Descrição" class="p-4">${t.description}</td>
-                            <td data-label="Tipo" class="p-4"><span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass}">${typeText}</span></td>
-                            <td data-label="Valor" class="p-4 text-right font-semibold ${amountClass}">${amountPrefix} ${formatCurrency(t.amount)}</td>
-                        </tr>
-                    `;
-                    list.innerHTML += row;
-                });
-            };
-
             const applyFiltersAndRender = () => {
-                const { currentTransactions } = getDataForCurrentUser();
                 const description = document.getElementById('filterDescription').value.toLowerCase();
                 const type = document.getElementById('filterType').value;
                 const startDate = document.getElementById('filterStartDate').value;
-                let filtered = currentTransactions.filter(t => {
+                let filtered = transactions.filter(t => {
                     const tDate = new Date(t.date + 'T00:00:00');
                     const start = startDate ? new Date(startDate + 'T00:00:00') : null;
                     return t.description.toLowerCase().includes(description) && (type === 'all' || t.type === type) && (!start || tDate >= start);
@@ -1656,7 +1542,6 @@
                 renderTransactions(filtered);
             };
 
-            // --- Funções de Utilitários ---
             const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
             const formatDate = (dateString) => { if(!dateString) return ''; const date = new Date(dateString); return new Date(date.getTime() + (date.getTimezoneOffset() * 60000)).toLocaleDateString('pt-BR'); };
             const dateToYMD = (date) => date.toISOString().split('T')[0];
@@ -1665,11 +1550,10 @@
             const hideModal = (modalId) => document.getElementById(modalId).classList.remove('active');
 
             const populateTransactionItemSelect = (selectElementId, selectedId) => {
-                const { currentItems } = getDataForCurrentUser();
                 const select = document.getElementById(selectElementId);
                 select.innerHTML = '<option value="">Nenhum / Outra</option>';
-                const rentedItems = currentItems.filter(item => item.rentedTo);
-                const availableItems = currentItems.filter(item => !item.rentedTo);
+                const rentedItems = items.filter(item => item.rentedTo);
+                const availableItems = items.filter(item => !item.rentedTo);
                 if (rentedItems.length > 0) {
                     const rentedGroup = document.createElement('optgroup');
                     rentedGroup.label = 'Alugados';
@@ -1728,58 +1612,6 @@
                 }
             };
             
-            const updateDashboardView = () => {
-                const { currentItems, currentTransactions } = getDataForCurrentUser();
-                renderDashboard(currentItems, currentTransactions);
-            }
-            
-            const initDashboardFilters = () => {
-                const monthSelect = document.getElementById('filterMonth'), yearSelect = document.getElementById('filterYear'), now = new Date();
-                if (monthSelect.options.length > 0) return; // Evita repopular
-                for(let i=0; i<12; i++) { const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}); monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`; }
-                
-                const { currentTransactions } = getDataForCurrentUser();
-                const years = [...new Set(currentTransactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean);
-                if (!years.includes(now.getFullYear())) {
-                    years.push(now.getFullYear());
-                }
-                years.sort((a,b) => b-a);
-                years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
-                monthSelect.value = now.getMonth(); yearSelect.value = now.getFullYear();
-                
-                monthSelect.addEventListener('change', updateDashboardView);
-                yearSelect.addEventListener('change', updateDashboardView);
-                document.getElementById('chart-view').addEventListener('change', updateDashboardView);
-            }
-
-            const initAcertoFilters = () => {
-                const monthSelect = document.getElementById('acertoMonth');
-                const yearSelect = document.getElementById('acertoYear');
-                const now = new Date();
-                
-                if (monthSelect.options.length > 0) return;
-                
-                for(let i=0; i<12; i++) { 
-                    const monthName = new Date(2000, i).toLocaleString('pt-BR', {month: 'long'}); 
-                    monthSelect.innerHTML += `<option value="${i}">${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</option>`; 
-                }
-                
-                const { currentTransactions } = getDataForCurrentUser();
-                const years = [...new Set(currentTransactions.map(t => new Date(t.date).getFullYear()))].filter(Boolean);
-                if (!years.includes(now.getFullYear())) {
-                    years.push(now.getFullYear());
-                }
-                years.sort((a,b) => b-a);
-                years.forEach(y => yearSelect.innerHTML += `<option value="${y}">${y}</option>`);
-
-                monthSelect.value = now.getMonth();
-                yearSelect.value = now.getFullYear();
-
-                monthSelect.addEventListener('change', renderAcerto);
-                yearSelect.addEventListener('change', renderAcerto);
-            }
-
-            // --- Handlers para Relatório de Imposto de Renda ---
             const initTaxReportFilters = () => {
                 const monthSelect = document.getElementById('taxReportMonth');
                 const yearSelect = document.getElementById('taxReportYear');
@@ -2067,11 +1899,6 @@
                 if (!categorySelect.value) { alert('Por favor, selecione uma categoria.'); return; }
                 let category = categorySelect.value;
                 if (category === 'outro') category = document.getElementById('itemCategoryOther').value || 'Outro';
-
-                if(currentUser.type === 'manager' && currentUser.type === 'Imobiliária' && category !== 'Imóvel'){
-                    alert('Gestores do tipo Imobiliária só podem cadastrar itens da categoria "Imóvel".');
-                    return;
-                }
                 
                 let managedBy = null, managerName = null, hasManagementFee = false, managementFeePercentage = 0;
                 if (category === 'Imóvel') {
@@ -2094,12 +1921,6 @@
                     managedBy, managerName, hasManagementFee, managementFeePercentage
                 };
                 items.push(newItem);
-
-                if(currentUser.type === 'manager'){
-                    currentUser.assignedItemIds.push(newItem.id);
-                    const managerInDb = managers.find(m => m.id === currentUser.id);
-                    if(managerInDb) managerInDb.assignedItemIds.push(newItem.id);
-                }
 
                 saveData();
                 renderAll();
@@ -2410,7 +2231,6 @@
                 addTransactionForm.reset();
             });
             
-            // --- Handlers para Modais de Alerta ---
             document.getElementById('paymentReceivedBtn').addEventListener('click', () => {
                 const itemId = parseInt(document.getElementById('paymentAlertItemId').value);
                 const item = items.find(i => i.id === itemId);
@@ -2484,7 +2304,6 @@
             
             document.getElementById('endContractBtn').addEventListener('click', () => {
                 const itemId = parseInt(document.getElementById('contractEndItemId').value);
-                const item = items.find(i => i.id === itemId);
                 
                 finalizeRental(itemId);
                 saveData();
@@ -2495,7 +2314,6 @@
             document.getElementById('confirmActionConfirm').addEventListener('click', () => { if (typeof onConfirm === 'function') onConfirm(); hideModal('confirmActionModal'); onConfirm = null; });
             document.getElementById('confirmActionCancel').addEventListener('click', () => { hideModal('confirmActionModal'); onConfirm = null; });
 
-            // --- Handlers para Configurações ---
             const settingsBtn = document.getElementById('settingsBtn');
             const settingsTabButtons = document.querySelectorAll('.settings-tab-button');
             const settingsTabContents = document.querySelectorAll('.settings-tab-content');
@@ -2608,64 +2426,15 @@
                 }
 
                 settings.password = newPassword;
-                saveSettings();
+                saveData();
                 passwordChangeFeedback.textContent = 'Senha alterada com sucesso!';
                 passwordChangeFeedback.classList.add('text-green-400');
                 changePasswordForm.reset();
             });
 
-            const customizeUIForUser = () => {
-                const isManager = currentUser.type === 'manager';
-
-                // --- 1. Personalização do Cabeçalho ---
-                document.getElementById('app-title').textContent = isManager ? (currentUser.name || 'Gestor') : 'Meu Gestor de Aluguéis';
-                document.getElementById('settingsBtn').style.display = isManager ? 'none' : 'flex';
-                document.getElementById('openAddItemModal').style.display = 'none'; // Gerenciador não pode adicionar itens por padrão.
-
-                // --- 2. Personalização das Abas ---
-                const adminTabs = ['dashboard', 'finance', 'notifications', 'gestores'];
-                const managerTabs = ['items', 'rentals', 'acerto'];
-                
-                document.querySelectorAll('.tab-button').forEach(tab => {
-                    const tabName = tab.dataset.tab;
-                    let shouldShow = false;
-
-                    if (isManager) {
-                        shouldShow = managerTabs.includes(tabName);
-                        // Altera texto das abas para o Gerenciador
-                        if(tabName === 'items' || tabName === 'rentals'){
-                            const textSpan = tab.querySelector('span:not(.notification-badge)');
-                            if(textSpan) textSpan.textContent = tabName === 'items' ? 'Itens' : 'Aluguéis';
-                        }
-                    } else { // Admin
-                        shouldShow = !managerTabs.includes(tabName) || tabName === 'items' || tabName === 'rentals';
-                        if (tabName === 'gestores') {
-                            shouldShow = managers.length > 0;
-                        }
-                        // Restaura texto original das abas para o Admin
-                        const itemsSpan = document.querySelector('[data-tab="items"] span:not(.notification-badge)');
-                        const rentalsSpan = document.querySelector('[data-tab="rentals"] span:not(.notification-badge)');
-                        if (itemsSpan) itemsSpan.textContent = tab.closest('#top-nav') ? 'Meus Itens' : 'Itens';
-                        if (rentalsSpan) rentalsSpan.textContent = tab.closest('#top-nav') ? 'Meus Aluguéis' : 'Aluguéis';
-                    }
-
-                    tab.style.display = shouldShow ? 'flex' : 'none';
-                });
-
-                if (isManager) {
-                    initAcertoFilters();
-                    switchTab('items');
-                } else {
-                    document.getElementById('openAddItemModal').style.display = 'inline-flex';
-                }
-            };
-
-
-            // Carga Inicial
+            // --- Carga Inicial ---
             loadData();
-            if (currentUser.type === 'admin') {
-                initDashboardFilters();
-            }
+            initDashboardFilters();
             renderAll();
         }
     });
