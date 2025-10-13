@@ -48,43 +48,55 @@
             scrollbar-width: none;  /* Firefox */
         }
 
-        /* Responsive table for transactions */
-        @media (max-width: 767px) {
-            #transactions-list thead {
-                display: none;
-            }
-            #transactions-list tr {
-                display: block;
-                border: 1px solid #374151; /* gray-700 */
-                border-radius: 0.75rem; /* rounded-xl */
-                margin-bottom: 1rem;
-                background-color: #1f2937; /* gray-800 */
-            }
-            #transactions-list td {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.75rem 1rem;
-                text-align: right;
-                border-bottom: 1px solid #374151; /* gray-700 */
-            }
-            #transactions-list td:last-child {
-                border-bottom: 0;
-            }
-            #transactions-list td:before{
-                content: attr(data-label);
-                font-weight: 600;
-                text-align: left;
-                margin-right: 1rem;
-                color: #9ca3af; /* gray-400 */
-            }
-            #transactions-list .actions-cell {
-                justify-content: flex-end; /* Align buttons to the right */
-            }
-             #transactions-list .actions-cell:before {
-                margin-right: auto;
-             }
-        }
+    /* Responsive table for transactions */
+    @media (max-width: 767px) {
+    /* Faz o container da tabela ocupar a tela de lado a lado */
+    #finance-content .transactions-container {
+        margin-left: -0.5rem; /* Anula o padding lateral do container principal */
+        margin-right: -0.5rem;
+        border-radius: 0; /* Remove o arredondamento nas laterais */
+        box-shadow: none; /* Remove a sombra que fica cortada */
+    }
+    #transactions-list thead {
+        display: none;
+    }
+    #transactions-list tr {
+        display: block;
+        border-bottom: 1px solid #374151; /* Adiciona um separador fino */
+        padding: 1rem;
+        background-color: #1f2937; /* Mantém o fundo do "card" */
+    }
+    #transactions-list tr:first-child {
+       padding-top: 1.5rem; /* Mais espaço no topo do primeiro item */
+    }
+    #transactions-list tr:last-child {
+        border-bottom: 0; /* Remove a borda do último item */
+        padding-bottom: 1.5rem; /* Mais espaço abaixo do último item */
+    }
+    #transactions-list td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        text-align: right;
+        border-bottom: none; /* Remove a borda interna de cada célula */
+    }
+    #transactions-list td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        text-align: left;
+        margin-right: 1rem;
+        color: #9ca3af; /* gray-400 */
+    }
+    /* Ajusta a célula de ações */
+    #transactions-list .actions-cell {
+        padding-top: 0.75rem;
+    }
+    #transactions-list .actions-cell:before {
+        display: none; /* Oculta o label "Ações" que não é necessário aqui */
+    }
+}
+
         
         /* Bottom Nav Active State */
         .bottom-nav-btn.active-tab {
@@ -289,7 +301,7 @@
                  </div>
 
                  <h2 class="text-xl sm:text-2xl font-semibold mb-4">Histórico de Transações</h2>
-                 <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                 <div class="transactions-container bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                      <div class="overflow-x-auto">
                          <table class="w-full text-left">
                              <thead class="bg-gray-700">
