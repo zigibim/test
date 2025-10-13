@@ -1124,12 +1124,12 @@
                 sortedRentalsList.innerHTML += card;
             });
         };
-        
-        const renderTransactions = (transactionsToRender) => {
+   
+    const renderTransactions = (transactionsToRender) => {
     const list = document.getElementById('transactions-list');
     list.innerHTML = ''; // Limpa a lista
 
-    // Adiciona o cabeçalho para a visualização de desktop (agora usando Grid)
+    // Cabeçalho para Desktop
     const headerHTML = `
         <div class="hidden md:grid grid-cols-12 gap-4 items-center bg-gray-700 p-4 rounded-t-lg font-semibold text-sm text-gray-300">
             <div class="col-span-2">Data</div>
@@ -1154,7 +1154,7 @@
 
     sortedTransactions.forEach(t => {
         let typeClass = '', typeText = '', amountClass = '', amountPrefix = '';
-
+        
         if (t.type === 'revenue') {
             typeClass = 'bg-green-900 text-green-300'; typeText = 'Receita'; amountClass = 'text-green-400'; amountPrefix = '+';
         } else if (t.type === 'expense') {
@@ -1162,28 +1162,50 @@
         } else if (t.type === 'management_fee') {
             typeClass = 'bg-yellow-900 text-yellow-300'; typeText = 'Taxa Gerência'; amountClass = 'text-yellow-400'; amountPrefix = '-';
         }
+        
+        const item = t.itemId ? items.find(i => i.id === t.itemId) : null;
+        let mobileCardHTML = '';
 
-        let displayDescription = t.description;
-        if (t.type === 'revenue' && t.itemId && (t.description.startsWith('Recebimento aluguel:') || t.description === 'Recebimento de Aluguel')) {
-            const item = items.find(i => i.id === t.itemId);
-            if (item && item.rentedTo) {
-                displayDescription = `${item.name} - ${item.rentedTo}`;
-            }
+        // Cria o HTML para o card de celular com o novo layout
+        if (t.type === 'revenue' && item && item.rentedTo) {
+            // Layout específico para recebimento de aluguel
+            const itemIdentifierLabel = (item.category === 'Imóvel' && item.endereco) ? 'Endereço:' : 'Item:';
+            const itemIdentifierValue = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+
+            mobileCardHTML = `
+                <div class="space-y-1.5">
+                    <p class="text-sm text-gray-200 flex"><strong class="font-semibold text-gray-400 w-20 shrink-0">Inquilino:</strong> <span>${item.rentedTo}</span></p>
+                    <p class="text-sm text-gray-200 flex"><strong class="font-semibold text-gray-400 w-20 shrink-0">${itemIdentifierLabel}</strong> <span>${itemIdentifierValue}</span></p>
+                    <p class="text-sm text-gray-200 flex"><strong class="font-semibold text-gray-400 w-20 shrink-0">Data:</strong> <span>${formatDate(t.date)}</span></p>
+                    <p class="text-sm text-gray-200 flex"><strong class="font-semibold text-gray-400 w-20 shrink-0">Valor:</strong> <span class="font-semibold ${amountClass}">${amountPrefix} ${formatCurrency(t.amount)}</span></p>
+                </div>
+            `;
+        } else {
+            // Layout genérico para outras transações (despesas, etc.)
+             mobileCardHTML = `
+                <div class="space-y-2">
+                    <p class="text-lg font-bold text-white break-words">${t.description}</p>
+                    <div class="flex items-center justify-between text-sm pt-1">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass}">${typeText}</span>
+                        <span class="text-gray-400">${formatDate(t.date)}</span>
+                    </div>
+                    <p class="text-right text-lg font-semibold ${amountClass}">${amountPrefix} ${formatCurrency(t.amount)}</p>
+                </div>
+            `;
+        }
+
+        // Determina a descrição para o desktop (mantém a lógica anterior)
+        let displayDescriptionDesktop = t.description;
+        if (t.type === 'revenue' && item && item.rentedTo && (t.description.startsWith('Recebimento aluguel:') || t.description === 'Recebimento de Aluguel')) {
+            displayDescriptionDesktop = `${item.name} - ${item.rentedTo}`;
         }
 
         const transactionElement = document.createElement('div');
         transactionElement.innerHTML = `
             <!-- Card para Mobile -->
             <div class="md:hidden p-4 flex flex-col space-y-3 border-b border-gray-700 last:border-b-0">
-                <div class="flex justify-between items-start">
-                    <span class="font-bold text-lg text-white pr-4 break-words">${displayDescription}</span>
-                    <span class="font-semibold text-lg ${amountClass} whitespace-nowrap">${amountPrefix} ${formatCurrency(t.amount)}</span>
-                </div>
-                <div class="flex justify-between items-center text-sm">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass}">${typeText}</span>
-                    <span class="text-gray-400">${formatDate(t.date)}</span>
-                </div>
-                <div class="flex items-center justify-end space-x-2 pt-2">
+                ${mobileCardHTML}
+                <div class="flex items-center justify-end space-x-2 pt-1">
                     <button data-id="${t.id}" class="edit-transaction-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Transação"><i data-lucide="edit" class="h-5 w-5"></i></button>
                     <button data-id="${t.id}" class="delete-transaction-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Excluir Transação"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
                 </div>
@@ -1192,7 +1214,7 @@
             <!-- Linha para Desktop -->
             <div class="hidden md:grid grid-cols-12 gap-4 items-center p-4 border-b border-gray-700 last:border-b-0">
                 <div class="col-span-2 text-gray-300">${formatDate(t.date)}</div>
-                <div class="col-span-4 text-white break-words">${displayDescription}</div>
+                <div class="col-span-4 text-white break-words">${displayDescriptionDesktop}</div>
                 <div class="col-span-2"><span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass}">${typeText}</span></div>
                 <div class="col-span-2 text-right font-semibold ${amountClass}">${amountPrefix} ${formatCurrency(t.amount)}</div>
                 <div class="col-span-2">
@@ -1205,9 +1227,9 @@
         `;
         transactionsContainer.appendChild(transactionElement);
     });
-
+    
     list.appendChild(transactionsContainer);
-    };
+};
 
         const checkAlerts = () => {
             const container = document.getElementById('alerts-container');
