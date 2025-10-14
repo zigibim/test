@@ -1616,7 +1616,10 @@ const initAdvancedFilters = () => {
         const getTodayDateString = () => dateToYMD(new Date());
         const showModal = (modalId) => document.getElementById(modalId).classList.add('active');
         const hideModal = (modalId) => document.getElementById(modalId).classList.remove('active');
-
+        const autoResizeTextarea = (element) => {
+    element.style.height = 'auto'; // Reseta a altura para calcular o novo tamanho
+    element.style.height = (element.scrollHeight) + 'px'; // Ajusta a altura para o tamanho do conteúdo
+};
         const populateTransactionItemSelect = (selectElementId, selectedId) => {
     const select = document.getElementById(selectElementId);
     select.innerHTML = '<option value="">Nenhum / Outra</option>';
@@ -1873,6 +1876,9 @@ const initAdvancedFilters = () => {
         };
         
         // --- Handlers para Eventos ---
+        document.querySelectorAll('textarea').forEach(textarea => {
+    textarea.addEventListener('input', () => autoResizeTextarea(textarea));
+});
         document.body.addEventListener('click', (e) => { 
             const copyButton = e.target.closest('.copy-btn');
             if (copyButton) {
@@ -2149,6 +2155,7 @@ const initAdvancedFilters = () => {
                 const item = items.find(i => i.id === itemId);
                 document.getElementById('editItemId').value = item.id;
                 document.getElementById('editItemName').value = item.name; document.getElementById('editItemDescription').value = item.description;
+                setTimeout(() => autoResizeTextarea(editDescriptionTextarea), 0);
                 document.getElementById('editItemValue').value = item.value; document.getElementById('editItemPaymentFrequency').value = item.paymentFrequency;
                 const categorySelect = document.getElementById('editItemCategorySelect');
                 const otherWrapper = document.getElementById('editItemCategoryOtherWrapper'); const otherInput = document.getElementById('editItemCategoryOther'); const imovelWrapper = document.getElementById('editImovelFieldsWrapper');
