@@ -1125,7 +1125,7 @@
             });
         };
    
-        const renderTransactions = (transactionsToRender) => {
+    const renderTransactions = (transactionsToRender) => {
     const list = document.getElementById('transactions-list');
     list.innerHTML = ''; // Limpa a lista
 
@@ -1166,12 +1166,10 @@
         const item = t.itemId ? items.find(i => i.id === t.itemId) : null;
         let mobileCardHTML = '';
 
-        // Cria o HTML para o card de celular com o novo layout
+        // Cria o HTML para o card de celular
         if (t.type === 'revenue' && item && item.rentedTo) {
-            // Layout para recebimento de aluguel
             const itemIdentifierLabel = (item.category === 'Imóvel' && item.endereco) ? 'Endereço:' : 'Item:';
             const itemIdentifierValue = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-
             mobileCardHTML = `
                 <div class="space-y-1.5">
                     <p class="text-sm text-gray-200 flex"><strong class="font-semibold text-gray-400 w-20 shrink-0">Inquilino:</strong> <span>${item.rentedTo}</span></p>
@@ -1181,10 +1179,8 @@
                 </div>
             `;
         } else if (t.type === 'management_fee' && item) {
-            // Layout para taxa de gerência
             const itemIdentifierLabel = (item.category === 'Imóvel' && item.endereco) ? 'Endereço:' : 'Item:';
             const itemIdentifierValue = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-
             mobileCardHTML = `
                 <div class="space-y-1.5">
                     <p class="text-sm text-gray-200 flex"><strong class="font-semibold text-gray-400 w-24 shrink-0">Gerência:</strong> <span>${item.managerName || 'N/A'}</span></p>
@@ -1195,7 +1191,6 @@
                 </div>
             `;
         } else {
-            // Layout genérico para outras transações
              mobileCardHTML = `
                 <div class="space-y-2">
                     <p class="text-lg font-bold text-white break-words">${t.description}</p>
@@ -1208,10 +1203,18 @@
             `;
         }
 
-        // Determina a descrição para o desktop
-        let displayDescriptionDesktop = t.description;
-        if (t.type === 'revenue' && item && item.rentedTo && (t.description.startsWith('Recebimento aluguel:') || t.description === 'Recebimento de Aluguel')) {
-            displayDescriptionDesktop = `${item.name} - ${item.rentedTo}`;
+        // Determina a descrição para o desktop com a NOVA LÓGICA
+        let displayDescriptionDesktop = t.description; // Padrão
+        if (item) {
+            const itemIdentifier = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+
+            if (t.type === 'revenue' && item.rentedTo) {
+                // Formato para Receita: Inquilino - Endereço/Nome do Item
+                displayDescriptionDesktop = `${item.rentedTo} - ${itemIdentifier}`;
+            } else if (t.type === 'management_fee') {
+                // Formato para Taxa de Gerência: Gerência - Endereço/Nome do Item
+                displayDescriptionDesktop = `${item.managerName || 'Taxa'} - ${itemIdentifier}`;
+            }
         }
 
         const transactionElement = document.createElement('div');
