@@ -227,30 +227,52 @@
                  <!-- Filtros de Transações -->
                  <div class="bg-gray-800 p-4 rounded-xl mb-6">
                     <h3 class="text-lg font-semibold mb-3">Filtrar Transações</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                        <div class="sm:col-span-2 lg:col-span-2">
-                            <label for="filterDescription" class="block text-sm font-medium mb-1">Descrição</label>
-                            <input type="text" id="filterDescription" placeholder="Filtrar por descrição..." class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
-                        </div>
-                        <div>
-                            <label for="filterType" class="block text-sm font-medium mb-1">Tipo</label>
-                            <select id="filterType" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
-                                <option value="all">Todos</option>
-                                <option value="revenue">Receita</option>
-                                <option value="expense">Despesa</option>
-                                <option value="management_fee">Taxa de Gerência</option>
-                            </select>
-                        </div>
-                         <div class="flex items-end space-x-2">
-                            <div class="flex-grow">
-                                <label for="filterStartDate" class="block text-sm font-medium mb-1">A partir de</label>
-                                <input type="date" id="filterStartDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
-                            </div>
-                            <button id="clearFiltersBtn" title="Limpar Filtros" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-md text-sm">
-                                <i data-lucide="rotate-ccw" class="h-5 w-5"></i>
-                            </button>
-                        </div>
-                    </div>
+                    <div class="space-y-4">
+    <!-- Seção de Busca por Texto -->
+    <div>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 mb-3">
+            <label class="block text-sm font-medium text-gray-300 shrink-0">Buscar por:</label>
+            <div class="flex items-center">
+                <input id="filterByNameToggle" type="checkbox" data-target="filterByName" class="filter-toggle h-4 w-4 rounded border-gray-600 bg-gray-700 text-cyan-600 focus:ring-cyan-500">
+                <label for="filterByNameToggle" class="ml-2 text-sm text-gray-300">Nome do Inquilino</label>
+            </div>
+            <div class="flex items-center">
+                <input id="filterByItemToggle" type="checkbox" data-target="filterByItem" class="filter-toggle h-4 w-4 rounded border-gray-600 bg-gray-700 text-cyan-600 focus:ring-cyan-500">
+                <label for="filterByItemToggle" class="ml-2 text-sm text-gray-300">Item/Endereço</label>
+            </div>
+            <div class="flex items-center">
+                <input id="filterByDescriptionToggle" type="checkbox" data-target="filterByDescription" class="filter-toggle h-4 w-4 rounded border-gray-600 bg-gray-700 text-cyan-600 focus:ring-cyan-500">
+                <label for="filterByDescriptionToggle" class="ml-2 text-sm text-gray-300">Descrição Genérica</label>
+            </div>
+        </div>
+        <div class="space-y-3">
+            <input type="text" id="filterByName" placeholder="Digite o nome do inquilino..." class="filter-input hidden w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+            <input type="text" id="filterByItem" placeholder="Digite o nome do item ou endereço..." class="filter-input hidden w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+            <input type="text" id="filterByDescription" placeholder="Digite a descrição da transação..." class="filter-input hidden w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+        </div>
+    </div>
+    <!-- Seção de Outros Filtros -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-700 items-end">
+        <div>
+            <label for="filterType" class="block text-sm font-medium mb-1">Tipo de Transação</label>
+            <select id="filterType" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+                <option value="all">Todos</option>
+                <option value="revenue">Receita</option>
+                <option value="expense">Despesa</option>
+                <option value="management_fee">Taxa de Gerência</option>
+            </select>
+        </div>
+         <div class="flex items-end space-x-2">
+            <div class="flex-grow">
+                <label for="filterStartDate" class="block text-sm font-medium mb-1">A partir de</label>
+                <input type="date" id="filterStartDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+            </div>
+            <button id="clearFiltersBtn" title="Limpar Filtros" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-md text-sm">
+                <i data-lucide="rotate-ccw" class="h-5 w-5"></i>
+            </button>
+        </div>
+    </div>
+</div>
                  </div>
 
                  <h2 class="text-xl sm:text-2xl font-semibold mb-4">Histórico de Transações</h2>
@@ -1501,16 +1523,88 @@ const renderTransactions = (transactionsToRender) => {
         };
         
         const applyFiltersAndRender = () => {
-            const description = document.getElementById('filterDescription').value.toLowerCase();
-            const type = document.getElementById('filterType').value;
-            const startDate = document.getElementById('filterStartDate').value;
-            let filtered = transactions.filter(t => {
-                const tDate = new Date(t.date + 'T00:00:00');
-                const start = startDate ? new Date(startDate + 'T00:00:00') : null;
-                return t.description.toLowerCase().includes(description) && (type === 'all' || t.type === type) && (!start || tDate >= start);
+    const byNameActive = document.getElementById('filterByNameToggle').checked;
+    const byItemActive = document.getElementById('filterByItemToggle').checked;
+    const byDescriptionActive = document.getElementById('filterByDescriptionToggle').checked;
+
+    const nameQuery = document.getElementById('filterByName').value.toLowerCase();
+    const itemQuery = document.getElementById('filterByItem').value.toLowerCase();
+    const descriptionQuery = document.getElementById('filterByDescription').value.toLowerCase();
+
+    const type = document.getElementById('filterType').value;
+    const startDate = document.getElementById('filterStartDate').value;
+
+    let filtered = transactions.filter(t => {
+        const tDate = new Date(t.date + 'T00:00:00');
+        const start = startDate ? new Date(startDate + 'T00:00:00') : null;
+
+        if (type !== 'all' && t.type !== type) return false;
+        if (start && tDate < start) return false;
+
+        let nameMatch = !byNameActive || (nameQuery === '');
+        let itemMatch = !byItemActive || (itemQuery === '');
+        let descriptionMatch = !byDescriptionActive || (descriptionQuery === '');
+
+        if (!nameMatch || !itemMatch || !descriptionMatch) {
+            const item = t.itemId ? items.find(i => i.id === t.itemId) : null;
+
+            if (byNameActive && nameQuery !== '') {
+                nameMatch = item && item.rentedTo && item.rentedTo.toLowerCase().includes(nameQuery);
+            }
+
+            if (byItemActive && itemQuery !== '' && item) {
+                const itemNameMatches = item.name.toLowerCase().includes(itemQuery);
+                const addressMatches = item.endereco ? item.endereco.toLowerCase().includes(itemQuery) : false;
+                itemMatch = itemNameMatches || addressMatches;
+            }
+
+            if (byDescriptionActive && descriptionQuery !== '') {
+                descriptionMatch = t.description.toLowerCase().includes(descriptionQuery);
+            }
+        }
+
+        return nameMatch && itemMatch && descriptionMatch;
+    });
+    renderTransactions(filtered);
+};
+
+const initAdvancedFilters = () => {
+    const filterToggles = document.querySelectorAll('.filter-toggle');
+    const filterInputs = document.querySelectorAll('.filter-input');
+
+    const setupEventListeners = () => {
+         filterToggles.forEach(toggle => {
+            toggle.addEventListener('change', () => {
+                const targetInput = document.getElementById(toggle.dataset.target);
+                if (targetInput) {
+                    targetInput.classList.toggle('hidden', !toggle.checked);
+                    if(!toggle.checked) targetInput.value = '';
+                }
+                applyFiltersAndRender();
             });
-            renderTransactions(filtered);
-        };
+        });
+
+        filterInputs.forEach(input => input.addEventListener('input', applyFiltersAndRender));
+        document.getElementById('filterType').addEventListener('input', applyFiltersAndRender);
+        document.getElementById('filterStartDate').addEventListener('input', applyFiltersAndRender);
+
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            filterToggles.forEach(toggle => {
+                toggle.checked = false;
+                const targetInput = document.getElementById(toggle.dataset.target);
+                if (targetInput) {
+                    targetInput.value = '';
+                    targetInput.classList.add('hidden');
+                }
+            });
+            document.getElementById('filterType').value = 'all';
+            document.getElementById('filterStartDate').value = '';
+            applyFiltersAndRender();
+        });
+    };
+
+    setupEventListeners();
+};
 
         const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
         const formatDate = (dateString) => { if(!dateString) return ''; const date = new Date(dateString); return new Date(date.getTime() + (date.getTimezoneOffset() * 60000)).toLocaleDateString('pt-BR'); };
@@ -1868,8 +1962,8 @@ const renderTransactions = (transactionsToRender) => {
         document.getElementById('editItemCategorySelect').addEventListener('change', (e) => { document.getElementById('editItemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro'); document.getElementById('editImovelFieldsWrapper').classList.toggle('hidden', e.target.value !== 'Imóvel'); });
         document.querySelectorAll('.itemManagedBySelect').forEach(select => { select.addEventListener('change', (e) => { const wrapper = e.target.closest('form').querySelector('.itemManagerNameWrapper'); const feeWrapper = e.target.closest('form').querySelector('.itemFeeWrapper'); const show = e.target.value === 'imobiliaria' || e.target.value === 'outros'; wrapper.classList.toggle('hidden', !show); feeWrapper.classList.toggle('hidden', !show);}); });
         document.querySelectorAll('input[type="checkbox"][id$="HasManagementFee"]').forEach(checkbox => { checkbox.addEventListener('change', (e) => { const wrapper = e.target.closest('.itemFeeWrapper').querySelector('.itemFeePercentageWrapper'); wrapper.classList.toggle('hidden', !e.target.checked); }); });
-        ['filterDescription', 'filterType', 'filterStartDate'].forEach(id => { document.getElementById(id).addEventListener('input', applyFiltersAndRender); });
-        document.getElementById('clearFiltersBtn').addEventListener('click', () => { document.getElementById('filterDescription').value = ''; document.getElementById('filterType').value = 'all'; document.getElementById('filterStartDate').value = ''; applyFiltersAndRender(); });
+        
+
         document.getElementById('addTransactionModal').addEventListener('change', (e) => { if (e.target.id === 'addManagementFee') document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked); if (e.target.id === 'transactionItemLink') { const itemId = e.target.value; if (itemId) { const item = items.find(i => i.id === parseInt(itemId)); if (item) document.getElementById('transactionAmount').value = item.rentedTo ? item.rentValue : item.value; } } });
         document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => { const totalAmount = parseFloat(document.getElementById('transactionAmount').value); if (!isNaN(totalAmount) && totalAmount > 0) document.getElementById('managementFeeAmount').value = (totalAmount * 0.10).toFixed(2); });
         document.getElementById('setOneYearBtn').addEventListener('click', () => { const startDateInput = document.getElementById('rentStartDate'); if(startDateInput.value) { const startDate = new Date(startDateInput.value + "T00:00:00"); startDate.setFullYear(startDate.getFullYear() + 1); document.getElementById('rentEndDate').value = dateToYMD(startDate); } });
@@ -2421,6 +2515,7 @@ const renderTransactions = (transactionsToRender) => {
         // --- Carga Inicial ---
         loadData();
         initDashboardFilters();
+        initAdvancedFilters();
         renderAll();
     });
     </script>
