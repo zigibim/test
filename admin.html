@@ -226,7 +226,12 @@
 
                  <!-- Filtros de Transações -->
                  <div class="bg-gray-800 p-4 rounded-xl mb-6">
-                    <h3 class="text-lg font-semibold mb-3">Filtrar Transações</h3>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-semibold">Filtrar Transações</h3>
+                        <button id="clearFiltersBtn" title="Limpar Filtros" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-md text-sm">
+                            <i data-lucide="rotate-ccw" class="h-5 w-5"></i>
+                        </button>    
+                    </div>
                     <div class="space-y-4">
     <!-- Seção de Busca por Texto -->
     <div>
@@ -267,9 +272,7 @@
                 <label for="filterStartDate" class="block text-sm font-medium mb-1">A partir de</label>
                 <input type="date" id="filterStartDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
             </div>
-            <button id="clearFiltersBtn" title="Limpar Filtros" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-md text-sm">
-                <i data-lucide="rotate-ccw" class="h-5 w-5"></i>
-            </button>
+           
         </div>
     </div>
 </div>
