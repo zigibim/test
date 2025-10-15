@@ -549,51 +549,60 @@
     </div>
     
     <!-- Modal Adicionar Transação -->
-<div id="addTransactionModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
-    <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
-        <form id="addTransactionForm">
-            <h2 id="transactionModalTitle" class="text-2xl font-bold mb-4">Adicionar Transação</h2>
-            <input type="hidden" id="transactionType">
-            <div class="space-y-4">
-                <div>
-                    <label for="transactionItemLink" class="block mb-1 font-medium">Associar a um Item</label>
-                    <select id="transactionItemLink" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
-                        <!-- Options will be populated by JS -->
-                    </select>
-                </div>
-                <div>
-                    <label for="transactionDescription" class="block mb-1 font-medium">Descrição</label>
-                    <textarea id="transactionDescription" rows="1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 resize-none overflow-hidden" required></textarea>
-                </div>
-                <div>
-                    <label for="transactionAmount" class="block mb-1 font-medium">Valor (R$)</label>
-                    <input type="number" step="0.01" id="transactionAmount" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
-                </div>
-                <div>
-                    <label for="transactionDate" class="block mb-1 font-medium">Data</label>
-                    <input type="date" id="transactionDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
-                </div>
-                <div id="managementFeeContainer" class="border-t border-gray-700 pt-4 mt-4">
-                    <label class="flex items-center space-x-3 cursor-pointer">
-                        <input type="checkbox" id="addManagementFee" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
-                        <span>Incluir despesa de gerência (taxa)?</span>
-                    </label>
-                    <div id="managementFeeDiv" class="mt-3 hidden">
-                        <label for="managementFeeAmount" class="block mb-1 font-medium">Valor da Taxa de Gerência (R$)</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" step="0.01" id="managementFeeAmount" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
-                            <button type="button" id="setTenPercentFeeBtn" class="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-md text-sm whitespace-nowrap">10%</button>
-                        </div>
-                    </div>
-                </div>
+    <div id="addTransactionModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
+            <form id="addTransactionForm">
+                <h2 id="transactionModalTitle" class="text-2xl font-bold mb-4">Adicionar Transação</h2>
+                <input type="hidden" id="transactionType">
+                <div class="space-y-4">
+    <div>
+        <label for="transactionItemLink" class="block mb-1 font-medium">Associar a um Item</label>
+        <select id="transactionItemLink" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+            <!-- Options will be populated by JS -->
+        </select>
+    </div>
+    <div>
+        <label for="transactionDescription" class="block mb-1 font-medium">Descrição</label>
+        <textarea id="transactionDescription" rows="1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 resize-none overflow-hidden" required></textarea>
+    </div>
+    <div>
+        <label for="transactionAmount" class="block mb-1 font-medium">Valor (R$)</label>
+        <input type="number" step="0.01" id="transactionAmount" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+    </div>
+    
+
+    <!-- Campo para exibir Dívida Existente -->
+    <div id="debtInfoContainer" class="hidden bg-gray-900/50 p-3 rounded-md mt-2">
+        <label class="block text-sm font-medium text-yellow-400">Dívida Pendente</label>
+        <span id="debtAmountText" class="text-lg font-semibold text-red-400"></span>
+    </div>
+    <div>
+        <label for="transactionDate" class="block mb-1 font-medium">Data</label>
+        <input type="date" id="transactionDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+    </div>
+    <div id="managementFeeContainer" class="border-t border-gray-700 pt-4 mt-4">
+        <label class="flex items-center space-x-3 cursor-pointer">
+            <input type="checkbox" id="addManagementFee" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
+            <span>Incluir despesa de gerência (taxa)?</span>
+        </label>
+        <div id="managementFeeDiv" class="mt-3 hidden">
+            <label for="managementFeeAmount" class="block mb-1 font-medium">Valor da Taxa de Gerência (R$)</label>
+            <div class="flex items-center space-x-2">
+                <input type="number" step="0.01" id="managementFeeAmount" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+                <button type="button" id="setTenPercentFeeBtn" class="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-md text-sm whitespace-nowrap">10%</button>
             </div>
-            <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-2 space-y-reverse sm:space-y-0">
-                <button type="button" class="modal-close-btn w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
-                <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-md font-semibold">Salvar</button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
+
+                <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-2 space-y-reverse sm:space-y-0">
+                    <button type="button" class="modal-close-btn w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
+                    <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-md font-semibold">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <!-- Modal Editar Transação -->
     <div id="editTransactionModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
