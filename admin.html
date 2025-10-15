@@ -569,13 +569,7 @@
         <label for="transactionAmount" class="block mb-1 font-medium">Valor (R$)</label>
         <input type="number" step="0.01" id="transactionAmount" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
     </div>
-    <!-- Campo de Pagamento Parcial -->
-    <div id="partialPaymentContainer" class="hidden">
-        <label class="flex items-center space-x-3 cursor-pointer text-sm">
-            <input type="checkbox" id="isPartialPayment" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
-            <span>Marcar como pagamento parcial (gera dívida)</span>
-        </label>
-    </div>
+    
 
     <!-- Campo para exibir Dívida Existente -->
     <div id="debtInfoContainer" class="hidden bg-gray-900/50 p-3 rounded-md space-y-2">
@@ -1032,147 +1026,90 @@
         };
 
         const renderRentals = (rentedItemsToRender) => {
-            const sortedRentalsList = document.getElementById('sorted-rentals-list');
-            sortedRentalsList.innerHTML = '';
+    const sortedRentalsList = document.getElementById('sorted-rentals-list');
+    sortedRentalsList.innerHTML = '';
 
-            const rentedItems = rentedItemsToRender.filter(item => item.rentedTo);
-        
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+    const rentedItems = rentedItemsToRender.filter(item => item.rentedTo);
 
-            const getSortPriority = (item) => {
-                const endDate = new Date(item.rentEndDate + 'T00:00:00');
-                const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
-                const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
-                const isPaymentOverdue = today >= paymentDueDateThisMonth && !isPaidThisMonth;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-                if (today > endDate && !item.renewalPending) return { priority: 1, date: endDate };
-                
-                const startDate = new Date(item.rentStartDate + 'T00:00:00');
-                let firstPaymentDueDate = new Date(startDate);
-                if (item.paymentFrequency === 'monthly') {
-                    firstPaymentDueDate.setMonth(firstPaymentDueDate.getMonth() + 1);
-                    firstPaymentDueDate.setDate(item.paymentDay);
+    rentedItems.forEach(item => {
+        const endDate = new Date(item.rentEndDate + 'T00:00:00');
+        const isContractOverdue = today > endDate;
+
+        // Lógica para calcular meses/ciclos em atraso
+        let paymentStatusHTML = '';
+        const overdueMonths = [];
+        if (item.paymentFrequency === 'monthly') {
+            const startDate = new Date(item.rentStartDate + 'T00:00:00');
+            let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            while (checkDate <= today && checkDate <= endDate) {
+                const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
+                if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
+                    const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                    if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
+                        const monthName = checkDate.toLocaleString('pt-BR', { month: 'long' });
+                        overdueMonths.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
+                    }
                 }
-                if (isPaymentOverdue && today >= firstPaymentDueDate) return { priority: 2, date: paymentDueDateThisMonth };
-                if (item.renewalPending) return { priority: 3, date: endDate };
-                if (!isPaidThisMonth) return { priority: 4, date: paymentDueDateThisMonth };
-                if (isPaidThisMonth) return { priority: 5, date: endDate };
-
-                return { priority: 6, date: endDate };
-            };
-
-            rentedItems.sort((a, b) => {
-                const aSort = getSortPriority(a);
-                const bSort = getSortPriority(b);
-                if (aSort.priority !== bSort.priority) {
-                    return aSort.priority - bSort.priority;
-                }
-                return aSort.date - bSort.date;
-            });
-
-            if (rentedItems.length === 0) {
-                sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
-                return;
+                checkDate.setMonth(checkDate.getMonth() + 1);
             }
+        }
 
-            rentedItems.forEach(item => {
-                const actionButtons = `
-                    <div class="mt-4 flex justify-end items-center space-x-2">
-                        <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita">
-                            <i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita
-                        </button>
-                        <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
-                            <i data-lucide="file-signature" class="h-5 w-5"></i>
-                        </button>
-                        <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel">
-                            <i data-lucide="clipboard-edit" class="h-5 w-5"></i>
-                        </button>
-                        <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel">
-                            <i data-lucide="trash-2" class="h-5 w-5"></i>
-                        </button>
-                    </div>
-                `;
+        const overdueCycles = overdueMonths.length;
 
-                const endDate = new Date(item.rentEndDate + 'T00:00:00');
-                const isContractOverdue = today > endDate;
-                
-                let paymentStatusHTML = '';
-                const overdueMonths = [];
+        // Define a cor da borda e o status do pagamento
+        let borderColor = 'border-gray-600';
+        const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
 
-                if (item.paymentFrequency === 'monthly') {
-                    const startDate = new Date(item.rentStartDate + 'T00:00:00');
-                    let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        if (isContractOverdue && !item.renewalPending) borderColor = 'border-red-500';
+        else if (item.renewalPending) borderColor = 'border-pink-500';
+        else if (overdueCycles > 0 || (item.debt && item.debt.amount > 0)) borderColor = 'border-yellow-500';
+        else if (isPaidThisMonth) borderColor = 'border-green-500';
 
-                    while (checkDate <= today && checkDate <= endDate) {
-                        const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
-                        
-                        if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
-                            const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
-                            if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
-                                const monthName = checkDate.toLocaleString('pt-BR', { month: 'long' });
-                                overdueMonths.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
-                            }
-                        }
-                        checkDate.setMonth(checkDate.getMonth() + 1);
-                    }
-                }
+        if (isPaidThisMonth && overdueCycles === 0) {
+             const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
+             paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
+        }
 
-                const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
-
-                let borderColor = 'border-gray-600';
-                if (isContractOverdue && !item.renewalPending) borderColor = 'border-red-500';
-                else if (item.renewalPending) borderColor = 'border-pink-500';
-                else if (overdueMonths.length > 0) borderColor = 'border-yellow-500';
-                else if (isPaidThisMonth) borderColor = 'border-green-500';
-
-                if (overdueMonths.length > 0) {
-                    const debtCount = overdueMonths.length;
-                    paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-yellow-900 text-yellow-300 px-2 py-1 rounded-full">Vencido (${overdueMonths.join(', ')}) (${debtCount} débito${debtCount > 1 ? 's' : ''})</span></p>`;
-                } else if (isPaidThisMonth) {
-                    const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
-                    paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
-                }
-                
-                let managementInfoHTML = '';
-                if (item.category === 'Imóvel' && item.managedBy) {
-                    if (item.managedBy === 'particular') {
-                        managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> Particular</p>`;
-                    } else if ((item.managedBy === 'imobiliaria' || item.managedBy === 'outros') && item.managerName) {
-                        managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> ${item.managerName} (${item.managedBy.charAt(0).toUpperCase() + item.managedBy.slice(1)})</p>`;
-                    }
-                }
-
-                const card = `
-                    <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
-                        <div class="flex-grow">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="font-bold text-lg">${item.name}</h3>
-                                    <p class="text-sm text-gray-400">${item.category}</p>
-                                </div>
-                                <div>
-                                    <span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span>
-                                    ${item.debt && item.debt.amount > 0 ? `<p class="text-xs text-red-400 font-semibold">Dívida: ${formatCurrency(item.debt.amount)}</p>` : ''}
-                                </div>
-                            </div>
-                            <div class="mt-3 text-sm space-y-1">
-                                <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
-                                ${managementInfoHTML}
-                                <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
-                                <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
-                                ${item.debt && item.debt.cycles > 0 ? `<p class="text-red-400"><strong class="font-semibold">Atrasado:</strong> ${item.debt.cycles} ciclo(s)</p>` : ''}
-                                ${paymentStatusHTML}
-                            </div>
+        // Monta o HTML do card
+        const card = `
+            <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
+                <div class="flex-grow">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg">${item.name}</h3>
+                            <p class="text-sm text-gray-400">${item.category}</p>
                         </div>
-                        ${actionButtons}
+                        <div>
+                            <span class="text-lg font-semibold text-right block">${formatCurrency(item.rentValue)}</span>
+                            ${item.debt && item.debt.amount > 0 ? `<p class="text-xs text-red-400 font-semibold text-right">Dívida: ${formatCurrency(item.debt.amount)}</p>` : ''}
+                        </div>
                     </div>
-                `;
-                sortedRentalsList.innerHTML += card;
-            });
-        };
+                    <div class="mt-3 text-sm space-y-1">
+                        <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
+                        <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
+                        <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                        ${overdueCycles > 0 ? `<p class="text-red-400"><strong class="font-semibold">Atrasado:</strong> ${overdueCycles} ciclo(s)</p>` : ''}
+                        ${paymentStatusHTML}
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end items-center space-x-2">
+                     <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita"><i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita</button>
+                     <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel"><i data-lucide="clipboard-edit" class="h-5 w-5"></i></button>
+                     <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
+                </div>
+            </div>
+        `;
+        sortedRentalsList.innerHTML += card;
+    });
+
+     if (rentedItems.length === 0) {
+        sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
+    }
+};
    
 
 
@@ -1716,7 +1653,7 @@ const initAdvancedFilters = () => {
                 item.tenantPhone = null;
                 item.tenantCPF = null;
                 item.paymentsMade = [];
-                item.debt = { amount: 0, cycles: 0 };
+                item.debt = { amount: 0 };
             }
         };
         
@@ -2332,7 +2269,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
             item.lastPaymentAlertDate = null;
             item.endOfContractNotified = false;
             item.renewalPending = false;
-            item.debt = { amount: 0, cycles: 0 };
+            item.debt = { amount: 0 };
             
             saveData();
             renderAll();
@@ -2340,13 +2277,12 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
             rentItemForm.reset();
         });
 
-        addTransactionForm.addEventListener('submit', (e) => {
+       addTransactionForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const selectedItemId = document.getElementById('transactionItemLink').value;
     const description = document.getElementById('transactionDescription').value;
     const amountPaid = parseFloat(document.getElementById('transactionAmount').value);
     const transactionDate = document.getElementById('transactionDate').value;
-    const isPartial = document.getElementById('isPartialPayment').checked;
     let finalDescription = description;
 
     if (selectedItemId && description.startsWith('Recebimento aluguel:')) {
@@ -2365,28 +2301,22 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
     if (newTransaction.type === 'revenue' && selectedItemId) {
         const item = items.find(i => i.id === parseInt(selectedItemId));
         if (item && item.rentedTo) {
-            // Inicializa o objeto de dívida se não existir (garantia extra)
-            if (!item.debt) {
-                item.debt = { amount: 0, cycles: 0 };
+            if (!item.debt) item.debt = { amount: 0 }; // Garante que a dívida exista
+
+            const difference = item.rentValue - amountPaid;
+
+            // Se pagou menos, adiciona a diferença à dívida
+            if (difference > 0) {
+                item.debt.amount += difference;
+            } 
+            // Se pagou a mais e tem dívida, abate o valor extra
+            else if (difference < 0 && item.debt.amount > 0) {
+                const surplus = -difference; // Valor extra pago
+                item.debt.amount -= surplus;
+                if (item.debt.amount < 0) item.debt.amount = 0; // Garante que a dívida não fique negativa
             }
 
-            // Lógica de Pagamento Parcial
-            if (isPartial) {
-                const difference = item.rentValue - amountPaid;
-                if (difference > 0) {
-                    item.debt.amount += difference;
-                    item.debt.cycles += 1;
-                }
-            // Se não for parcial e houver dívida, tenta abater
-            } else if (item.debt.amount > 0) {
-                const surplus = amountPaid - item.rentValue;
-                if (surplus > 0) {
-                    item.debt.amount -= surplus;
-                    if (item.debt.amount < 0) item.debt.amount = 0;
-                }
-            }
-
-            // Marca o período como pago, independentemente de ser parcial
+            // Marca o período como pago para não gerar novos alertas
             const paymentPeriod = `${new Date(transactionDate + 'T00:00:00').getFullYear()}-${String(new Date(transactionDate + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
             if (!item.paymentsMade) item.paymentsMade = [];
             if (!item.paymentsMade.includes(paymentPeriod)) item.paymentsMade.push(paymentPeriod);
@@ -2395,6 +2325,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 
     transactions.push(newTransaction);
 
+    // Lógica da taxa de gerência (não muda)
     const addFee = document.getElementById('addManagementFee').checked;
     const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
     if (addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
