@@ -1608,6 +1608,15 @@ const initAdvancedFilters = () => {
     element.style.height = 'auto'; // Reseta a altura para calcular o novo tamanho
     element.style.height = (element.scrollHeight) + 'px'; // Ajusta a altura para o tamanho do conteúdo
 };
+const checkAndDisplayDebt = (item) => {
+    const debtDisplay = document.getElementById('debtAmountDisplay');
+    if (item && item.debt && item.debt.amount > 0) {
+        debtDisplay.textContent = `Dívida: ${formatCurrency(item.debt.amount)}`;
+        debtDisplay.classList.remove('hidden');
+    } else {
+        debtDisplay.classList.add('hidden');
+    }
+};
         const populateTransactionItemSelect = (selectElementId, selectedId) => {
     const select = document.getElementById(selectElementId);
     select.innerHTML = '<option value="">Nenhum / Outra</option>';
@@ -1973,21 +1982,13 @@ const initAdvancedFilters = () => {
     if (e.target.id === 'transactionItemLink') {
     const itemId = e.target.value;
     const debtDisplay = document.getElementById('debtAmountDisplay');
-
-    // Sempre começa escondendo a informação de dívida
-    debtDisplay.classList.add('hidden');
+    debtDisplay.classList.add('hidden'); // Reseta a exibição
 
     if (itemId) {
         const item = items.find(i => i.id === parseInt(itemId));
         if (item && item.rentedTo) {
-            // Preenche o valor padrão do aluguel
             document.getElementById('transactionAmount').value = item.rentValue;
-
-            // VERIFICA SE HÁ DÍVIDA E MOSTRA A INFORMAÇÃO
-            if (item.debt && item.debt.amount > 0) {
-                debtDisplay.textContent = `Dívida: ${formatCurrency(item.debt.amount)}`;
-                debtDisplay.classList.remove('hidden');
-            }
+            checkAndDisplayDebt(item); // Chama a nova função
         }
     }
 }
@@ -2149,6 +2150,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                 populateTransactionItemSelect('transactionItemLink', item.id);
                 document.getElementById('transactionDescription').value = `Recebimento aluguel: ${item.name}`;
                 document.getElementById('transactionAmount').value = item.rentValue;
+                checkAndDisplayDebt(item);
                 
                 if (item.hasManagementFee && item.managementFeePercentage > 0) {
                     const feeCheckbox = document.getElementById('addManagementFee');
