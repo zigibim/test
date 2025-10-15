@@ -573,14 +573,14 @@
 
     <!-- Campo para exibir Dívida Existente -->
     <div id="debtInfoContainer" class="hidden bg-gray-900/50 p-3 rounded-md space-y-2">
-        <label class="block text-sm font-medium text-yellow-400">Dívida Pendente</label>
-        <div class="flex items-center justify-between">
-            <span id="debtAmountText" class="text-lg font-semibold text-red-400"></span>
-            <button type="button" id="forgiveDebtBtn" title="Perdoar Dívida" class="text-gray-400 hover:text-red-500 p-1 rounded-full">
-                <i data-lucide="trash-2" class="h-5 w-5"></i>
-            </button>
-        </div>
+    <label class="block text-sm font-medium text-yellow-400">Dívida Pendente</label>
+    <div class="flex items-center justify-between">
+        <span id="debtAmountText" class="text-lg font-semibold text-red-400"></span>
+        <button type="button" id="forgiveDebtBtn" title="Perdoar Dívida" class="text-gray-400 hover:text-red-500 p-1 rounded-full">
+            <i data-lucide="trash-2" class="h-5 w-5"></i>
+        </button>
     </div>
+</div>
     <div>
         <label for="transactionDate" class="block mb-1 font-medium">Data</label>
         <input type="date" id="transactionDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
@@ -1961,21 +1961,23 @@ const initAdvancedFilters = () => {
         
 
         document.getElementById('addTransactionModal').addEventListener('change', (e) => {
+    // Mostra/esconde o campo de valor da taxa de gerência
     if (e.target.id === 'addManagementFee') {
         document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked);
     }
 
+    // Atualiza o modal quando um item é selecionado
     if (e.target.id === 'transactionItemLink') {
         const itemId = e.target.value;
-        const partialPaymentContainer = document.getElementById('partialPaymentContainer');
         const debtInfoContainer = document.getElementById('debtInfoContainer');
 
         if (itemId) {
             const item = items.find(i => i.id === parseInt(itemId));
             if (item && item.rentedTo) {
+                // Preenche o valor padrão do aluguel
                 document.getElementById('transactionAmount').value = item.rentValue;
-                partialPaymentContainer.classList.remove('hidden');
 
+                // Verifica se há dívida e mostra a informação
                 if (item.debt && item.debt.amount > 0) {
                     document.getElementById('debtAmountText').textContent = formatCurrency(item.debt.amount);
                     debtInfoContainer.classList.remove('hidden');
@@ -1984,10 +1986,27 @@ const initAdvancedFilters = () => {
                 }
             }
         } else {
-            partialPaymentContainer.classList.add('hidden');
+            // Esconde a informação de dívida se nenhum item for selecionado
             debtInfoContainer.classList.add('hidden');
         }
     }
+});
+
+// Adiciona o listener para o botão de perdoar dívida
+document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
+    const itemId = document.getElementById('transactionItemLink').value;
+    if (!itemId) return; // Não faz nada se nenhum item estiver selecionado
+
+    // Pede confirmação ao usuário
+    showConfirmModal('Perdoar Dívida', 'Você tem certeza que deseja zerar a dívida deste item? Esta ação não pode ser desfeita.', () => {
+        const item = items.find(i => i.id === parseInt(itemId));
+        if (item) {
+            item.debt = { amount: 0 }; // Zera a dívida
+            saveData();
+            renderAll(); // Atualiza toda a interface
+            document.getElementById('debtInfoContainer').classList.add('hidden'); // Esconde o campo no modal
+        }
+    });
 });
 
 // Lógica para o botão de perdoar dívida
