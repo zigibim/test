@@ -1034,47 +1034,75 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Lógica para calcular os ciclos de pagamento em atraso
+    const calculateOverdueCycles = (item) => {
+        if (item.paymentFrequency !== 'monthly') return 0;
+
+        const overdueMonths = [];
+        const startDate = new Date(item.rentStartDate + 'T00:00:00');
+        const endDate = new Date(item.rentEndDate + 'T00:00:00');
+        let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+        while (checkDate <= today && checkDate <= endDate) {
+            const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
+            if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
+                const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
+                    overdueMonths.push(periodString);
+                }
+            }
+            checkDate.setMonth(checkDate.getMonth() + 1);
+        }
+        return overdueMonths.length;
+    };
+
+    // Atribui prioridade para ordenação
+    rentedItems.forEach(item => {
+        const endDate = new Date(item.rentEndDate + 'T00:00:00');
+        const overdueCycles = calculateOverdueCycles(item);
+        item.overdueCycles = overdueCycles; // Armazena para usar na renderização
+
+        if (today > endDate && !item.renewalPending) item.sortPriority = 1; // Contrato Vencido
+        else if (overdueCycles > 0) item.sortPriority = 2; // Pagamento Atrasado
+        else if (item.debt && item.debt.amount > 0) item.sortPriority = 3; // Dívida Pendente (pagamento parcial)
+        else if (item.renewalPending) item.sortPriority = 4; // Renovação Pendente
+        else item.sortPriority = 5; // Em dia ou aguardando pagamento
+    });
+
+    // Ordena a lista com base na prioridade e data de vencimento
+    rentedItems.sort((a, b) => {
+        if (a.sortPriority !== b.sortPriority) {
+            return a.sortPriority - b.sortPriority;
+        }
+        // Se a prioridade for a mesma, ordena pelo dia de pagamento do mês atual
+        const aDueDate = new Date(today.getFullYear(), today.getMonth(), a.paymentDay);
+        const bDueDate = new Date(today.getFullYear(), today.getMonth(), b.paymentDay);
+        return aDueDate - bDueDate;
+    });
+
+    if (rentedItems.length === 0) {
+        sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
+        return;
+    }
+
     rentedItems.forEach(item => {
         const endDate = new Date(item.rentEndDate + 'T00:00:00');
         const isContractOverdue = today > endDate;
-
-        // Lógica para calcular meses/ciclos em atraso
-        let paymentStatusHTML = '';
-        const overdueMonths = [];
-        if (item.paymentFrequency === 'monthly') {
-            const startDate = new Date(item.rentStartDate + 'T00:00:00');
-            let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-            while (checkDate <= today && checkDate <= endDate) {
-                const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
-                if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
-                    const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
-                    if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
-                        const monthName = checkDate.toLocaleString('pt-BR', { month: 'long' });
-                        overdueMonths.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
-                    }
-                }
-                checkDate.setMonth(checkDate.getMonth() + 1);
-            }
-        }
-
-        const overdueCycles = overdueMonths.length;
-
-        // Define a cor da borda e o status do pagamento
-        let borderColor = 'border-gray-600';
         const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
 
+        let borderColor = 'border-gray-600';
         if (isContractOverdue && !item.renewalPending) borderColor = 'border-red-500';
         else if (item.renewalPending) borderColor = 'border-pink-500';
-        else if (overdueCycles > 0 || (item.debt && item.debt.amount > 0)) borderColor = 'border-yellow-500';
+        else if (item.overdueCycles > 0 || (item.debt && item.debt.amount > 0)) borderColor = 'border-yellow-500';
         else if (isPaidThisMonth) borderColor = 'border-green-500';
 
-        if (isPaidThisMonth && overdueCycles === 0) {
+        let paymentStatusHTML = '';
+        if (isPaidThisMonth && item.overdueCycles === 0 && (!item.debt || item.debt.amount === 0)) {
              const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
              paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
         }
 
-        // Monta o HTML do card
         const card = `
             <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
                 <div class="flex-grow">
@@ -1092,7 +1120,7 @@
                         <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
                         <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
                         <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
-                        ${overdueCycles > 0 ? `<p class="text-red-400"><strong class="font-semibold">Atrasado:</strong> ${overdueCycles} ciclo(s)</p>` : ''}
+                        ${item.overdueCycles > 0 ? `<p class="text-red-400"><strong class="font-semibold">Atrasado:</strong> ${item.overdueCycles} ciclo(s)</p>` : ''}
                         ${paymentStatusHTML}
                     </div>
                 </div>
@@ -1106,9 +1134,7 @@
         sortedRentalsList.innerHTML += card;
     });
 
-     if (rentedItems.length === 0) {
-        sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
-    }
+    lucide.createIcons();
 };
    
 
