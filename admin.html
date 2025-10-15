@@ -1716,6 +1716,7 @@ const initAdvancedFilters = () => {
                 item.tenantPhone = null;
                 item.tenantCPF = null;
                 item.paymentsMade = [];
+                item.debt = { amount: 0, cycles: 0 };
             }
         };
         
@@ -2331,6 +2332,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
             item.lastPaymentAlertDate = null;
             item.endOfContractNotified = false;
             item.renewalPending = false;
+            item.debt = { amount: 0, cycles: 0 };
             
             saveData();
             renderAll();
@@ -2363,7 +2365,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
     if (newTransaction.type === 'revenue' && selectedItemId) {
         const item = items.find(i => i.id === parseInt(selectedItemId));
         if (item && item.rentedTo) {
-            // Inicializa o objeto de dívida se não existir
+            // Inicializa o objeto de dívida se não existir (garantia extra)
             if (!item.debt) {
                 item.debt = { amount: 0, cycles: 0 };
             }
@@ -2375,10 +2377,10 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                     item.debt.amount += difference;
                     item.debt.cycles += 1;
                 }
-            } else {
-                // Lógica de Pagamento Completo ou com Abatimento de Dívida
-                if (amountPaid > item.rentValue && item.debt.amount > 0) {
-                    const surplus = amountPaid - item.rentValue;
+            // Se não for parcial e houver dívida, tenta abater
+            } else if (item.debt.amount > 0) {
+                const surplus = amountPaid - item.rentValue;
+                if (surplus > 0) {
                     item.debt.amount -= surplus;
                     if (item.debt.amount < 0) item.debt.amount = 0;
                 }
@@ -2393,7 +2395,6 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 
     transactions.push(newTransaction);
 
-    // Lógica da taxa de gerência (permanece a mesma)
     const addFee = document.getElementById('addManagementFee').checked;
     const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
     if (addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
