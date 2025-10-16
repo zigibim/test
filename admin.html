@@ -2334,33 +2334,39 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 if (deleteTransactionButton) {
     const transactionId = parseInt(deleteTransactionButton.dataset.id);
     const transaction = transactions.find(t => t.id === transactionId);
-    if (!transaction) return; // Checagem de segurança
+    if (!transaction) return; // Checagem de segurança para evitar erros
 
     showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
         const txToDelete = transactions.find(t => t.id === transactionId);
 
-        // Se a transação for uma receita de um item alugado, precisamos reverter o status de pagamento
+        // Se a transação for uma receita de um item alugado, precisamos reverter o estado.
         if (txToDelete && txToDelete.type === 'revenue' && txToDelete.itemId) {
             const item = items.find(i => i.id === txToDelete.itemId);
             if (item && item.rentedTo) {
 
-                // Lógica para reverter dívida (se aplicável)
+                // Passo 1: Reverter o cálculo da dívida (se houver)
                 if (item.debt) {
                     const amountDeleted = txToDelete.amount;
                     const rentValue = item.rentValue;
                     const difference = rentValue - amountDeleted;
 
-                    if (difference > 0) { // O pagamento apagado era parcial e gerou dívida. Revertemos.
+                    // Se o pagamento apagado era PARCIAL, ele GEROU uma dívida. Agora, removemos essa dívida.
+                    if (difference > 0) {
                         item.debt.amount -= difference;
-                    } else if (difference < 0) { // O pagamento apagado era maior e abateu dívida. Restauramos.
-                        const surplus = -difference;
+                    } 
+                    // Se o pagamento apagado era MAIOR que o aluguel, ele REDUZIU uma dívida. Agora, restauramos esse valor.
+                    else if (difference < 0) {
+                        const surplus = -difference; // O valor excedente que foi pago
                         item.debt.amount += surplus;
                     }
 
-                    if (item.debt.amount < 0.005) { item.debt.amount = 0; }
+                    // Garante que a dívida não fique com valor negativo por erros de arredondamento.
+                    if (item.debt.amount < 0.01) {
+                        item.debt.amount = 0;
+                    }
                 }
 
-                // LÓGICA CORRIGIDA: Verifica se existem OUTROS pagamentos para o mesmo item no mesmo mês.
+                // Passo 2 (CRUCIAL): Verificar se existem OUTROS pagamentos no mesmo mês.
                 const transactionDate = new Date(txToDelete.date + 'T00:00:00');
                 const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -2371,7 +2377,8 @@ if (deleteTransactionButton) {
                     `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
                 );
 
-                // Se NÃO houver outros pagamentos, desmarca o mês como "pago".
+                // Passo 3: Se NÃO houver outros pagamentos, desmarca o mês como "pago".
+                // É ISSO QUE FAZ O ITEM VOLTAR A SER PENDENTE.
                 if (!otherPaymentsInPeriod && item.paymentsMade) {
                     const index = item.paymentsMade.indexOf(paymentPeriod);
                     if (index > -1) {
@@ -2381,7 +2388,7 @@ if (deleteTransactionButton) {
             }
         }
 
-        // Finalmente, remove a transação da lista
+        // Passo 4: Finalmente, remove a transação da lista
         transactions = transactions.filter(t => t.id !== transactionId);
 
         saveData();
