@@ -2450,13 +2450,12 @@ if (deleteTransactionButton) {
 
             const difference = item.rentValue - amountPaid;
 
-            // Se pagou menos, adiciona a diferença à dívida e incrementa o ciclo
-            if (difference > 0) {
+            // LÓGICA CORRIGIDA
+            if (difference > 0) { // Se pagou menos, cria/aumenta a dívida
                 item.debt.amount += difference;
-                item.debt.cycles += 1; // Incrementa o contador de ciclos
-            } 
-            // Se pagou a mais e tem dívida, abate o valor extra
-            else if (difference < 0 && item.debt.amount > 0) {
+                // Garante que o contador comece em 1
+                item.debt.cycles = (item.debt.cycles || 0) + 1; 
+            } else if (difference < 0 && item.debt.amount > 0) { // Se pagou a mais e tem dívida, abate
                 const surplus = -difference;
                 item.debt.amount -= surplus;
                 if (item.debt.amount < 0.01) {
