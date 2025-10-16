@@ -1068,16 +1068,15 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Lógica para calcular os ciclos de pagamento em atraso
+    // Lógica para calcular os ciclos de pagamento em atraso de meses anteriores
     const calculateOverdueCycles = (item) => {
         if (item.paymentFrequency !== 'monthly') return 0;
-
         const overdueMonths = [];
         const startDate = new Date(item.rentStartDate + 'T00:00:00');
         const endDate = new Date(item.rentEndDate + 'T00:00:00');
         let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
-        while (checkDate <= today && checkDate <= endDate) {
+        while (checkDate < new Date(today.getFullYear(), today.getMonth(), 1) && checkDate <= endDate) {
             const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
             if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
                 const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
@@ -1090,28 +1089,31 @@
         return overdueMonths.length;
     };
 
-    // Atribui prioridade para ordenação
+    // Atribui uma pontuação de prioridade para cada item
     rentedItems.forEach(item => {
         const endDate = new Date(item.rentEndDate + 'T00:00:00');
         const overdueCycles = calculateOverdueCycles(item);
-        item.overdueCycles = overdueCycles; // Armazena para usar na renderização
+        item.overdueCycles = overdueCycles; 
 
-        if (today > endDate && !item.renewalPending) item.sortPriority = 1; // Contrato Vencido
-        else if (overdueCycles > 0) item.sortPriority = 2; // Pagamento Atrasado
-        else if (item.debt && item.debt.amount > 0) item.sortPriority = 3; // Dívida Pendente (pagamento parcial)
-        else if (item.renewalPending) item.sortPriority = 4; // Renovação Pendente
-        else item.sortPriority = 5; // Em dia ou aguardando pagamento
+        const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+        const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+
+        if (today > endDate && !item.renewalPending) item.sortPriority = 1; // 1. Contrato Vencido (Máxima prioridade)
+        else if (overdueCycles > 0) item.sortPriority = 2; // 2. Atraso de meses anteriores
+        else if (today >= paymentDueDateThisMonth && !isPaidThisMonth) item.sortPriority = 3; // 3. Pagamento do mês atual VENCIDO
+        else if (item.debt && item.debt.amount > 0) item.sortPriority = 4; // 4. Dívida pendente (de pagamentos parciais)
+        else if (item.renewalPending) item.sortPriority = 5; // 5. Renovação marcada como pendente
+        else if (!isPaidThisMonth) item.sortPriority = 6; // 6. Pagamento do mês atual AINDA NÃO VENCEU
+        else item.sortPriority = 7; // 7. Tudo em dia, pago (Mínima prioridade)
     });
 
-    // Ordena a lista com base na prioridade e data de vencimento
+    // Ordena a lista: primeiro pela prioridade, depois pelo dia de pagamento
     rentedItems.sort((a, b) => {
         if (a.sortPriority !== b.sortPriority) {
             return a.sortPriority - b.sortPriority;
         }
-        // Se a prioridade for a mesma, ordena pelo dia de pagamento do mês atual
-        const aDueDate = new Date(today.getFullYear(), today.getMonth(), a.paymentDay);
-        const bDueDate = new Date(today.getFullYear(), today.getMonth(), b.paymentDay);
-        return aDueDate - bDueDate;
+        return a.paymentDay - b.paymentDay;
     });
 
     if (rentedItems.length === 0) {
@@ -1120,16 +1122,16 @@
     }
 
     rentedItems.forEach(item => {
+        // A lógica de renderização do card permanece a mesma
         const endDate = new Date(item.rentEndDate + 'T00:00:00');
         const isContractOverdue = today > endDate;
-        const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+        const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
 
         let borderColor = 'border-gray-600';
-        if (isContractOverdue && !item.renewalPending) borderColor = 'border-red-500';
-        else if (item.renewalPending) borderColor = 'border-pink-500';
-        else if (item.overdueCycles > 0 || (item.debt && item.debt.amount > 0)) borderColor = 'border-yellow-500';
-        else if (isPaidThisMonth) borderColor = 'border-green-500';
+        if (item.sortPriority === 1) borderColor = 'border-red-500';
+        else if (item.sortPriority === 5) borderColor = 'border-pink-500';
+        else if (item.sortPriority >= 2 && item.sortPriority <= 4) borderColor = 'border-yellow-500';
+        else if (item.sortPriority === 7) borderColor = 'border-green-500';
 
         let paymentStatusHTML = '';
         if (isPaidThisMonth && item.overdueCycles === 0 && (!item.debt || item.debt.amount === 0)) {
