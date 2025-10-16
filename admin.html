@@ -1149,7 +1149,7 @@
                         </div>
                         <div>
                             <span class="text-lg font-semibold text-right block">${formatCurrency(item.rentValue)}</span>
-                            ${item.debt && item.debt.amount > 0 ? `<button data-id="${item.id}" class="manage-debt-btn text-xs text-red-400 font-semibold text-right w-full hover:bg-red-900/50 rounded-md px-1 py-0.5">Dívida: ${formatCurrency(item.debt.amount)}</button>` : ''}
+                            ${item.debt && item.debt.amount > 0 ? `<button data-id="${item.id}" class="manage-debt-btn text-xs text-red-400 font-semibold text-right w-full hover:bg-red-900/50 rounded-md px-1 py-0.5">Dívida: ${item.debt.cycles} - ${formatCurrency(item.debt.amount)}</button>` : ''}
                         </div>
                     </div>
                     <div class="mt-3 text-sm space-y-1">
@@ -1724,7 +1724,7 @@ const checkAndDisplayDebt = (item) => {
                 item.tenantPhone = null;
                 item.tenantCPF = null;
                 item.paymentsMade = [];
-                item.debt = { amount: 0 };
+                item.debt = { amount: 0, cycles: 0 };
             }
         };
         
@@ -2081,7 +2081,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
     showConfirmModal('Perdoar Dívida', 'Você tem certeza que deseja zerar a dívida deste item? Esta ação não pode ser desfeita.', () => {
         const item = items.find(i => i.id === parseInt(itemId));
         if (item) {
-            item.debt = { amount: 0 }; // Zera a dívida
+           item.debt = { amount: 0, cycles: 0 }; // Zera a dívida
             saveData();
             renderAll(); // Atualiza toda a interface
             document.getElementById('debtInfoContainer').classList.add('hidden'); // Esconde o campo no modal
@@ -2414,7 +2414,7 @@ if (deleteTransactionButton) {
             item.lastPaymentAlertDate = null;
             item.endOfContractNotified = false;
             item.renewalPending = false;
-            item.debt = { amount: 0 };
+            item.debt = { amount: 0, cycles: 0 };
             
             saveData();
             renderAll();
@@ -2446,22 +2446,25 @@ if (deleteTransactionButton) {
     if (newTransaction.type === 'revenue' && selectedItemId) {
         const item = items.find(i => i.id === parseInt(selectedItemId));
         if (item && item.rentedTo) {
-            if (!item.debt) item.debt = { amount: 0 }; // Garante que a dívida exista
+            if (!item.debt) item.debt = { amount: 0, cycles: 0 };
 
             const difference = item.rentValue - amountPaid;
 
-            // Se pagou menos, adiciona a diferença à dívida
+            // Se pagou menos, adiciona a diferença à dívida e incrementa o ciclo
             if (difference > 0) {
                 item.debt.amount += difference;
+                item.debt.cycles += 1; // Incrementa o contador de ciclos
             } 
             // Se pagou a mais e tem dívida, abate o valor extra
             else if (difference < 0 && item.debt.amount > 0) {
-                const surplus = -difference; // Valor extra pago
+                const surplus = -difference;
                 item.debt.amount -= surplus;
-                if (item.debt.amount < 0) item.debt.amount = 0; // Garante que a dívida não fique negativa
+                if (item.debt.amount < 0.01) {
+                    item.debt.amount = 0;
+                    item.debt.cycles = 0; // Zera os ciclos ao quitar a dívida
+                }
             }
 
-            // Marca o período como pago para não gerar novos alertas
             const paymentPeriod = `${new Date(transactionDate + 'T00:00:00').getFullYear()}-${String(new Date(transactionDate + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
             if (!item.paymentsMade) item.paymentsMade = [];
             if (!item.paymentsMade.includes(paymentPeriod)) item.paymentsMade.push(paymentPeriod);
@@ -2470,7 +2473,6 @@ if (deleteTransactionButton) {
 
     transactions.push(newTransaction);
 
-    // Lógica da taxa de gerência (não muda)
     const addFee = document.getElementById('addManagementFee').checked;
     const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
     if (addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
