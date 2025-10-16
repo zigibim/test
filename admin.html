@@ -1128,18 +1128,24 @@
         const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
 
         let borderColor = 'border-gray-600'; // Cor padrão
-if (item.sortPriority >= 1 && item.sortPriority <= 4) {
-    // Prioridades 1 (Vencido), 2 (Atrasado), 3 (Pendente Mês), 4 (Dívida Parcial)
-    borderColor = 'border-red-500'; // Todas as dívidas e pendências financeiras ficam em VERMELHO
-} else if (item.sortPriority === 5) {
-    // Prioridade 5 (Renovação Pendente)
-    borderColor = 'border-pink-500'; // Renovação continua ROSA
-} else if (item.sortPriority === 6) {
-    // Prioridade 6 (Aguardando vencimento do mês)
-    borderColor = 'border-yellow-500'; // Aguardando pagamento fica AMARELO
+
+// Prioridades que indicam DÍVIDA real ou situação crítica
+if (item.sortPriority === 1 || item.sortPriority === 2 || item.sortPriority === 4) {
+    // 1: Contrato Vencido, 2: Atraso de Meses Anteriores, 4: Dívida de Pagamento Parcial
+    borderColor = 'border-red-500'; // Borda VERMELHA
+} 
+// Prioridades que indicam PENDÊNCIA NORMAL do mês
+else if (item.sortPriority === 3 || item.sortPriority === 6) {
+    // 3: Pagamento do Mês Atual Vencido, 6: Aguardando Vencimento do Mês Atual
+    borderColor = 'border-yellow-500'; // Borda AMARELA
+} 
+// Outros status
+else if (item.sortPriority === 5) {
+    // 5: Renovação Pendente
+    borderColor = 'border-pink-500'; // Borda ROSA
 } else if (item.sortPriority === 7) {
-    // Prioridade 7 (Pago)
-    borderColor = 'border-green-500'; // Pago fica VERDE
+    // 7: Pago
+    borderColor = 'border-green-500'; // Borda VERDE
 }
 
         let paymentStatusHTML = '';
