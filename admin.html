@@ -2087,21 +2087,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
     });
 });
 
-// Lógica para o botão de perdoar dívida
-document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
-    const itemId = document.getElementById('transactionItemLink').value;
-    if (!itemId) return;
 
-    showConfirmModal('Perdoar Dívida', 'Você tem certeza que deseja zerar a dívida deste item? Esta ação não pode ser desfeita.', () => {
-        const item = items.find(i => i.id === parseInt(itemId));
-        if(item) {
-            item.debt = { amount: 0, cycles: 0 };
-            saveData();
-            renderAll();
-            document.getElementById('debtInfoContainer').classList.add('hidden');
-        }
-    });
-});
         document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => { const totalAmount = parseFloat(document.getElementById('transactionAmount').value); if (!isNaN(totalAmount) && totalAmount > 0) document.getElementById('managementFeeAmount').value = (totalAmount * 0.10).toFixed(2); });
         document.getElementById('setOneYearBtn').addEventListener('click', () => { const startDateInput = document.getElementById('rentStartDate'); if(startDateInput.value) { const startDate = new Date(startDateInput.value + "T00:00:00"); startDate.setFullYear(startDate.getFullYear() + 1); document.getElementById('rentEndDate').value = dateToYMD(startDate); } });
 
@@ -2334,25 +2320,24 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 if (deleteTransactionButton) {
     const transactionId = parseInt(deleteTransactionButton.dataset.id);
     const transaction = transactions.find(t => t.id === transactionId);
-    if (!transaction) return; // Checagem de segurança
+    if (!transaction) return;
 
     showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
         const txToDelete = transactions.find(t => t.id === transactionId);
 
-        // Se a transação for uma receita de um item alugado, precisamos reverter o estado.
         if (txToDelete && txToDelete.type === 'revenue' && txToDelete.itemId) {
             const item = items.find(i => i.id === txToDelete.itemId);
             if (item && item.rentedTo) {
 
-                // Passo 1: Reverter o cálculo da dívida (se houver)
+                // Passo 1: Reverter o cálculo da dívida (se aplicável)
                 if (item.debt) {
                     const amountDeleted = txToDelete.amount;
                     const rentValue = item.rentValue;
                     const difference = rentValue - amountDeleted;
 
-                    if (difference > 0) { // O pagamento apagado era parcial e gerou dívida. Revertemos.
+                    if (difference > 0) { // O pagamento apagado era parcial, então ele GEROU uma dívida. Agora, removemos essa dívida.
                         item.debt.amount -= difference;
-                    } else if (difference < 0) { // O pagamento apagado era maior e abateu dívida. Restauramos.
+                    } else if (difference < 0) { // O pagamento apagado era maior que o aluguel, então ele REDUZIU uma dívida. Agora, restauramos esse valor.
                         const surplus = -difference;
                         item.debt.amount += surplus;
                     }
@@ -2360,23 +2345,19 @@ if (deleteTransactionButton) {
                     if (item.debt.amount < 0.01) { item.debt.amount = 0; }
                 }
 
-                // Passo 2 (LÓGICA CORRIGIDA): Verifica se existem OUTROS pagamentos no mesmo mês.
+                // Passo 2 (LÓGICA CORRIGIDA): Verificar se esta era a ÚNICA transação de receita do mês.
                 const transactionDate = new Date(txToDelete.date + 'T00:00:00');
                 const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
 
-                // Cria uma lista de transações *sem* a que está sendo deletada, para simular o futuro.
-                const futureTransactions = transactions.filter(t => t.id !== txToDelete.id);
-
-                // Verifica se há outros pagamentos para este item, neste período, na lista *futura*.
-                const otherPaymentsInPeriod = futureTransactions.some(t =>
+                // Conta quantas transações de receita existem para este item neste período.
+                const paymentsInPeriod = transactions.filter(t =>
                     t.itemId === txToDelete.itemId &&
                     t.type === 'revenue' &&
                     `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
-                );
+                ).length;
 
-                // Passo 3: Se NÃO houver outros pagamentos, desmarca o mês como "pago".
-                // É ISSO QUE FAZ O ITEM VOLTAR A SER PENDENTE.
-                if (!otherPaymentsInPeriod && item.paymentsMade) {
+                // Se a contagem for 1 (ou seja, apenas a que estamos prestes a apagar), então o mês não está mais pago.
+                if (paymentsInPeriod === 1 && item.paymentsMade) {
                     const index = item.paymentsMade.indexOf(paymentPeriod);
                     if (index > -1) {
                         item.paymentsMade.splice(index, 1);
@@ -2385,7 +2366,7 @@ if (deleteTransactionButton) {
             }
         }
 
-        // Passo 4: Finalmente, remove a transação da lista principal
+        // Passo 3: Remove a transação da lista
         transactions = transactions.filter(t => t.id !== transactionId);
 
         saveData();
