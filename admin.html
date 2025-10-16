@@ -821,6 +821,36 @@
             </div>
         </div>
     </div>
+    <!-- Modal de Ações da Dívida -->
+<div id="debtActionsModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
+    <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
+        <h2 class="text-xl font-bold mb-2">Gerenciar Dívida</h2>
+        <p id="debtActionsInfo" class="text-gray-400 mb-6"></p>
+        <input type="hidden" id="debtActionsItemId">
+        <div class="flex flex-col space-y-3">
+            <button id="openEditDebtModalBtn" class="w-full px-6 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-md font-semibold">Alterar Valor da Dívida</button>
+            <button id="deleteDebtBtn" class="w-full px-6 py-2 bg-red-600 hover:bg-red-500 rounded-md font-semibold">Apagar Dívida</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Dívida -->
+<div id="editDebtModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
+    <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6">
+        <form id="editDebtForm">
+            <h2 class="text-2xl font-bold mb-4">Alterar Dívida</h2>
+            <input type="hidden" id="editDebtItemId">
+            <div>
+                <label for="newDebtAmount" class="block mb-1 font-medium">Novo Valor da Dívida (R$)</label>
+                <input type="number" step="0.01" id="newDebtAmount" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+            </div>
+            <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-2 space-y-reverse sm:space-y-0">
+                <button type="button" class="modal-close-btn w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
+                <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-md font-semibold">Salvar Alteração</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 
     <script>
@@ -845,6 +875,7 @@
         const rentItemForm = document.getElementById('rentItemForm');
         const addTransactionForm = document.getElementById('addTransactionForm');
         const editTransactionForm = document.getElementById('editTransactionForm');
+        const editDebtForm = document.getElementById('editDebtForm');
         
         const saveData = () => {
             localStorage.setItem('rentalManagerItems', JSON.stringify(items));
@@ -1116,7 +1147,7 @@
                         </div>
                         <div>
                             <span class="text-lg font-semibold text-right block">${formatCurrency(item.rentValue)}</span>
-                            ${item.debt && item.debt.amount > 0 ? `<p class="text-xs text-red-400 font-semibold text-right">Dívida: ${formatCurrency(item.debt.amount)}</p>` : ''}
+                            ${item.debt && item.debt.amount > 0 ? `<button data-id="${item.id}" class="manage-debt-btn text-xs text-red-400 font-semibold text-right w-full hover:bg-red-900/50 rounded-md px-1 py-0.5">Dívida: ${formatCurrency(item.debt.amount)}</button>` : ''}
                         </div>
                     </div>
                     <div class="mt-3 text-sm space-y-1">
@@ -1878,6 +1909,51 @@ const checkAndDisplayDebt = (item) => {
     textarea.addEventListener('input', () => autoResizeTextarea(textarea));
 });
         document.body.addEventListener('click', (e) => { 
+            // --- Lógica para Gerenciamento de Dívida ---
+
+// Abre o modal de ações (Alterar/Apagar) ao clicar no botão de dívida
+const manageDebtButton = e.target.closest('.manage-debt-btn');
+if (manageDebtButton) {
+    const itemId = parseInt(manageDebtButton.dataset.id);
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+        document.getElementById('debtActionsItemId').value = item.id;
+        document.getElementById('debtActionsInfo').textContent = `Item: ${item.name}`;
+        showModal('debtActionsModal');
+    }
+}
+
+// Abre o modal para editar o valor da dívida
+const openEditDebtModalButton = e.target.closest('#openEditDebtModalBtn');
+if (openEditDebtModalButton) {
+    const itemId = parseInt(document.getElementById('debtActionsItemId').value);
+    const item = items.find(i => i.id === itemId);
+    if (item && item.debt) {
+        hideModal('debtActionsModal');
+        document.getElementById('editDebtItemId').value = item.id;
+        document.getElementById('newDebtAmount').value = item.debt.amount.toFixed(2);
+        showModal('editDebtModal');
+    }
+}
+
+// Apaga a dívida após confirmação
+const deleteDebtButton = e.target.closest('#deleteDebtBtn');
+if (deleteDebtButton) {
+    const itemId = parseInt(document.getElementById('debtActionsItemId').value);
+    hideModal('debtActionsModal');
+    showConfirmModal('Apagar Dívida', 'Você tem certeza que deseja apagar a dívida deste item?', () => {
+        const item = items.find(i => i.id === itemId);
+        if (item) {
+            item.debt.amount = 0;
+            saveData();
+            renderAll();
+        }
+    });
+}
+
+// --- Fim da Lógica de Gerenciamento de Dívida ---
+
+
             const copyButton = e.target.closest('.copy-btn');
             if (copyButton) {
                 const targetId = copyButton.dataset.copyTarget;
@@ -2416,6 +2492,26 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
     addTransactionForm.reset();
 });
         
+        editDebtForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const itemId = parseInt(document.getElementById('editDebtItemId').value);
+    const newAmount = parseFloat(document.getElementById('newDebtAmount').value);
+    const item = items.find(i => i.id === itemId);
+
+    if (item && !isNaN(newAmount)) {
+        if (!item.debt) item.debt = { amount: 0 };
+        item.debt.amount = newAmount >= 0 ? newAmount : 0; // Garante que não seja negativo
+
+        if (item.debt.amount < 0.005) {
+            item.debt.amount = 0;
+        }
+
+        saveData();
+        renderAll();
+        hideModal('editDebtModal');
+    }
+});
+
         document.getElementById('paymentReceivedBtn').addEventListener('click', () => {
             const itemId = parseInt(document.getElementById('paymentAlertItemId').value);
             const item = items.find(i => i.id === itemId);
