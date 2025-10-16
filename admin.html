@@ -2350,35 +2350,31 @@ if (deleteTransactionButton) {
                     const rentValue = item.rentValue;
                     const difference = rentValue - amountDeleted;
 
-                    // Se o pagamento apagado era PARCIAL, ele GEROU uma dívida. Agora, removemos essa dívida.
-                    if (difference > 0) {
+                    if (difference > 0) { // O pagamento apagado era parcial e gerou dívida. Revertemos.
                         item.debt.amount -= difference;
-                    } 
-                    // Se o pagamento apagado era MAIOR que o aluguel, ele REDUZIU uma dívida. Agora, restauramos esse valor.
-                    else if (difference < 0) {
-                        const surplus = -difference; // O valor excedente que foi pago
+                    } else if (difference < 0) { // O pagamento apagado era maior e abateu dívida. Restauramos.
+                        const surplus = -difference;
                         item.debt.amount += surplus;
                     }
 
-                    // Garante que a dívida não fique com valor negativo por erros de arredondamento.
-                    if (item.debt.amount < 0.01) {
-                        item.debt.amount = 0;
-                    }
+                    if (item.debt.amount < 0.01) { item.debt.amount = 0; }
                 }
 
-                // Passo 2 (CRUCIAL): Verificar se existem OUTROS pagamentos no mesmo mês.
+                // Passo 2 (LÓGICA CORRIGIDA): Verificar se o mês deve voltar a ser "pendente"
                 const transactionDate = new Date(txToDelete.date + 'T00:00:00');
                 const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
 
-                const otherPaymentsInPeriod = transactions.some(t => 
-                    t.id !== txToDelete.id &&
+                // Cria uma lista de transações *sem* a que está sendo deletada, para simular o futuro.
+                const futureTransactions = transactions.filter(t => t.id !== txToDelete.id);
+
+                // Verifica se há outros pagamentos para este item, neste período, na lista *futura*.
+                const otherPaymentsInPeriod = futureTransactions.some(t =>
                     t.itemId === txToDelete.itemId &&
                     t.type === 'revenue' &&
                     `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
                 );
 
-                // Passo 3: Se NÃO houver outros pagamentos, desmarca o mês como "pago".
-                // É ISSO QUE FAZ O ITEM VOLTAR A SER PENDENTE.
+                // Se NÃO houver outros pagamentos, o mês não está mais pago.
                 if (!otherPaymentsInPeriod && item.paymentsMade) {
                     const index = item.paymentsMade.indexOf(paymentPeriod);
                     if (index > -1) {
@@ -2388,7 +2384,7 @@ if (deleteTransactionButton) {
             }
         }
 
-        // Passo 4: Finalmente, remove a transação da lista
+        // Passo 3: Efetivamente remove a transação da lista principal
         transactions = transactions.filter(t => t.id !== transactionId);
 
         saveData();
