@@ -2334,7 +2334,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 if (deleteTransactionButton) {
     const transactionId = parseInt(deleteTransactionButton.dataset.id);
     const transaction = transactions.find(t => t.id === transactionId);
-    if (!transaction) return; // Checagem de segurança para evitar erros
+    if (!transaction) return; // Checagem de segurança
 
     showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
         const txToDelete = transactions.find(t => t.id === transactionId);
@@ -2360,7 +2360,7 @@ if (deleteTransactionButton) {
                     if (item.debt.amount < 0.01) { item.debt.amount = 0; }
                 }
 
-                // Passo 2 (LÓGICA CORRIGIDA): Verificar se o mês deve voltar a ser "pendente"
+                // Passo 2 (LÓGICA CORRIGIDA): Verifica se existem OUTROS pagamentos no mesmo mês.
                 const transactionDate = new Date(txToDelete.date + 'T00:00:00');
                 const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -2374,7 +2374,8 @@ if (deleteTransactionButton) {
                     `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
                 );
 
-                // Se NÃO houver outros pagamentos, o mês não está mais pago.
+                // Passo 3: Se NÃO houver outros pagamentos, desmarca o mês como "pago".
+                // É ISSO QUE FAZ O ITEM VOLTAR A SER PENDENTE.
                 if (!otherPaymentsInPeriod && item.paymentsMade) {
                     const index = item.paymentsMade.indexOf(paymentPeriod);
                     if (index > -1) {
@@ -2384,7 +2385,7 @@ if (deleteTransactionButton) {
             }
         }
 
-        // Passo 3: Efetivamente remove a transação da lista principal
+        // Passo 4: Finalmente, remove a transação da lista principal
         transactions = transactions.filter(t => t.id !== transactionId);
 
         saveData();
