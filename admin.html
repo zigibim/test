@@ -2331,56 +2331,61 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
             }
 
             const deleteTransactionButton = e.target.closest('.delete-transaction-btn');
-            if (deleteTransactionButton) {
-                const transactionId = parseInt(deleteTransactionButton.dataset.id);
-                const transaction = transactions.find(t => t.id === transactionId);
-                if (!transaction) return; // Checagem de segurança
+if (deleteTransactionButton) {
+    const transactionId = parseInt(deleteTransactionButton.dataset.id);
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (!transaction) return;
 
-                showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
-                const txToDelete = transactions.find(t => t.id === transactionId);
+    showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
+        const txToDelete = transactions.find(t => t.id === transactionId);
 
-                // Reverte o cálculo da dívida se a transação for uma receita de um item alugado
-                if (txToDelete && txToDelete.type === 'revenue' && txToDelete.itemId) {
-                    const item = items.find(i => i.id === txToDelete.itemId);
-                    if (item && item.rentedTo && item.debt) {
-                        const amountDeleted = txToDelete.amount;
-                        const rentValue = item.rentValue;
-                        const difference = rentValue - amountDeleted;
+        if (txToDelete && txToDelete.type === 'revenue' && txToDelete.itemId) {
+            const item = items.find(i => i.id === txToDelete.itemId);
+            if (item && item.rentedTo && item.debt) {
+                // 1. Reverte o cálculo da dívida
+                const amountDeleted = txToDelete.amount;
+                const rentValue = item.rentValue;
+                const difference = rentValue - amountDeleted;
 
-                        // Se o pagamento apagado era parcial, ele GEROU uma dívida. Agora, removemos essa dívida.
-                        if (difference > 0) {
-                            item.debt.amount -= difference;
-                        } 
-                        // Se o pagamento apagado era maior que o aluguel, ele REDUZIU uma dívida. Agora, restauramos esse valor.
-                        else if (difference < 0) {
-                            const surplus = -difference; // O valor excedente
-                            item.debt.amount += surplus;
-                        }
-
-                        // Garante que a dívida não fique negativa
-                        if (item.debt.amount < 0.005) { // Usa um valor pequeno para comparação de ponto flutuante
-                            item.debt.amount = 0;
-                        }
-
-                        // Desmarca o período como pago
-                        const transactionDate = new Date(txToDelete.date + 'T00:00:00');
-                        const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
-                        if (item.paymentsMade) {
-                            const index = item.paymentsMade.indexOf(paymentPeriod);
-                            if (index > -1) {
-                                item.paymentsMade.splice(index, 1);
-                            }
-                        }
-                    }
+                if (difference > 0) { // Se o pagamento apagado era parcial
+                    item.debt.amount -= difference;
+                } else if (difference < 0) { // Se o pagamento apagado era maior que o aluguel
+                    const surplus = -difference;
+                    item.debt.amount += surplus;
                 }
 
-                // Finalmente, remove a transação da lista
-                transactions = transactions.filter(t => t.id !== transactionId);
+                if (item.debt.amount < 0.005) {
+                    item.debt.amount = 0;
+                }
 
-                saveData();
-                renderAll();
-            });
+                // 2. Verifica se existem OUTROS pagamentos no mesmo mês
+                const transactionDate = new Date(txToDelete.date + 'T00:00:00');
+                const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
+
+                const otherPaymentsInPeriod = transactions.some(t => 
+                    t.id !== txToDelete.id &&
+                    t.itemId === txToDelete.itemId &&
+                    t.type === 'revenue' &&
+                    `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
+                );
+
+                // 3. Se NÃO houver outros pagamentos, desmarca o mês como pago
+                if (!otherPaymentsInPeriod && item.paymentsMade) {
+                    const index = item.paymentsMade.indexOf(paymentPeriod);
+                    if (index > -1) {
+                        item.paymentsMade.splice(index, 1);
+                    }
+                }
+            }
         }
+
+        // Remove a transação da lista
+        transactions = transactions.filter(t => t.id !== transactionId);
+
+        saveData();
+        renderAll();
+    });
+}
             
             const resolvePaymentBtn = e.target.closest('.resolve-payment-btn');
             if(resolvePaymentBtn) {
