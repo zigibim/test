@@ -407,6 +407,12 @@
                             <option value="single">Pagamento Único</option>
                         </select>
                     </div>
+                    <div class="border-t border-gray-700 pt-4 mt-4">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="itemIncludeInTaxReport" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" checked>
+                            <span class="text-sm">Incluir na planilha de Imposto de Renda?</span>
+                        </label>
+                    </div>
                 </div>
                 <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-2 space-y-reverse sm:space-y-0">
                     <button type="button" class="modal-close-btn w-full sm:w-auto px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
@@ -489,6 +495,12 @@
                             <option value="daily">Diário</option>
                             <option value="single">Pagamento Único</option>
                         </select>
+                    </div>
+                    <div class="border-t border-gray-700 pt-4 mt-4">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="editItemIncludeInTaxReport" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
+                            <span class="text-sm">Incluir na planilha de Imposto de Renda?</span>
+                        </label>
                     </div>
                 </div>
                 <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-2 space-y-reverse sm:space-y-0">
@@ -1784,6 +1796,7 @@ const checkAndDisplayDebt = (item) => {
                 return t.type === 'revenue' && 
                     item && 
                     item.category === 'Imóvel' &&
+                    (item.includeInTaxReport === undefined || item.includeInTaxReport === true) &&
                     tDate.getMonth() === month &&
                     tDate.getFullYear() === year;
             });
@@ -2132,11 +2145,19 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 
             const newItem = {
                 id: Date.now(),
-                name: document.getElementById('itemName').value, description: document.getElementById('itemDescription').value, category: category,
-                value: parseFloat(document.getElementById('itemValue').value), paymentFrequency: document.getElementById('itemPaymentFrequency').value, rentedTo: null,
+                name: document.getElementById('itemName').value, 
+                description: document.getElementById('itemDescription').value, 
+                category: category,
+                value: parseFloat(document.getElementById('itemValue').value), 
+                paymentFrequency: document.getElementById('itemPaymentFrequency').value, 
+                rentedTo: null,
                 endereco: category === 'Imóvel' ? document.getElementById('itemEndereco').value : null, 
                 cep: category === 'Imóvel' ? document.getElementById('itemCep').value : null,
-                managedBy, managerName, hasManagementFee, managementFeePercentage
+                managedBy, 
+                managerName, 
+                hasManagementFee, 
+                managementFeePercentage,
+                includeInTaxReport: document.getElementById('itemIncludeInTaxReport').checked
             };
             items.push(newItem);
 
@@ -2162,6 +2183,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                 item.category = category;
                 item.value = parseFloat(document.getElementById('editItemValue').value);
                 item.paymentFrequency = document.getElementById('editItemPaymentFrequency').value;
+                item.includeInTaxReport = document.getElementById('editItemIncludeInTaxReport').checked;
                 
                 if (category === 'Imóvel') {
                     item.endereco = document.getElementById('editItemEndereco').value;
@@ -2322,6 +2344,9 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                         }
                     }
                 }
+                document.getElementById('editItemIncludeInTaxReport').checked = (item.includeInTaxReport === undefined || item.includeInTaxReport === true);
+
+
                 showModal('editItemModal');
             }
             
