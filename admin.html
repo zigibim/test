@@ -2031,42 +2031,59 @@ if (deleteDebtButton) {
             }
 
             const editManagerBtn = e.target.closest('.edit-manager-btn');
-            if(editManagerBtn) {
-                const managerId = parseInt(editManagerBtn.dataset.id);
-                const manager = managers.find(m => m.id === managerId);
-                if(manager) {
-                    document.getElementById('managerModalTitle').textContent = 'Editar Gestor';
-                    document.getElementById('managerId').value = manager.id;
-                    document.getElementById('managerType').value = manager.type;
-                    document.getElementById('managerName').value = manager.name;
-                    document.getElementById('managerPassword').value = manager.password;
+if(editManagerBtn) {
+    const managerId = parseInt(editManagerBtn.dataset.id);
+    const manager = managers.find(m => m.id === managerId);
+    if(manager) {
+        document.getElementById('managerModalTitle').textContent = 'Editar Gestor';
+        document.getElementById('managerId').value = manager.id;
+        document.getElementById('managerType').value = manager.type;
+        document.getElementById('managerName').value = manager.name;
+        document.getElementById('managerPassword').value = manager.password;
 
-                    const rentalsListDiv = document.getElementById('managerRentalsList');
-                    rentalsListDiv.innerHTML = '';
-                    const allItems = items; // Pega TODOS os itens
+        const rentalsListDiv = document.getElementById('managerRentalsList');
+        rentalsListDiv.innerHTML = '';
+        const allItems = items;
 
-                    if (allItems.length === 0) {
-                    rentalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum item cadastrado para associar.</p>';
-                    } else {
-                        allItems.forEach(item => {
-                            const checkboxId = `manager-item-edit-${item.id}`;
-                            const isChecked = manager.assignedItemIds.includes(item.id);
-                            const label = document.createElement('label');
-                            label.htmlFor = checkboxId;
-                            label.className = 'flex items-center space-x-3 p-2 rounded-md hover:bg-gray-600/50 cursor-pointer';
-
-                            const statusText = item.rentedTo ? `(Alugado para: ${item.rentedTo})` : '(Disponível)';
-
-                            label.innerHTML = `
-                                <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isChecked ? 'checked' : ''}>
-                                <span>${item.name} <span class="text-xs text-gray-400">${statusText}</span></span>
-                            `;
-                            rentalsListDiv.appendChild(label);
-                        });
-                    }
-                    showModal('managerModal');
-                }
+        // Cria um conjunto de IDs de itens gerenciados por OUTROS gestores
+        const otherAssignedItemIds = new Set();
+        managers.forEach(m => {
+            if (m.id !== manager.id) { // Importante: ignora o gestor que estamos editando
+                m.assignedItemIds.forEach(id => otherAssignedItemIds.add(id));
             }
+        });
+
+        if (allItems.length === 0) {
+             rentalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum item cadastrado para associar.</p>';
+        } else {
+            allItems.forEach(item => {
+                const checkboxId = `manager-item-edit-${item.id}`;
+                const isChecked = manager.assignedItemIds.includes(item.id);
+
+                const isManagedByOther = otherAssignedItemIds.has(item.id);
+                const isDisabled = isManagedByOther ? 'disabled' : '';
+                const cursorClass = isManagedByOther ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-600/50';
+
+                const label = document.createElement('label');
+                label.htmlFor = checkboxId;
+                label.className = `flex items-center space-x-3 p-2 rounded-md ${cursorClass}`;
+
+                let statusText = item.rentedTo ? `(Alugado para: ${item.rentedTo})` : '(Disponível)';
+                if(isManagedByOther) {
+                    const managingManager = managers.find(m => m.assignedItemIds.includes(item.id));
+                    statusText = `(Gerenciado por: ${managingManager.name})`;
+                }
+
+                label.innerHTML = `
+                    <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isChecked ? 'checked' : ''} ${isDisabled}>
+                    <span>${item.name} <span class="text-xs ${isManagedByOther ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
+                `;
+                rentalsListDiv.appendChild(label);
+            });
+        }
+        showModal('managerModal');
+    }
+}
         });
 
         tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
@@ -2660,7 +2677,13 @@ if (deleteTransactionButton) {
 
     const rentalsListDiv = document.getElementById('managerRentalsList');
     rentalsListDiv.innerHTML = '';
-    const allItems = items; // Pega TODOS os itens, não apenas os alugados
+    const allItems = items;
+
+    // Cria um conjunto de todos os IDs de itens que já estão sendo gerenciados
+    const allAssignedItemIds = new Set();
+    managers.forEach(m => {
+        m.assignedItemIds.forEach(id => allAssignedItemIds.add(id));
+    });
 
     if (allItems.length === 0) {
         rentalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum item cadastrado para associar.</p>';
@@ -2668,15 +2691,23 @@ if (deleteTransactionButton) {
         allItems.forEach(item => {
             const checkboxId = `manager-item-add-${item.id}`;
             const label = document.createElement('label');
-            label.htmlFor = checkboxId;
-            label.className = 'flex items-center space-x-3 p-2 rounded-md hover:bg-gray-600/50 cursor-pointer';
 
-            // Adiciona um status para diferenciar itens alugados e disponíveis
-            const statusText = item.rentedTo ? `(Alugado para: ${item.rentedTo})` : '(Disponível)';
+            const isManaged = allAssignedItemIds.has(item.id);
+            const isDisabled = isManaged ? 'disabled' : '';
+            const cursorClass = isManaged ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-600/50';
+
+            label.htmlFor = checkboxId;
+            label.className = `flex items-center space-x-3 p-2 rounded-md ${cursorClass}`;
+
+            let statusText = item.rentedTo ? `(Alugado para: ${item.rentedTo})` : '(Disponível)';
+            if(isManaged) {
+                const managingManager = managers.find(m => m.assignedItemIds.includes(item.id));
+                statusText = `(Gerenciado por: ${managingManager.name})`;
+            }
 
             label.innerHTML = `
-                <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
-                <span>${item.name} <span class="text-xs text-gray-400">${statusText}</span></span>
+                <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isDisabled}>
+                <span>${item.name} <span class="text-xs ${isManaged ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
             `;
             rentalsListDiv.appendChild(label);
         });
