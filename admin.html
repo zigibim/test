@@ -578,6 +578,12 @@
         <textarea id="transactionDescription" rows="1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 resize-none overflow-hidden" required></textarea>
     </div>
     <div>
+    <div id="payIptuContainer" class="hidden mb-4 p-3 bg-blue-900/50 rounded-md">
+    <label class="flex items-center space-x-3 cursor-pointer">
+        <input type="checkbox" id="payIptuCheckbox" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
+        <span id="payIptuLabel" class="text-sm font-medium text-blue-300"></span>
+    </label>
+    </div>    
     <div class="flex justify-between items-baseline mb-1">
         <label for="transactionAmount" class="font-medium">Valor (R$)</label>
         <span id="debtAmountDisplay" class="hidden text-sm font-semibold text-red-400"></span>
@@ -1016,8 +1022,20 @@
         availableList.innerHTML = `<p class="text-gray-400">Nenhum item para gerenciar.</p>`;
     }
 
+    const currentYear = new Date().getFullYear();
+
     itemsToRender.forEach(item => {
-        // Cria o botão de IPTU apenas se o item for um imóvel
+        // Lógica para exibir o status do IPTU
+        let iptuStatusHTML = '';
+        if (item.iptu && item.iptu[currentYear]) {
+            const iptuData = item.iptu[currentYear];
+            if (iptuData.paidInstallments === iptuData.installments) {
+                iptuStatusHTML = `<p class="text-xs text-green-400 mt-1">IPTU ${currentYear}: Pago</p>`;
+            } else {
+                iptuStatusHTML = `<p class="text-xs text-blue-400 mt-1">IPTU ${currentYear}: ${iptuData.paidInstallments}/${iptuData.installments} parcelas pagas</p>`;
+            }
+        }
+
         const iptuButton = item.category === 'Imóvel' ? `
             <button data-id="${item.id}" class="iptu-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Registrar IPTU">
                 <i data-lucide="landmark" class="h-4 w-4 mr-1"></i>IPTU
@@ -1027,43 +1045,24 @@
         const actionButtons = `
             <div class="mt-4 flex justify-end items-center space-x-2">
                 ${iptuButton}
-                <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item">
-                    <i data-lucide="file-signature" class="h-5 w-5"></i>
-                </button>
-                ${item.rentedTo ? `
-                <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel">
-                    <i data-lucide="clipboard-edit" class="h-5 w-5"></i>
-                </button>
-                ` : ''}
-                <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="${item.rentedTo ? 'Finalizar Aluguel' : 'Excluir Item'}">
-                    <i data-lucide="trash-2" class="h-5 w-5"></i>
-                </button>
-                ${!item.rentedTo ? `
-                <button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm">
-                    <i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar
-                </button>` : ''}
+                <button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item"><i data-lucide="file-signature" class="h-5 w-5"></i></button>
+                ${item.rentedTo ? `<button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel"><i data-lucide="clipboard-edit" class="h-5 w-5"></i></button>` : ''}
+                <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="${item.rentedTo ? 'Finalizar Aluguel' : 'Excluir Item'}"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
+                ${!item.rentedTo ? `<button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm"><i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar</button>` : ''}
             </div>
         `;
 
         if (item.rentedTo) {
+            // ... (código do card alugado, não precisa mudar)
             const endDate = new Date(item.rentEndDate);
             const isOverdue = new Date() > endDate;
-
             let borderColor = 'border-yellow-500'; 
-            if (item.renewalPending) {
-                borderColor = 'border-pink-500';
-            } else if (isOverdue) {
-                borderColor = 'border-red-500';
-            }
+            if (item.renewalPending) { borderColor = 'border-pink-500'; } else if (isOverdue) { borderColor = 'border-red-500'; }
             let managementInfoHTML = '';
             if (item.category === 'Imóvel' && item.managedBy) {
-                if (item.managedBy === 'particular') {
-                    managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> Particular</p>`;
-                } else if ((item.managedBy === 'imobiliaria' || item.managedBy === 'outros') && item.managerName) {
-                    managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> ${item.managerName} (${item.managedBy})</p>`;
-                }
+                if (item.managedBy === 'particular') { managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> Particular</p>`; } 
+                else if ((item.managedBy === 'imobiliaria' || item.managedBy === 'outros') && item.managerName) { managementInfoHTML = `<p><strong class="text-gray-300">Gerido por:</strong> ${item.managerName} (${item.managedBy})</p>`;}
             }
-
             const card = `
                 <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
                     <div class="flex-grow">
@@ -1071,6 +1070,7 @@
                             <div>
                                 <h3 class="font-bold text-lg">${item.name}</h3>
                                 <p class="text-sm text-gray-400">${item.category}</p>
+                                ${iptuStatusHTML}
                             </div>
                             <span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span>
                         </div>
@@ -1086,8 +1086,7 @@
                         </div>
                     </div>
                     ${actionButtons}
-                </div>
-            `;
+                </div>`;
             rentedList.innerHTML += card;
         } else {
             const card = `
@@ -1097,6 +1096,7 @@
                             <div>
                                 <h3 class="font-bold text-lg">${item.name}</h3>
                                 <p class="text-sm text-gray-400">${item.category}</p>
+                                ${iptuStatusHTML}
                             </div>
                             <span class="text-lg font-semibold">${formatCurrency(item.value)}</span>
                         </div>
@@ -1104,8 +1104,7 @@
                         ${item.endereco ? `<p class="text-xs text-gray-400 mt-2"><i data-lucide="map-pin" class="inline-block h-3 w-3 mr-1"></i>${item.endereco}${item.cep ? `, ${item.cep}`: ''}</p>` : ''}
                     </div>
                     ${actionButtons}
-                </div>
-            `;
+                </div>`;
             availableList.innerHTML += card;
         }
     });
