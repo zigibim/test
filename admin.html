@@ -2398,37 +2398,51 @@ if (deleteTransactionButton) {
             const item = items.find(i => i.id === txToDelete.itemId);
             if (item && item.rentedTo) {
 
-                // Passo 1: Reverter o cálculo da dívida (se aplicável)
+                const transactionDate = new Date(txToDelete.date + 'T00:00:00');
+                const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
+
+                const otherPaymentsInPeriod = transactions.filter(t =>
+                    t.id !== txToDelete.id &&
+                    t.itemId === txToDelete.itemId &&
+                    t.type === 'revenue' &&
+                    `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
+                );
+
+                // Reverte o cálculo da dívida (se aplicável)
                 if (item.debt) {
                     const amountDeleted = txToDelete.amount;
                     const rentValue = item.rentValue;
                     const difference = rentValue - amountDeleted;
 
-                    if (difference > 0) { // O pagamento apagado era parcial, então ele GEROU uma dívida. Agora, removemos essa dívida.
+                    // Se o pagamento apagado era parcial e gerou uma dívida
+                    if (difference > 0) {
                         item.debt.amount -= difference;
-                    } else if (difference < 0) { // O pagamento apagado era maior que o aluguel, então ele REDUZIU uma dívida. Agora, restauramos esse valor.
+
+                        // LÓGICA CORRIGIDA: Só decrementa o ciclo se este for o único pagamento do período
+                        if (otherPaymentsInPeriod.length === 0) {
+                            if (item.debt.cycles > 0) {
+                                item.debt.cycles -= 1;
+                            }
+                        }
+                    } 
+                    // Se o pagamento apagado era maior e abateu uma dívida
+                    else if (difference < 0) {
                         const surplus = -difference;
                         item.debt.amount += surplus;
+                        // Se ao restaurar a dívida, ela volta a existir, e não havia ciclo, adiciona um.
+                        if (item.debt.amount > 0 && item.debt.cycles === 0) {
+                            item.debt.cycles = 1;
+                        }
                     }
 
-                    if (item.debt.amount < 0.01) { item.debt.amount = 0; }
+                    if (item.debt.amount < 0.01) { 
+                        item.debt.amount = 0;
+                        item.debt.cycles = 0; // Zera os ciclos se a dívida for zerada
+                    }
                 }
 
-                // Passo 2 (LÓGICA CORRIGIDA): Verificar se esta era a ÚNICA transação de receita do mês.
-                const transactionDate = new Date(txToDelete.date + 'T00:00:00');
-                const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
-
-                // Conta quantas transações de receita existem para este item neste período, EXCLUINDO a que estamos prestes a apagar.
-                const otherPaymentsInPeriod = transactions.filter(t =>
-                    t.id !== txToDelete.id && // <-- A condição crucial
-                    t.itemId === txToDelete.itemId &&
-                    t.type === 'revenue' &&
-                    `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
-                ).length;
-
-                // Se a contagem for 0, significa que esta era a última (ou única) transação do mês.
-                // Portanto, o mês volta a ficar pendente.
-                if (otherPaymentsInPeriod === 0 && item.paymentsMade) {
+                // Se não houver outros pagamentos, desmarca o mês como "pago".
+                if (otherPaymentsInPeriod.length === 0 && item.paymentsMade) {
                     const index = item.paymentsMade.indexOf(paymentPeriod);
                     if (index > -1) {
                         item.paymentsMade.splice(index, 1);
@@ -2437,7 +2451,7 @@ if (deleteTransactionButton) {
             }
         }
 
-        // Passo 3: Finalmente, remove a transação da lista principal
+        // Remove a transação da lista
         transactions = transactions.filter(t => t.id !== transactionId);
 
         saveData();
