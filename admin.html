@@ -2418,15 +2418,17 @@ if (deleteTransactionButton) {
                 const transactionDate = new Date(txToDelete.date + 'T00:00:00');
                 const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
 
-                // Conta quantas transações de receita existem para este item neste período.
-                const paymentsInPeriod = transactions.filter(t =>
+                // Conta quantas transações de receita existem para este item neste período, EXCLUINDO a que estamos prestes a apagar.
+                const otherPaymentsInPeriod = transactions.filter(t =>
+                    t.id !== txToDelete.id && // <-- A condição crucial
                     t.itemId === txToDelete.itemId &&
                     t.type === 'revenue' &&
                     `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
                 ).length;
 
-                // Se a contagem for 1 (ou seja, apenas a que estamos prestes a apagar), então o mês não está mais pago.
-                if (paymentsInPeriod === 1 && item.paymentsMade) {
+                // Se a contagem for 0, significa que esta era a última (ou única) transação do mês.
+                // Portanto, o mês volta a ficar pendente.
+                if (otherPaymentsInPeriod === 0 && item.paymentsMade) {
                     const index = item.paymentsMade.indexOf(paymentPeriod);
                     if (index > -1) {
                         item.paymentsMade.splice(index, 1);
@@ -2435,7 +2437,7 @@ if (deleteTransactionButton) {
             }
         }
 
-        // Passo 3: Remove a transação da lista
+        // Passo 3: Finalmente, remove a transação da lista principal
         transactions = transactions.filter(t => t.id !== transactionId);
 
         saveData();
