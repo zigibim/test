@@ -2516,13 +2516,19 @@ if (deleteTransactionButton) {
             if (!item.debt) item.debt = { amount: 0, cycles: 0 };
 
             const difference = item.rentValue - amountPaid;
+            const paymentPeriod = `${new Date(transactionDate + 'T00:00:00').getFullYear()}-${String(new Date(transactionDate + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
+
+            // Verifica se já houve algum pagamento (mesmo que parcial) para este período.
+            const hasPaymentForPeriod = item.paymentsMade && item.paymentsMade.includes(paymentPeriod);
 
             // LÓGICA CORRIGIDA
-            if (difference > 0) { // Se pagou menos, cria/aumenta a dívida
+            if (difference > 0) { // Se pagou menos...
                 item.debt.amount += difference;
-                // Garante que o contador comece em 1
-                item.debt.cycles = (item.debt.cycles || 0) + 1; 
-            } else if (difference < 0 && item.debt.amount > 0) { // Se pagou a mais e tem dívida, abate
+                // Só incrementa o ciclo se este for o PRIMEIRO pagamento do período.
+                if (!hasPaymentForPeriod) {
+                    item.debt.cycles = (item.debt.cycles || 0) + 1;
+                }
+            } else if (difference < 0 && item.debt.amount > 0) { // Se pagou a mais e tem dívida...
                 const surplus = -difference;
                 item.debt.amount -= surplus;
                 if (item.debt.amount < 0.01) {
@@ -2531,9 +2537,11 @@ if (deleteTransactionButton) {
                 }
             }
 
-            const paymentPeriod = `${new Date(transactionDate + 'T00:00:00').getFullYear()}-${String(new Date(transactionDate + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
+            // Marca o período como "pago" (mesmo que parcialmente) para não gerar novos ciclos no mesmo mês.
             if (!item.paymentsMade) item.paymentsMade = [];
-            if (!item.paymentsMade.includes(paymentPeriod)) item.paymentsMade.push(paymentPeriod);
+            if (!item.paymentsMade.includes(paymentPeriod)) {
+                item.paymentsMade.push(paymentPeriod);
+            }
         }
     }
 
