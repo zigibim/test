@@ -1025,7 +1025,7 @@
     const currentYear = new Date().getFullYear();
 
     itemsToRender.forEach(item => {
-        // Lógica para exibir o status do IPTU
+        // Lógica para exibir o status do IPTU (será usada nos próximos passos)
         let iptuStatusHTML = '';
         if (item.iptu && item.iptu[currentYear]) {
             const iptuData = item.iptu[currentYear];
@@ -1036,6 +1036,7 @@
             }
         }
 
+        // Cria o botão de IPTU apenas se o item for um imóvel
         const iptuButton = item.category === 'Imóvel' ? `
             <button data-id="${item.id}" class="iptu-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Registrar IPTU">
                 <i data-lucide="landmark" class="h-4 w-4 mr-1"></i>IPTU
@@ -1053,7 +1054,6 @@
         `;
 
         if (item.rentedTo) {
-            // ... (código do card alugado, não precisa mudar)
             const endDate = new Date(item.rentEndDate);
             const isOverdue = new Date() > endDate;
             let borderColor = 'border-yellow-500'; 
@@ -1111,7 +1111,6 @@
     if (rentedList.innerHTML === '') rentedList.innerHTML = `<p class="text-gray-400">Nenhum item alugado no momento.</p>`;
     if (availableList.innerHTML === '') availableList.innerHTML = `<p class="text-gray-400">Nenhum item disponível no momento.</p>`;
 };
-
         const renderRentals = (rentedItemsToRender) => {
     const sortedRentalsList = document.getElementById('sorted-rentals-list');
     sortedRentalsList.innerHTML = '';
@@ -2231,6 +2230,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                 hasManagementFee, 
                 managementFeePercentage,
                 includeInTaxReport: document.getElementById('itemIncludeInTaxReport').checked
+                iptu: {}
             };
             items.push(newItem);
 
@@ -2297,6 +2297,28 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
             renderAll();
             hideModal('editTransactionModal');
         });
+        iptuForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const itemId = parseInt(document.getElementById('iptuItemId').value);
+    const totalValue = parseFloat(document.getElementById('iptuTotalValue').value);
+    const installments = parseInt(document.getElementById('iptuInstallments').value);
+    const item = items.find(i => i.id === itemId);
+
+    if (item && !isNaN(totalValue) && totalValue > 0) {
+        const currentYear = new Date().getFullYear();
+        if (!item.iptu) {
+            item.iptu = {};
+        }
+        item.iptu[currentYear] = {
+            totalValue: totalValue,
+            installments: installments,
+            paidInstallments: 0
+        };
+        saveData();
+        renderAll();
+        hideModal('iptuModal');
+    }
+});
         
         appContainer.addEventListener('click', (e) => {
             const rentButton = e.target.closest('.rent-btn');
