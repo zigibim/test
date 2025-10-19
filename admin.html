@@ -830,8 +830,8 @@
             <input type="hidden" id="iptuItemId">
             <div class="space-y-4">
                 <div>
-                    <label for="iptuTotalValue" class="block mb-1 font-medium">Valor Total do IPTU (R$)</label>
-                    <input type="number" step="0.01" id="iptuTotalValue" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                    <label for="iptuInstallmentValue" class="block mb-1 font-medium">Valor de Cada Parcela (R$)</label>
+                    <input type="number" step="0.01" id="iptuInstallmentValue" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
                 </div>
                 <div>
                     <label for="iptuInstallments" class="block mb-1 font-medium">Pagar em</label>
@@ -861,8 +861,8 @@
             <input type="hidden" id="manageIptuYear">
             <div class="space-y-4">
                 <div>
-                    <label for="manageIptuTotalValue" class="block mb-1 font-medium">Valor Total do IPTU (R$)</label>
-                    <input type="number" step="0.01" id="manageIptuTotalValue" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                    <label for="manageIptuInstallmentValue" class="block mb-1 font-medium">Valor de Cada Parcela (R$)</label>
+                    <input type="number" step="0.01" id="manageIptuInstallmentValue" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
                 </div>
                 <div>
                     <label for="manageIptuInstallments" class="block mb-1 font-medium">Pagar em</label>
@@ -1988,14 +1988,18 @@ if (iptuButton) {
         if (item.iptu && item.iptu[currentYear]) {
             const iptuData = item.iptu[currentYear];
 
-            // Preenche o modal de GERENCIAMENTO
-            document.getElementById('manageIptuModalTitle').textContent = `Gerenciar IPTU ${currentYear} - ${item.name}`;
-            document.getElementById('manageIptuItemId').value = item.id;
-            document.getElementById('manageIptuYear').value = currentYear;
-            document.getElementById('manageIptuTotalValue').value = iptuData.totalValue.toFixed(2);
-            document.getElementById('manageIptuInstallments').value = iptuData.installments;
-            document.getElementById('manageIptuPaidInstallments').textContent = `${iptuData.paidInstallments} de ${iptuData.installments}`;
-            document.getElementById('manageIptuWarning').classList.add('hidden'); // Esconde aviso por padrão
+            // Calcula o valor da parcela
+        const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
+
+        // Preenche o modal de GERENCIAMENTO
+        document.getElementById('manageIptuModalTitle').textContent = `Gerenciar IPTU ${currentYear} - ${item.name}`;
+        document.getElementById('manageIptuItemId').value = item.id;
+        document.getElementById('manageIptuYear').value = currentYear;
+        // Preenche com o VALOR DA PARCELA calculado
+        document.getElementById('manageIptuInstallmentValue').value = installmentValue.toFixed(2);
+        document.getElementById('manageIptuInstallments').value = iptuData.installments;
+        document.getElementById('manageIptuPaidInstallments').textContent = `${iptuData.paidInstallments} de ${iptuData.installments}`;
+        document.getElementById('manageIptuWarning').classList.add('hidden');
 
             // Mostra o modal de GERENCIAMENTO
             showModal('manageIptuModal');
@@ -2362,21 +2366,31 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
         iptuForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const itemId = parseInt(document.getElementById('iptuItemId').value);
-    const totalValue = parseFloat(document.getElementById('iptuTotalValue').value);
+    // Lê o VALOR DA PARCELA do input modificado
+    const installmentValue = parseFloat(document.getElementById('iptuInstallmentValue').value);
     const installments = parseInt(document.getElementById('iptuInstallments').value);
     const item = items.find(i => i.id === itemId);
 
-    if (item && !isNaN(totalValue) && totalValue > 0) {
+    // Calcula o VALOR TOTAL
+    const totalValue = installmentValue * installments;
+
+    // Verifica se os valores são válidos ANTES de salvar
+    if (item && !isNaN(installmentValue) && installmentValue > 0 && installments > 0) {
         const currentYear = new Date().getFullYear();
         if (!item.iptu) item.iptu = {};
+
+        // Salva o VALOR TOTAL calculado e as outras informações
         item.iptu[currentYear] = {
-            totalValue: totalValue,
+            totalValue: totalValue, // <-- Salva o valor TOTAL calculado
             installments: installments,
             paidInstallments: 0
         };
         saveData();
         renderAll();
         hideModal('iptuModal');
+    } else {
+         // Adiciona um feedback se os valores forem inválidos
+         alert("Por favor, insira um valor de parcela válido e selecione o número de parcelas.");
     }
 });
 
@@ -3066,39 +3080,42 @@ if (deleteTransactionButton) {
          document.getElementById('manageIptuWarning').classList.remove('hidden');
     });
 
+
     // Listener para SALVAR ALTERAÇÕES no IPTU
-    manageIptuForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const itemId = parseInt(document.getElementById('manageIptuItemId').value);
-        const year = parseInt(document.getElementById('manageIptuYear').value);
-        const newTotalValue = parseFloat(document.getElementById('manageIptuTotalValue').value);
-        const newInstallments = parseInt(document.getElementById('manageIptuInstallments').value);
-        const item = items.find(i => i.id === itemId);
+manageIptuForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const itemId = parseInt(document.getElementById('manageIptuItemId').value);
+    const year = parseInt(document.getElementById('manageIptuYear').value);
+    // Lê o VALOR DA PARCELA editado
+    const newInstallmentValue = parseFloat(document.getElementById('manageIptuInstallmentValue').value);
+    const newInstallments = parseInt(document.getElementById('manageIptuInstallments').value);
+    const item = items.find(i => i.id === itemId);
 
-        if (item && item.iptu && item.iptu[year] && !isNaN(newTotalValue) && newTotalValue >= 0) {
-            const iptuData = item.iptu[year];
+    // Calcula o NOVO VALOR TOTAL
+    const newTotalValue = newInstallmentValue * newInstallments;
 
-            // Atualiza os valores
-            iptuData.totalValue = newTotalValue;
+    // Valida o VALOR DA PARCELA e as parcelas
+    if (item && item.iptu && item.iptu[year] && !isNaN(newInstallmentValue) && newInstallmentValue >= 0 && newInstallments > 0) {
+        const iptuData = item.iptu[year];
 
-            // Se o número de parcelas mudou, reseta as pagas (ou ajusta, como preferir)
-            // Simples: Se mudou, zera as pagas para evitar inconsistência.
-            // Poderia também limitar ao novo número: Math.min(iptuData.paidInstallments, newInstallments)
-            if (iptuData.installments !== newInstallments) {
-                 iptuData.paidInstallments = 0;
-                 // Poderia adicionar lógica aqui para apagar transações futuras se diminuir parcelas
-                 console.warn("Número de parcelas alterado. Parcelas pagas foram resetadas para 0. Transações existentes não foram alteradas.");
-            }
-             iptuData.installments = newInstallments;
+        // Atualiza com o NOVO VALOR TOTAL calculado
+        iptuData.totalValue = newTotalValue;
 
-
-            saveData();
-            renderAll();
-            hideModal('manageIptuModal');
-        } else {
-             alert("Erro ao salvar. Verifique os valores.");
+        // Se o número de parcelas mudou, reseta as pagas (mantém a lógica anterior)
+        if (iptuData.installments !== newInstallments) {
+             iptuData.paidInstallments = 0;
+             console.warn("Número de parcelas alterado. Parcelas pagas foram resetadas para 0. Transações existentes não foram alteradas.");
         }
-    });
+         iptuData.installments = newInstallments;
+
+
+        saveData();
+        renderAll();
+        hideModal('manageIptuModal');
+    } else {
+         alert("Erro ao salvar. Verifique o valor da parcela e o número de parcelas.");
+    }
+});
 
     // Listener para APAGAR o IPTU do ano
     deleteIptuBtn.addEventListener('click', () => {
