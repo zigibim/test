@@ -1184,7 +1184,7 @@
     }
 
             const iptuButton = settings.iptuButtonEnabled && item.category === 'Imóvel' ? `<button data-id="${item.id}" ... >...</button>` : ''; 
-            const actionButtons = `<div class="mt-4 flex justify-end items-center gap-2">${iptuButton}${payIptuButton}<button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item"><i data-lucide="file-signature" class="h-5 w-5"></i></button><button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Excluir Item"><i data-lucide="trash-2" class="h-5 w-5"></i></button><button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm"><i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar</button></div>`;
+            const actionButtons = `<div class="mt-4 flex justify-end items-center gap-2">${payIptuButton}${iptuButton}<button data-id="${item.id}" class="edit-item-btn ... >...</button> ... </div>`;
             availableList.innerHTML += card;
         }
     });
