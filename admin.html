@@ -577,6 +577,14 @@
         <label for="transactionDescription" class="block mb-1 font-medium">Descrição</label>
         <textarea id="transactionDescription" rows="1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 resize-none overflow-hidden" required></textarea>
     </div>
+    <div id="autoIptuContainer" class="hidden space-y-2 mb-4">
+        <label class="flex items-center space-x-3 cursor-pointer p-3 bg-gray-900 rounded-md hover:bg-gray-700">
+            <input type="checkbox" id="autoIptuCheckbox" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
+            <span id="autoIptuLabel" class="text-sm font-medium text-cyan-300"></span>
+        </label>
+    </div>
+    <div>
+    <div class="flex justify-between items-baseline mb-1">
     <div>
     <div class="flex justify-between items-baseline mb-1">
         <label for="transactionAmount" class="font-medium">Valor (R$)</label>
@@ -600,12 +608,6 @@
         <label for="transactionDate" class="block mb-1 font-medium">Data</label>
         <input type="date" id="transactionDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
     </div>
-    <div id="payIptuContainer" class="hidden border-t border-gray-700 pt-4 mt-4">
-            <label class="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" id="payIptuCheckbox" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
-                <span id="payIptuLabel" class="text-sm">Adicionar pagamento de IPTU</span>
-            </label>
-        </div>
     <div id="managementFeeContainer" class="border-t border-gray-700 pt-4 mt-4">
         <label class="flex items-center space-x-3 cursor-pointer">
             <input type="checkbox" id="addManagementFee" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
@@ -911,6 +913,20 @@
         
         // --- INÍCIO DA APLICAÇÃO ---
         lucide.createIcons();
+
+        document.getElementById('autoIptuCheckbox').addEventListener('change', (e) => {
+            const transactionAmountInput = document.getElementById('transactionAmount');
+            const installmentValue = parseFloat(e.target.dataset.iptuValue) || 0;
+            let currentAmount = parseFloat(transactionAmountInput.value) || 0;
+
+            if (e.target.checked) {
+                // Adiciona o valor do IPTU
+                transactionAmountInput.value = (currentAmount + installmentValue).toFixed(2);
+            } else {
+                // Remove o valor do IPTU
+                transactionAmountInput.value = (currentAmount - installmentValue).toFixed(2);
+            }
+        });
 
         let settings = { password: 'davi' };
         let managers = [];
@@ -1485,7 +1501,7 @@ const renderTransactions = (transactionsToRender) => {
                 : transactionsForBalance.filter(t => {
                     const tDate = new Date(t.date);
                     return tDate.getMonth() === month && tDate.getFullYear() === year;
-                });
+                }).filter(t => !t.excludeFromDashboard);
 
             relevantTransactions.forEach(t => {
                 if(t.type === 'revenue') {
@@ -1525,6 +1541,7 @@ const renderTransactions = (transactionsToRender) => {
                 managementFeeData = Array(12).fill(0);
                 
                 transactionsForChart.forEach(t => {
+                    if (t.excludeFromDashboard) return;
                     const tDate = new Date(t.date);
                     if (tDate.getFullYear() === year) {
                         const monthIndex = tDate.getMonth();
@@ -1542,6 +1559,7 @@ const renderTransactions = (transactionsToRender) => {
                 managementFeeData = Array(years.length).fill(0);
 
                 transactionsForChart.forEach(t => {
+                    if (t.excludeFromDashboard) return;
                     const tYear = new Date(t.date).getFullYear();
                     const index = years.indexOf(tYear);
                     if (index !== -1) {
@@ -2102,21 +2120,37 @@ if(editManagerBtn) {
     if (e.target.id === 'transactionItemLink') {
         const itemId = e.target.value;
         const debtDisplay = document.getElementById('debtAmountDisplay');
-        const payIptuContainer = document.getElementById('payIptuContainer');
-        debtDisplay.classList.add('hidden');
-        payIptuContainer.classList.add('hidden');
+        // --- INÍCIO DA NOVA LÓGICA DE IPTU AUTOMÁTICO ---
+const autoIptuContainer = document.getElementById('autoIptuContainer');
+const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
+const autoIptuLabel = document.getElementById('autoIptuLabel');
 
-        if (itemId) {
-            const item = items.find(i => i.id === parseInt(itemId));
-            if (item) {
-                document.getElementById('transactionAmount').value = item.rentedTo ? item.rentValue : item.value;
-                checkAndDisplayDebt(item);
+// Reseta e esconde o campo por padrão
+autoIptuContainer.classList.add('hidden');
+if(autoIptuCheckbox.checked) {
+     // Se estava marcado, desmarca e reverte o valor
+     autoIptuCheckbox.checked = false;
+     autoIptuCheckbox.dispatchEvent(new Event('change')); // Força o evento de 'change'
+}
+autoIptuCheckbox.dataset.iptuValue = 0;
+autoIptuLabel.textContent = '';
 
-                const currentYear = new Date().getFullYear();
-                if (item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
-                    document.getElementById('payIptuLabel').textContent = `Adicionar IPTU do ano: ${currentYear}`;
-                    payIptuContainer.classList.remove('hidden');
-                }
+// Verifica se o item selecionado é um Imóvel com IPTU pendente
+if (itemId) {
+    const item = items.find(i => i.id === parseInt(itemId));
+    const currentYear = new Date().getFullYear();
+
+    if (item && item.category === 'Imóvel' && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
+        const iptuData = item.iptu[currentYear];
+        const installmentValue = iptuData.totalValue / iptuData.installments;
+
+        // Configura o campo e exibe
+        autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
+        autoIptuCheckbox.dataset.iptuValue = installmentValue; // Armazena o valor no checkbox
+        autoIptuContainer.classList.remove('hidden');
+    }
+}
+// --- FIM DA NOVA LÓGICA DE IPTU AUTOMÁTICO ---
             }
         }
     }
@@ -2527,20 +2561,53 @@ if (deleteTransactionButton) {
     e.preventDefault();
     const selectedItemId = document.getElementById('transactionItemLink').value;
     const description = document.getElementById('transactionDescription').value;
-    const amountPaid = parseFloat(document.getElementById('transactionAmount').value);
+    let amountPaidFromForm = parseFloat(document.getElementById('transactionAmount').value); // Valor total do input
     const transactionDate = document.getElementById('transactionDate').value;
-    const payIptu = document.getElementById('payIptuCheckbox').checked; // Captura o estado do checkbox de IPTU
-    let finalDescription = description;
 
+    const iptuCheckbox = document.getElementById('autoIptuCheckbox');
+    let iptuTransactionToCreate = null;
+    let revenueAmount = amountPaidFromForm; // Valor da receita por padrão é o total
+
+    // --- Início da Lógica de Separação do IPTU ---
+    if (selectedItemId && iptuCheckbox.checked) {
+        const item = items.find(i => i.id === parseInt(selectedItemId));
+        const currentYear = new Date().getFullYear();
+        
+        if (item && item.iptu && item.iptu[currentYear]) {
+            const iptuData = item.iptu[currentYear];
+            const installmentValue = parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
+
+            // 1. Subtrai o valor do IPTU do montante da receita
+            revenueAmount = amountPaidFromForm - installmentValue;
+
+            // 2. Atualiza o contador de parcelas pagas
+            iptuData.paidInstallments += 1;
+
+            // 3. Prepara a transação de despesa do IPTU
+            iptuTransactionToCreate = {
+                id: Date.now() + 2,
+                type: 'expense',
+                description: `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments}/${iptuData.installments}) - ${item.name}`,
+                amount: installmentValue,
+                date: transactionDate,
+                itemId: item.id,
+                excludeFromDashboard: true // FLAG PARA OCULTAR DO PAINEL
+            };
+        }
+    }
+    // --- Fim da Lógica de Separação do IPTU ---
+
+    let finalDescription = description;
     if (selectedItemId && description.startsWith('Recebimento aluguel:')) {
         finalDescription = 'Recebimento de Aluguel';
     }
 
+    // Cria a transação de Receita (com o valor já ajustado, se houver IPTU)
     const newTransaction = {
         id: Date.now(),
         type: document.getElementById('transactionType').value,
         description: finalDescription,
-        amount: amountPaid,
+        amount: revenueAmount, // Usa o valor da receita ajustado
         date: transactionDate,
         itemId: selectedItemId ? parseInt(selectedItemId) : null
     };
@@ -2549,8 +2616,9 @@ if (deleteTransactionButton) {
         const item = items.find(i => i.id === parseInt(selectedItemId));
         if (item && item.rentedTo) {
             if (!item.debt) item.debt = { amount: 0, cycles: 0 };
-
-            const difference = item.rentValue - amountPaid;
+            
+            // A lógica de dívida agora compara com o valor do aluguel, não com o valor pago
+            const difference = item.rentValue - revenueAmount; 
             const paymentPeriod = `${new Date(transactionDate + 'T00:00:00').getFullYear()}-${String(new Date(transactionDate + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
             const hasPaymentForPeriod = item.paymentsMade && item.paymentsMade.includes(paymentPeriod);
 
@@ -2577,6 +2645,7 @@ if (deleteTransactionButton) {
 
     transactions.push(newTransaction);
 
+    // Adiciona a transação de Taxa de Gerência (se houver)
     const addFee = document.getElementById('addManagementFee').checked;
     const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
     if (addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
@@ -2586,29 +2655,12 @@ if (deleteTransactionButton) {
         transactions.push(feeTransaction);
     }
 
-    // --- INÍCIO DA NOVA LÓGICA DE IPTU ---
-    if (selectedItemId && payIptu) {
-        const item = items.find(i => i.id === parseInt(selectedItemId));
-        const currentYear = new Date().getFullYear();
-        if (item && item.iptu && item.iptu[currentYear]) {
-            const iptuData = item.iptu[currentYear];
-            if (iptuData.paidInstallments < iptuData.installments) {
-                const installmentValue = iptuData.totalValue / iptuData.installments;
-                iptuData.paidInstallments += 1;
-
-                const iptuTransaction = {
-                    id: Date.now() + 2, // ID ligeiramente diferente para evitar colisão
-                    type: 'expense',
-                    description: `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments}/${iptuData.installments}) - ${item.name}`,
-                    amount: installmentValue,
-                    date: transactionDate,
-                    itemId: item.id
-                };
-                transactions.push(iptuTransaction);
-            }
-        }
+    // Adiciona a transação de Despesa do IPTU (se foi preparada)
+    if (iptuTransactionToCreate) {
+        transactions.push(iptuTransactionToCreate);
     }
-    // --- FIM DA NOVA LÓGICA DE IPTU ---
+    
+    // REMOVEMOS O BLOCO ANTIGO DE IPTU DAQUI
 
     saveData();
     renderAll();
