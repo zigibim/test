@@ -2106,45 +2106,67 @@ if(editManagerBtn) {
         
 
         document.getElementById('addTransactionModal').addEventListener('change', (e) => {
-    // ... (lógica existente para taxa de gerência) ...
+    // --- INÍCIO DO CÓDIGO CORRIGIDO PARA SUBSTITUIR ---
 
+    // Lógica existente para a taxa de gerência (não mexer)
+    if (e.target.id === 'addManagementFee') {
+        document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked);
+        return; // Sai da função se foi só o checkbox da taxa
+    }
+
+    // Lógica principal quando o ITEM selecionado muda
     if (e.target.id === 'transactionItemLink') {
         const itemId = e.target.value;
         const debtDisplay = document.getElementById('debtAmountDisplay');
-        // --- INÍCIO DA NOVA LÓGICA DE IPTU AUTOMÁTICO ---
-const autoIptuContainer = document.getElementById('autoIptuContainer');
-const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
-const autoIptuLabel = document.getElementById('autoIptuLabel');
+        const transactionAmountInput = document.getElementById('transactionAmount'); // Input do valor
 
-// Reseta e esconde o campo por padrão
-autoIptuContainer.classList.add('hidden');
-if(autoIptuCheckbox.checked) {
-     // Se estava marcado, desmarca e reverte o valor
-     autoIptuCheckbox.checked = false;
-     autoIptuCheckbox.dispatchEvent(new Event('change')); // Força o evento de 'change'
-}
-autoIptuCheckbox.dataset.iptuValue = 0;
-autoIptuLabel.textContent = '';
+        // --- Resetar campos antes de verificar o novo item ---
+        debtDisplay.classList.add('hidden'); // Esconde display de dívida
+        const autoIptuContainer = document.getElementById('autoIptuContainer');
+        const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
+        const autoIptuLabel = document.getElementById('autoIptuLabel');
 
-// Verifica se o item selecionado é um Imóvel com IPTU pendente
-if (itemId) {
-    const item = items.find(i => i.id === parseInt(itemId));
-    const currentYear = new Date().getFullYear();
+        // Garante que o checkbox IPTU está desmarcado e esconde
+        if(autoIptuCheckbox.checked) {
+             autoIptuCheckbox.checked = false;
+             // Não precisa disparar o 'change' aqui, pois o valor será resetado abaixo
+        }
+        autoIptuContainer.classList.add('hidden');
+        autoIptuCheckbox.dataset.iptuValue = 0;
+        autoIptuLabel.textContent = '';
 
-    if (item && item.category === 'Imóvel' && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
-        const iptuData = item.iptu[currentYear];
-        const installmentValue = iptuData.totalValue / iptuData.installments;
 
-        // Configura o campo e exibe
-        autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
-        autoIptuCheckbox.dataset.iptuValue = installmentValue; // Armazena o valor no checkbox
-        autoIptuContainer.classList.remove('hidden');
-    }
-}
-// --- FIM DA NOVA LÓGICA DE IPTU AUTOMÁTICO ---
+        // --- Lógica se um item FOI selecionado ---
+        if (itemId) {
+            const item = items.find(i => i.id === parseInt(itemId));
+            if (item) {
+                // Atualiza o valor padrão da transação
+                transactionAmountInput.value = item.rentedTo ? item.rentValue.toFixed(2) : item.value.toFixed(2); // Usa toFixed(2) para garantir formato
+                // Verifica e mostra a dívida existente
+                checkAndDisplayDebt(item);
+
+                // Verifica se mostra a opção de IPTU
+                const currentYear = new Date().getFullYear();
+                if (item.category === 'Imóvel' && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
+                    const iptuData = item.iptu[currentYear];
+                    const installmentValue = iptuData.totalValue / iptuData.installments;
+
+                    autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
+                    autoIptuCheckbox.dataset.iptuValue = installmentValue;
+                    autoIptuContainer.classList.remove('hidden');
+                }
+            } else {
+                // Caso o item ID exista mas não seja encontrado (improvável, mas seguro)
+                transactionAmountInput.value = '';
             }
         }
-    }
+        // --- Lógica se NENHUM item foi selecionado ("Nenhum / Outra") ---
+        else {
+            transactionAmountInput.value = ''; // Limpa o valor
+        }
+    } // Fim do if (e.target.id === 'transactionItemLink')
+
+    // --- FIM DO CÓDIGO CORRIGIDO PARA SUBSTITUIR ---
 });
 
 // Adiciona o listener para o botão de perdoar dívida
