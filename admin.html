@@ -1254,6 +1254,9 @@ const renderTransactions = (transactionsToRender) => {
     const mobileHTML = sortedTransactions.map(t => {
         let typeClass = '', typeText = '', amountClass = '', amountPrefix = '';
         if (t.type === 'revenue') { typeClass = 'bg-green-900 text-green-300'; typeText = 'Receita'; amountClass = 'text-green-400'; amountPrefix = '+'; } 
+        else if (t.type === 'expense' && t.description.startsWith('Pagamento IPTU')) {
+            typeClass = 'bg-blue-900 text-blue-300'; typeText = 'Despesa (IPTU)'; amountClass = 'text-blue-400'; amountPrefix = '-'; // Classes Azuis
+        }
         else if (t.type === 'expense') { typeClass = 'bg-red-900 text-red-300'; typeText = 'Despesa'; amountClass = 'text-red-400'; amountPrefix = '-'; } 
         else if (t.type === 'management_fee') { typeClass = 'bg-yellow-900 text-yellow-300'; typeText = 'Taxa Gerência'; amountClass = 'text-yellow-400'; amountPrefix = '-'; }
         
@@ -1307,6 +1310,9 @@ const renderTransactions = (transactionsToRender) => {
     const desktopRowsHTML = sortedTransactions.map(t => {
         let typeClass = '', typeText = '', amountClass = '', amountPrefix = '';
         if (t.type === 'revenue') { typeClass = 'bg-green-900 text-green-300'; typeText = 'Receita'; amountClass = 'text-green-400'; amountPrefix = '+'; } 
+        else if (t.type === 'expense' && t.description.startsWith('Pagamento IPTU')) {
+            typeClass = 'bg-blue-900 text-blue-300'; typeText = 'Despesa (IPTU)'; amountClass = 'text-blue-400'; amountPrefix = '-'; // Classes Azuis
+        }
         else if (t.type === 'expense') { typeClass = 'bg-red-900 text-red-300'; typeText = 'Despesa'; amountClass = 'text-red-400'; amountPrefix = '-'; } 
         else if (t.type === 'management_fee') { typeClass = 'bg-yellow-900 text-yellow-300'; typeText = 'Taxa Gerência'; amountClass = 'text-yellow-400'; amountPrefix = '-'; }
 
