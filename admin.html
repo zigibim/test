@@ -1168,24 +1168,34 @@
             const card = `<div class="bg-gray-800 p-4 rounded-lg border-l-4 border-yellow-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span></div><div class="mt-3 text-sm space-y-1"><p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p><p><strong class="text-gray-300">Término Contrato:</strong> <span>${formatDate(item.rentEndDate)}</span></p></div></div>${actionButtons}</div>`;
             rentedList.innerHTML += card;
         } else {
-
             // --- INÍCIO: Lógica para Botão Pagar IPTU (Item Disponível) ---
-    let payIptuButton = ''; // Inicializa vazio
-    const currentYear = new Date().getFullYear();
-    if (settings.iptuButtonEnabled && // Verifica se a funcionalidade está ativa nas config
-        item.category === 'Imóvel' &&
-        item.iptu && item.iptu[currentYear])
-    {
-        const iptuData = item.iptu[currentYear];
-        if (iptuData.paidInstallments < iptuData.installments) {
-            // Cria o botão se houver parcelas pendentes
-            payIptuButton = `<button data-id="${item.id}" class="pay-iptu-expense-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Registrar Pagamento Parcela IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>Pagar IPTU</button>`;
-        }
-    }
+            let payIptuButton = ''; // Inicializa vazio
+            const currentYear = new Date().getFullYear();
+            // Verifica se a funcionalidade IPTU está ativa E se o item é Imóvel com IPTU no ano atual
+            if (settings.iptuButtonEnabled &&
+                item.category === 'Imóvel' &&
+                item.iptu && item.iptu[currentYear])
+            {
+                const iptuData = item.iptu[currentYear];
+                // Cria o botão "Pagar IPTU" apenas se houver parcelas pendentes
+                if (iptuData.paidInstallments < iptuData.installments) {
+                    payIptuButton = `<button data-id="${item.id}" class="pay-iptu-expense-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Registrar Pagamento Parcela IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>Pagar IPTU</button>`;
+                }
+            }
+            // --- FIM: Lógica para Botão Pagar IPTU ---
 
-            const iptuButton = settings.iptuButtonEnabled && item.category === 'Imóvel' ? `<button data-id="${item.id}" ... >...</button>` : ''; 
+            // Define o botão "IPTU" (Gerenciar/Registrar) - Visível apenas se config ativa e item for Imóvel
+            const iptuButton = settings.iptuButtonEnabled && item.category === 'Imóvel' ? `<button data-id="${item.id}" class="iptu-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Gerenciar/Registrar IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>IPTU</button>` : '';
+
+            // Define a string com TODOS os botões de ação, na ordem correta: IPTU, Pagar IPTU, Editar, Excluir, Alugar
             const actionButtons = `<div class="mt-4 flex justify-end items-center gap-2">${iptuButton}${payIptuButton}<button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item"><i data-lucide="file-signature" class="h-5 w-5"></i></button><button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Excluir Item"><i data-lucide="trash-2" class="h-5 w-5"></i></button><button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm"><i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar</button></div>`;
+
+            // Monta o HTML do card para item disponível
+            // (Note que iptuStatusHTML foi definido anteriormente dentro do loop forEach)
+            const card = `<div class="bg-gray-800 p-4 rounded-lg border-l-4 border-green-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.value)}</span></div>${item.description ? `<p class="text-sm text-gray-300 mt-2">${item.description}</p>` : ''}</div>${actionButtons}</div>`;
             availableList.innerHTML += card;
+
+       
         }
     });
     if (rentedList.innerHTML === '') rentedList.innerHTML = `<p class="text-gray-400">Nenhum item alugado no momento.</p>`;
