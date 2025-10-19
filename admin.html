@@ -1145,13 +1145,20 @@
             paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
         }
 
-        // LÓGICA ADICIONADA PARA EXIBIR O STATUS DO IPTU
+        // LÓGICA ADICIONADA PARA EXIBIR O STATUS DO IPTU E VALOR DA PARCELA
         let iptuStatusHTML_rentals = '';
         const currentYear = new Date().getFullYear();
         if (item.iptu && item.iptu[currentYear]) {
             const iptuData = item.iptu[currentYear];
+            // Calcula o valor da parcela apenas se houver parcelas
+            const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
+
             if (iptuData.paidInstallments < iptuData.installments) {
-                iptuStatusHTML_rentals = `<p class="text-xs text-blue-400 font-semibold text-right">IPTU: ${iptuData.paidInstallments}/${iptuData.installments}</p>`;
+                // Adiciona o valor formatado da parcela ao texto
+                iptuStatusHTML_rentals = `<p class="text-xs text-blue-400 font-semibold text-right">IPTU: ${iptuData.paidInstallments}/${iptuData.installments} - ${formatCurrency(installmentValue)}</p>`;
+            } else {
+                 // Opcional: Mostrar que está pago (se desejar)
+                 // iptuStatusHTML_rentals = `<p class="text-xs text-green-400 font-semibold text-right">IPTU ${currentYear}: Pago</p>`;
             }
         }
 
