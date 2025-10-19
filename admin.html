@@ -733,6 +733,7 @@
                         <nav class="-mb-px flex space-x-6" aria-label="Settings Tabs">
                             <button class="settings-tab-button active-settings-tab whitespace-nowrap py-3 px-4 rounded-t-md text-sm font-medium bg-gray-700 text-gray-100" data-tab="profile">Perfil</button>
                             <button class="settings-tab-button whitespace-nowrap py-3 px-4 rounded-t-md text-sm font-medium text-gray-400 hover:bg-gray-700/50" data-tab="managers">Gestores</button>
+                            <button class="settings-tab-button whitespace-nowrap py-3 px-4 rounded-t-md text-sm font-medium text-gray-400 hover:bg-gray-700/50" data-tab="adjustments">Ajustes</button>
                         </nav>
                     </div>
                 </div>
@@ -777,6 +778,26 @@
                             </div>
                         </div>
                     </div>
+
+                    </div> {/* */}
+                <div id="adjustments-settings-content" class="settings-tab-content hidden">
+                     <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg">
+                        <h3 class="text-xl font-semibold mb-4">Notificações</h3>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Ativar alertas de pagamento e fim de contrato?</span>
+                            {/* */}
+                            <label for="notificationsToggle" class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" value="" id="notificationsToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                {/* */}
+
+            </div> </div>
+    </div>
+</div>
                 </div>
             </div>
         </div>
@@ -975,6 +996,14 @@
         const editTransactionForm = document.getElementById('editTransactionForm');
         const iptuForm = document.getElementById('iptuForm');
         const editDebtForm = document.getElementById('editDebtForm');
+        const notificationsToggle = document.getElementById('notificationsToggle');
+
+        notificationsToggle.addEventListener('change', (e) => {
+        settings.notificationsEnabled = e.target.checked;
+        saveData(); // Salva a nova configuração
+        updateNotificationVisibility(); // Atualiza a visibilidade das abas
+        checkAlerts(); // Re-checa os alertas para atualizar o badge (se habilitado)
+    });
         
         const saveData = () => {
             localStorage.setItem('rentalManagerItems', JSON.stringify(items));
@@ -987,6 +1016,10 @@
             const storedSettings = localStorage.getItem('rentalManagerSettings');
             if (storedSettings) settings = JSON.parse(storedSettings);
             
+            if (settings.notificationsEnabled === undefined) {
+                settings.notificationsEnabled = false;
+            }
+
             const storedManagers = localStorage.getItem('rentalManagerManagers');
             if(storedManagers) managers = JSON.parse(storedManagers);
 
@@ -995,9 +1028,28 @@
             const storedTransactions = localStorage.getItem('rentalManagerTransactions');
             transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
         };
+
+        const updateNotificationVisibility = () => {
+    const showNotifications = settings.notificationsEnabled;
+    // Seleciona todos os elementos relacionados à aba de notificações
+    const notificationTabs = document.querySelectorAll('.tab-button[data-tab="notifications"]');
+
+    notificationTabs.forEach(tab => {
+        tab.style.display = showNotifications ? '' : 'none'; // Mostra ou esconde
+    });
+
+    // Se as notificações foram desativadas e a aba ativa era a de notificações, muda para o dashboard
+    const activeTopTab = document.querySelector('#top-nav .tab-button.active-tab');
+    const activeBottomTab = document.querySelector('#bottom-nav .tab-button.active-tab');
+    if (!showNotifications && ( (activeTopTab && activeTopTab.dataset.tab === 'notifications') || (activeBottomTab && activeBottomTab.dataset.tab === 'notifications') ) ) {
+        switchTab('dashboard');
+    }
+};
         
         const renderAll = () => {
             customizeUIForAdmin();
+            updateNotificationVisibility();
+            document.getElementById('notificationsToggle').checked = settings.notificationsEnabled;
             renderDashboard(items, transactions);
             renderTransactions(transactions);
             checkAlerts();
@@ -1376,6 +1428,15 @@ const renderTransactions = (transactionsToRender) => {
             const notificationBadges = document.querySelectorAll('.notification-badge');
             const notificationsTabBtns = document.querySelectorAll('.tab-button[data-tab="notifications"]');
             container.innerHTML = '';
+            notificationBadges.forEach(badge => badge.textContent = 0);
+            notificationsTabBtns.forEach(btn => btn.classList.remove('has-notifications'));
+            
+            if (!settings.notificationsEnabled) {
+                container.innerHTML = `<p class="text-gray-400">As notificações estão desativadas nos Ajustes.</p>`;
+                return; // Sai da função se as notificações estiverem desativadas
+            }
+    
+
             let alertCount = 0;
 
             const today = new Date();
@@ -3005,17 +3066,21 @@ if (deleteTransactionButton) {
 
 
         const switchSettingsTab = (tabId) => {
-            settingsTabButtons.forEach(btn => {
-                const isCorrectTab = btn.dataset.tab === tabId;
-                btn.classList.toggle('active-settings-tab', isCorrectTab);
-                btn.classList.toggle('text-gray-100', isCorrectTab);
-                btn.classList.toggle('bg-gray-700', isCorrectTab);
-                btn.classList.toggle('text-gray-400', !isCorrectTab);
-                 btn.classList.toggle('hover:bg-gray-700/50', !isCorrectTab);
-            });
-            settingsTabContents.forEach(content => content.classList.add('hidden'));
-            document.getElementById(`${tabId}-settings-content`).classList.remove('hidden');
-        };
+    settingsTabButtons.forEach(btn => {
+        const isCorrectTab = btn.dataset.tab === tabId;
+        btn.classList.toggle('active-settings-tab', isCorrectTab);
+        btn.classList.toggle('text-gray-100', isCorrectTab);
+        btn.classList.toggle('bg-gray-700', isCorrectTab);
+        btn.classList.toggle('text-gray-400', !isCorrectTab);
+         btn.classList.toggle('hover:bg-gray-700/50', !isCorrectTab);
+    });
+    settingsTabContents.forEach(content => content.classList.add('hidden'));
+    // Adiciona a busca pelo novo ID
+    const contentToShow = document.getElementById(`${tabId}-settings-content`);
+    if (contentToShow) {
+        contentToShow.classList.remove('hidden');
+    }
+};
 
         settingsTabButtons.forEach(button => button.addEventListener('click', () => switchSettingsTab(button.dataset.tab)));
         
