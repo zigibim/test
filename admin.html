@@ -2355,6 +2355,33 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                     feeDiv.classList.remove('hidden');
                     feeAmountInput.value = fee.toFixed(2);
                 }
+
+                // --- INÍCIO: Verificação Automática de IPTU ao Abrir Modal ---
+        const preselectedItemId = document.getElementById('transactionItemLink').value;
+        if (preselectedItemId) {
+            const preselectedItem = items.find(i => i.id === parseInt(preselectedItemId));
+            const currentYear = new Date().getFullYear();
+            const autoIptuContainer = document.getElementById('autoIptuContainer');
+            const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
+            const autoIptuLabel = document.getElementById('autoIptuLabel');
+
+            // Garante que o checkbox está resetado antes de verificar
+            autoIptuContainer.classList.add('hidden');
+            autoIptuCheckbox.checked = false;
+            autoIptuCheckbox.dataset.iptuValue = 0;
+            autoIptuLabel.textContent = '';
+
+            // Verifica se é Imóvel com IPTU pendente
+            if (preselectedItem && preselectedItem.category === 'Imóvel' && preselectedItem.iptu && preselectedItem.iptu[currentYear] && preselectedItem.iptu[currentYear].paidInstallments < preselectedItem.iptu[currentYear].installments) {
+                const iptuData = preselectedItem.iptu[currentYear];
+                const installmentValue = iptuData.totalValue / iptuData.installments;
+
+                // Configura e exibe o checkbox
+                autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
+                autoIptuCheckbox.dataset.iptuValue = installmentValue;
+                autoIptuContainer.classList.remove('hidden');
+            }
+        }
                 
                 showModal('addTransactionModal');
             }
