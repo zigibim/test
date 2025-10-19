@@ -781,7 +781,7 @@
 
                     </div> 
                 <div id="adjustments-settings-content" class="settings-tab-content hidden">
-                     <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg">
+                     <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg space-y-6">
                         <h3 class="text-xl font-semibold mb-4">Notificações</h3>
                         <div class="flex items-center justify-between">
                             <span class="text-gray-300">Ativar alertas de pagamento e fim de contrato?</span>
@@ -792,6 +792,19 @@
                             </label>
                         </div>
                     </div>
+                    
+                    <div class="border-t border-gray-700 pt-6"> 
+                        <h3 class="text-xl font-semibold mb-4">Imóveis</h3>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-300">Exibir botão de gerenciamento de IPTU nos itens?</span>
+                            {/* Toggle Switch IPTU */}
+                            <label for="iptuButtonToggle" class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" value="" id="iptuButtonToggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
                 </div>
                 
 
@@ -997,12 +1010,19 @@
         const iptuForm = document.getElementById('iptuForm');
         const editDebtForm = document.getElementById('editDebtForm');
         const notificationsToggle = document.getElementById('notificationsToggle');
+        const iptuButtonToggle = document.getElementById('iptuButtonToggle');
 
         notificationsToggle.addEventListener('change', (e) => {
         settings.notificationsEnabled = e.target.checked;
         saveData(); // Salva a nova configuração
         updateNotificationVisibility(); // Atualiza a visibilidade das abas
         checkAlerts(); // Re-checa os alertas para atualizar o badge (se habilitado)
+    });
+
+    iptuButtonToggle.addEventListener('change', (e) => {
+        settings.iptuButtonEnabled = e.target.checked;
+        saveData(); // Salva a nova configuração
+        renderItems(items); // Re-renderiza apenas a lista de itens para mostrar/esconder o botão
     });
         
         const saveData = () => {
@@ -1018,6 +1038,11 @@
             
             if (settings.notificationsEnabled === undefined) {
                 settings.notificationsEnabled = false;
+            }
+
+            // --- ADICIONADO: Garante que a chave 'iptuButtonEnabled' exista, default para true ---
+            if (settings.iptuButtonEnabled === undefined) {
+                settings.iptuButtonEnabled = true;
             }
 
             const storedManagers = localStorage.getItem('rentalManagerManagers');
@@ -1050,6 +1075,7 @@
             customizeUIForAdmin();
             updateNotificationVisibility();
             document.getElementById('notificationsToggle').checked = settings.notificationsEnabled;
+            document.getElementById('iptuButtonToggle').checked = settings.iptuButtonEnabled;
             renderDashboard(items, transactions);
             renderTransactions(transactions);
             checkAlerts();
@@ -1134,7 +1160,7 @@
             }
         }
 
-        const iptuButton = item.category === 'Imóvel' ? `<button data-id="${item.id}" class="iptu-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Registrar IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>IPTU</button>` : '';
+        const iptuButton = settings.iptuButtonEnabled && item.category === 'Imóvel' ? `<button data-id="${item.id}" class="iptu-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Gerenciar/Registrar IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>IPTU</button>` : '';
         const actionButtons = `<div class="mt-4 flex justify-end items-center space-x-2">${iptuButton}<button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item"><i data-lucide="file-signature" class="h-5 w-5"></i></button>${item.rentedTo ? `<button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel"><i data-lucide="clipboard-edit" class="h-5 w-5"></i></button>` : ''}<button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="${item.rentedTo ? 'Finalizar Aluguel' : 'Excluir Item'}"><i data-lucide="trash-2" class="h-5 w-5"></i></button>${!item.rentedTo ? `<button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm"><i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar</button>` : ''}</div>`;
 
         if (item.rentedTo) {
