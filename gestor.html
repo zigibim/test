@@ -53,40 +53,40 @@
         <main>
             <!-- Aba Painel -->
             <div id="dashboard-content" class="tab-content">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col text-center sm:flex-row sm:items-center sm:text-left gap-4">
-                        <i data-lucide="package" class="h-8 w-8 text-cyan-400 mb-2 sm:mb-0 self-center"></i>
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-400">Itens Gerenciados</h3>
-                            <p id="total-items" class="mt-1 text-2xl sm:text-3xl font-semibold">0</p>
+                <div class="space-y-4">
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-row items-center gap-4">
+                        <i data-lucide="package" class="h-8 w-8 text-cyan-400 flex-shrink-0"></i>
+                        <div class="flex-grow flex justify-between items-center">
+                            <h3 class="text-md font-medium text-gray-300">Itens Gerenciados</h3>
+                            <p id="total-items" class="text-2xl sm:text-3xl font-semibold">0</p>
                         </div>
                     </div>
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col text-center sm:flex-row sm:items-center sm:text-left gap-4">
-                         <i data-lucide="package-x" class="h-8 w-8 text-cyan-400 mb-2 sm:mb-0 self-center"></i>
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-400">Alugados</h3>
-                            <p id="rented-items" class="mt-1 text-2xl sm:text-3xl font-semibold">0</p>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-row items-center gap-4">
+                         <i data-lucide="package-x" class="h-8 w-8 text-cyan-400 flex-shrink-0"></i>
+                        <div class="flex-grow flex justify-between items-center">
+                            <h3 class="text-md font-medium text-gray-300">Alugados</h3>
+                            <p id="rented-items" class="text-2xl sm:text-3xl font-semibold">0</p>
                         </div>
                     </div>
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col text-center sm:flex-row sm:items-center sm:text-left gap-4">
-                        <i data-lucide="package-check" class="h-8 w-8 text-cyan-400 mb-2 sm:mb-0 self-center"></i>
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-400">Disponíveis</h3>
-                            <p id="available-items" class="mt-1 text-2xl sm:text-3xl font-semibold">0</p>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-row items-center gap-4">
+                        <i data-lucide="package-check" class="h-8 w-8 text-cyan-400 flex-shrink-0"></i>
+                        <div class="flex-grow flex justify-between items-center">
+                            <h3 class="text-md font-medium text-gray-300">Disponíveis</h3>
+                            <p id="available-items" class="text-2xl sm:text-3xl font-semibold">0</p>
                         </div>
                     </div>
-                     <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col text-center sm:flex-row sm:items-center sm:text-left gap-4">
-                        <i data-lucide="arrow-down-circle" class="h-8 w-8 text-red-400 mb-2 sm:mb-0 self-center"></i>
-                        <div>
-                             <h3 class="text-sm font-medium text-gray-400">Despesas (Mês)</h3>
-                            <p id="month-expense" class="mt-1 text-2xl sm:text-3xl font-semibold text-red-400">R$ 0,00</p>
+                     <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-row items-center gap-4">
+                        <i data-lucide="arrow-down-circle" class="h-8 w-8 text-red-400 flex-shrink-0"></i>
+                        <div class="flex-grow flex justify-between items-center">
+                             <h3 class="text-md font-medium text-gray-300">Despesas (Mês)</h3>
+                            <p id="month-expense" class="text-2xl sm:text-3xl font-semibold text-red-400">R$ 0,00</p>
                         </div>
                     </div>
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col text-center sm:flex-row sm:items-center sm:text-left gap-4">
-                        <i data-lucide="percent" class="h-8 w-8 text-yellow-400 mb-2 sm:mb-0 self-center"></i>
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-400">Taxas (Mês)</h3>
-                            <p id="month-fee" class="mt-1 text-2xl sm:text-3xl font-semibold text-yellow-400">R$ 0,00</p>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-row items-center gap-4">
+                        <i data-lucide="percent" class="h-8 w-8 text-yellow-400 flex-shrink-0"></i>
+                        <div class="flex-grow flex justify-between items-center">
+                            <h3 class="text-md font-medium text-gray-300">Taxas (Mês)</h3>
+                            <p id="month-fee" class="text-2xl sm:text-3xl font-semibold text-yellow-400">R$ 0,00</p>
                         </div>
                     </div>
                 </div>
@@ -124,6 +124,27 @@
                          <span>Adicionar Despesa</span>
                      </button>
                  </div>
+
+                <!-- Filtros de Transações -->
+                 <div class="bg-gray-800 p-4 rounded-xl mb-6">
+                    <h3 class="text-lg font-semibold mb-3">Filtrar Transações</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label for="filterType" class="block text-sm font-medium mb-1">Tipo de Transação</label>
+                            <select id="filterType" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+                                <option value="all">Todos</option>
+                                <option value="revenue">Receita</option>
+                                <option value="expense">Despesa</option>
+                                <option value="management_fee">Taxa de Gerência</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label for="filterStartDate" class="block text-sm font-medium mb-1">A partir de</label>
+                            <input type="date" id="filterStartDate" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+                        </div>
+                    </div>
+                 </div>
+
                  <h2 class="text-xl sm:text-2xl font-semibold mb-4">Histórico de Transações</h2>
                 <div id="transactions-list" class="space-y-4 md:space-y-0"></div>
             </div>
@@ -264,7 +285,7 @@
         // --- AUTENTICAÇÃO E CARGA DE DADOS ---
         const currentManagerJSON = localStorage.getItem('currentManager');
         if (!currentManagerJSON) {
-            window.location.href = 'index.html';
+            window.location.href = './index.html';
             return;
         }
         const currentManager = JSON.parse(currentManagerJSON);
@@ -340,11 +361,27 @@
             renderDashboard();
             renderItems();
             renderRentals();
-            renderTransactions();
+            applyManagerFiltersAndRender(); // Usa a função de filtro
             lucide.createIcons();
         };
 
-        // --- LÓGICA DE RENDERIZAÇÃO DAS ABAS ---
+        // --- LÓGICA DE FILTRO E RENDERIZAÇÃO DAS ABAS ---
+
+        const applyManagerFiltersAndRender = () => {
+            const type = document.getElementById('filterType').value;
+            const startDate = document.getElementById('filterStartDate').value;
+
+            let filtered = managedTransactions.filter(t => {
+                const tDate = new Date(t.date + 'T00:00:00');
+                const start = startDate ? new Date(startDate + 'T00:00:00') : null;
+
+                if (type !== 'all' && t.type !== type) return false;
+                if (start && tDate < start) return false;
+                
+                return true;
+            });
+            renderTransactions(filtered);
+        };
 
         const renderDashboard = () => {
             const rentedCount = managedItems.filter(item => item.rentedTo).length;
@@ -449,22 +486,29 @@
             });
         };
         
-        const renderTransactions = () => {
+        const renderTransactions = (transactionsToRender) => {
             const list = document.getElementById('transactions-list');
             list.innerHTML = '';
-            const sorted = [...managedTransactions].sort((a,b) => new Date(b.date) - new Date(a.date));
 
-            if (sorted.length === 0) {
-                list.innerHTML = `<p class="text-gray-400">Nenhuma transação encontrada.</p>`;
+            if (!transactionsToRender || transactionsToRender.length === 0) {
+                list.innerHTML = `<p class="text-gray-400">Nenhuma transação encontrada para os filtros selecionados.</p>`;
                 return;
             }
             
-            const mobileHTML = sorted.map(t => {
+            const mobileHTML = transactionsToRender.map(t => {
                 const item = managedItems.find(i => i.id === t.itemId);
                 let typeClass, typeText, amountClass, amountPrefix;
                 if(t.type === 'revenue') { typeClass='bg-green-900 text-green-300'; typeText='Receita'; amountClass='text-green-400'; amountPrefix='+'; }
                 else if(t.type === 'expense') { typeClass='bg-red-900 text-red-300'; typeText='Despesa'; amountClass='text-red-400'; amountPrefix='-'; }
                 else { typeClass='bg-yellow-900 text-yellow-300'; typeText='Taxa'; amountClass='text-yellow-400'; amountPrefix='-'; }
+                
+                // Botões de ação condicionais
+                const actionButtons = (t.createdBy === currentManager.id)
+                    ? `<div class="flex items-center justify-end space-x-2 pt-1">
+                        <button data-id="${t.id}" class="edit-transaction-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Transação"><i data-lucide="edit" class="h-5 w-5"></i></button>
+                        <button data-id="${t.id}" class="delete-transaction-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Excluir Transação"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
+                    </div>`
+                    : '<div class="h-10"></div>'; // Placeholder para manter altura
                 
                 return `<div class="bg-gray-800 p-4 rounded-lg shadow-lg">
                     <p class="text-lg font-bold text-white break-words">${t.description}</p>
@@ -474,10 +518,7 @@
                         <span class="text-gray-400">${formatDate(t.date)}</span>
                     </div>
                     <p class="text-right text-lg font-semibold ${amountClass} mt-2">${amountPrefix} ${formatCurrency(t.amount)}</p>
-                     <div class="flex items-center justify-end space-x-2 pt-1">
-                        <button data-id="${t.id}" class="edit-transaction-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Transação"><i data-lucide="edit" class="h-5 w-5"></i></button>
-                        <button data-id="${t.id}" class="delete-transaction-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Excluir Transação"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
-                    </div>
+                    ${actionButtons}
                 </div>`;
             }).join('');
             
@@ -487,12 +528,15 @@
 
         // --- LÓGICA DAS AÇÕES E MODALS ---
         
-        // Ações dos botões
+        // Ações dos botões e filtros
         tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.removeItem('currentManager');
-            window.location.href = 'index.html';
+            window.location.href = './index.html';
         });
+        document.getElementById('filterType').addEventListener('change', applyManagerFiltersAndRender);
+        document.getElementById('filterStartDate').addEventListener('input', applyManagerFiltersAndRender);
+
         modals.forEach(modal => modal.addEventListener('click', (e) => { 
             if (e.target.classList.contains('modal') || e.target.closest('.modal-close-btn')) hideModal(modal.id); 
         }));
@@ -547,22 +591,27 @@
             const editBtn = e.target.closest('.edit-transaction-btn');
             if(editBtn) {
                 const tx = allTransactions.find(t => t.id === parseInt(editBtn.dataset.id));
-                document.getElementById('editTransactionForm').reset();
-                document.getElementById('editTransactionId').value = tx.id;
-                document.getElementById('editTransactionDescription').value = tx.description;
-                document.getElementById('editTransactionAmount').value = tx.amount;
-                document.getElementById('editTransactionDate').value = tx.date;
-                showModal('editTransactionModal');
+                 if (tx && tx.createdBy === currentManager.id) {
+                    document.getElementById('editTransactionForm').reset();
+                    document.getElementById('editTransactionId').value = tx.id;
+                    document.getElementById('editTransactionDescription').value = tx.description;
+                    document.getElementById('editTransactionAmount').value = tx.amount;
+                    document.getElementById('editTransactionDate').value = tx.date;
+                    showModal('editTransactionModal');
+                }
             }
             
             const deleteBtn = e.target.closest('.delete-transaction-btn');
             if(deleteBtn) {
                  const txId = parseInt(deleteBtn.dataset.id);
-                 showConfirmModal('Excluir Transação', 'Tem certeza que deseja excluir esta transação?', () => {
-                     allTransactions = allTransactions.filter(t => t.id !== txId);
-                     saveData();
-                     renderAll();
-                 });
+                 const tx = allTransactions.find(t => t.id === txId);
+                 if (tx && tx.createdBy === currentManager.id) {
+                     showConfirmModal('Excluir Transação', 'Tem certeza que deseja excluir esta transação?', () => {
+                         allTransactions = allTransactions.filter(t => t.id !== txId);
+                         saveData();
+                         renderAll();
+                     });
+                 }
             }
         });
 
@@ -620,7 +669,8 @@
                 description: document.getElementById('transactionDescription').value,
                 amount: amount,
                 date: document.getElementById('transactionDate').value,
-                itemId: itemId
+                itemId: itemId,
+                createdBy: currentManager.id // Adiciona o ID do gestor
             };
             allTransactions.push(newTransaction);
             
@@ -634,7 +684,8 @@
                     description: `Taxa Gerência - ${item.name}`,
                     amount: feeAmount,
                     date: newTransaction.date,
-                    itemId: itemId
+                    itemId: itemId,
+                    createdBy: currentManager.id // Adiciona o ID do gestor
                 };
                 allTransactions.push(feeTransaction);
             }
@@ -648,7 +699,7 @@
             e.preventDefault();
             const txId = parseInt(document.getElementById('editTransactionId').value);
             const tx = allTransactions.find(t => t.id === txId);
-            if(tx){
+            if(tx && tx.createdBy === currentManager.id){ // Dupla verificação
                 tx.description = document.getElementById('editTransactionDescription').value;
                 tx.amount = parseFloat(document.getElementById('editTransactionAmount').value);
                 tx.date = document.getElementById('editTransactionDate').value;
@@ -674,3 +725,4 @@
     </script>
 </body>
 </html>
+
