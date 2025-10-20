@@ -583,17 +583,24 @@
                 const endDate = new Date(item.rentEndDate + 'T00:00:00');
                 let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
+                // Loop through each month from the start until the month BEFORE the current one
                 while (checkDate < new Date(today.getFullYear(), today.getMonth(), 1) && checkDate <= endDate) {
                     const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
                     
-                    if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
+                    // A payment is considered overdue if its due date has passed and it's after the contract started
+                    if (paymentDueDateInLoop < today && paymentDueDateInLoop > startDate) {
                         const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        // Check if a payment was made for that period
                         if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
                             overdueMonths.push(periodString);
                         }
                     }
+                    
+                    // Move to the next month
                     checkDate.setMonth(checkDate.getMonth() + 1);
                 }
+                
                 return overdueMonths.length;
             };
 
