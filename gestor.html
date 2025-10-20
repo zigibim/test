@@ -1014,18 +1014,20 @@
             
             const iptuCheckbox = document.getElementById('autoIptuCheckbox');
             let iptuTransactionToCreate = null;
-            let revenueAmount = amount;
+            let revenueAmount = amount; // Start with the full amount
             let finalDescription = description;
 
+            // 1. Logic for IPTU checkbox (only if it's a revenue transaction, not a direct IPTU payment)
             if (!isDirectPayment && type === 'revenue' && itemId && iptuCheckbox.checked) {
                 const currentYear = new Date().getFullYear();
                 if (item && item.iptu && item.iptu[currentYear]) {
                     const iptuData = item.iptu[currentYear];
                     if (iptuData.paidInstallments < iptuData.installments) {
                         const installmentValue = parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
-                        revenueAmount = amount - installmentValue;
-                        iptuData.paidInstallments += 1;
+                        revenueAmount = amount - installmentValue; // Adjust the revenue amount
+                        iptuData.paidInstallments += 1; // Increment the paid count
                         
+                        // Prepare the separate IPTU expense transaction
                         iptuTransactionToCreate = {
                              id: Date.now() + 2,
                              type: 'expense',
@@ -1040,20 +1042,22 @@
                 }
             }
 
-            if (selectedItemId && description.startsWith('Recebimento aluguel:')) {
+            if (itemId && description.startsWith('Recebimento aluguel:')) {
                 finalDescription = 'Recebimento de Aluguel';
             }
 
+            // 2. Create the main transaction (either revenue or direct expense)
             const newTransaction = {
                 id: Date.now(),
                 type: type,
                 description: finalDescription,
-                amount: revenueAmount,
+                amount: revenueAmount, // This is either the full amount or the adjusted revenue amount
                 date: transactionDate,
                 itemId: itemId,
                 createdBy: currentManager.id
             };
             
+            // 3. Handle direct IPTU payment logic
             if (isDirectPayment && newTransaction.type === 'expense') {
                  newTransaction.excludeFromDashboard = true;
                  const yearMatch = newTransaction.description.match(/IPTU (\d{4})/);
@@ -1067,10 +1071,12 @@
 
             allTransactions.push(newTransaction);
             
+            // 4. If a separate IPTU transaction was created, add it
             if (iptuTransactionToCreate) {
                 allTransactions.push(iptuTransactionToCreate);
             }
             
+            // 5. Handle revenue-specific logic (debt and management fee)
             if (type === 'revenue' && item && !isDirectPayment) {
                  if (item.rentedTo) {
                     if (!item.debt) item.debt = { amount: 0, cycles: 0 };
