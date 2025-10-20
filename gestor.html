@@ -384,7 +384,10 @@
             
             const storedSettings = localStorage.getItem('rentalManagerSettings');
             settings = storedSettings ? JSON.parse(storedSettings) : {};
-
+            
+            if (settings.iptuButtonEnabled === undefined) {
+                settings.iptuButtonEnabled = true;
+            }
 
             // Filtra dados específicos do gestor
             managedItems = allItems.filter(item => currentManager.assignedItemIds.includes(item.id));
@@ -575,22 +578,30 @@
 
             const calculateOverdueCycles = (item) => {
                 if (item.paymentFrequency !== 'monthly') return 0;
-                const overdueMonths = [];
+                let overdueCount = 0;
                 const startDate = new Date(item.rentStartDate + 'T00:00:00');
-                const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                
+                // Clona a data de início para iterar
                 let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
-                while (checkDate < new Date(today.getFullYear(), today.getMonth(), 1) && checkDate <= endDate) {
+                // Avança para o primeiro mês completo do aluguel
+                if (startDate.getDate() > item.paymentDay) { // Considera o dia de pagamento
+                    checkDate.setMonth(checkDate.getMonth() + 1);
+                }
+
+                const todayFirstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+                while (checkDate <= todayFirstOfMonth) {
                     const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
-                    if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
-                        const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
-                        if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
-                            overdueMonths.push(periodString);
-                        }
+                     if (paymentDueDateInLoop > today) break;
+
+                    const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                    if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
+                        overdueCount++;
                     }
                     checkDate.setMonth(checkDate.getMonth() + 1);
                 }
-                return overdueMonths.length;
+                return overdueCount;
             };
 
             rentedItems.forEach(item => {
