@@ -950,6 +950,11 @@
             populateTransactionItemSelect(itemToPreselect ? itemToPreselect.id : null);
             document.getElementById('isDirectIptuPayment').value = 'false';
 
+            const autoIptuContainer = document.getElementById('autoIptuContainer');
+            const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
+            autoIptuContainer.classList.add('hidden');
+            autoIptuCheckbox.checked = false;
+
             if (iptuDetails && iptuDetails.isIptu) {
                  const displayName = (itemToPreselect.category === 'Imóvel' && itemToPreselect.endereco) ? itemToPreselect.endereco : itemToPreselect.name;
                  document.getElementById('transactionModalTitle').textContent = 'Registrar Pagamento IPTU';
@@ -960,6 +965,17 @@
                 const displayName = (itemToPreselect.category === 'Imóvel' && itemToPreselect.endereco) ? itemToPreselect.endereco : itemToPreselect.name;
                 document.getElementById('transactionDescription').value = `Recebimento aluguel: ${displayName}`;
                 document.getElementById('transactionAmount').value = itemToPreselect.rentValue;
+                
+                const currentYear = new Date().getFullYear();
+                if (itemToPreselect.category === 'Imóvel' && itemToPreselect.iptu && itemToPreselect.iptu[currentYear] && itemToPreselect.iptu[currentYear].paidInstallments < itemToPreselect.iptu[currentYear].installments) {
+                    const iptuData = itemToPreselect.iptu[currentYear];
+                    const installmentValue = iptuData.totalValue / iptuData.installments;
+                    const autoIptuLabel = document.getElementById('autoIptuLabel');
+
+                    autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
+                    autoIptuCheckbox.dataset.iptuValue = installmentValue;
+                    autoIptuContainer.classList.remove('hidden');
+                }
             }
 
             document.getElementById('transactionDate').value = getTodayDateString();
@@ -991,20 +1007,54 @@
             const itemId = parseInt(document.getElementById('transactionItemLink').value);
             const amount = parseFloat(document.getElementById('transactionAmount').value);
             const item = allItems.find(i => i.id === itemId);
-
+            const description = document.getElementById('transactionDescription').value;
+            const transactionDate = document.getElementById('transactionDate').value;
+            
             const isDirectPayment = document.getElementById('isDirectIptuPayment').value === 'true';
+            
+            const iptuCheckbox = document.getElementById('autoIptuCheckbox');
+            let iptuTransactionToCreate = null;
+            let revenueAmount = amount;
+            let finalDescription = description;
+
+            if (!isDirectPayment && type === 'revenue' && itemId && iptuCheckbox.checked) {
+                const currentYear = new Date().getFullYear();
+                if (item && item.iptu && item.iptu[currentYear]) {
+                    const iptuData = item.iptu[currentYear];
+                    if (iptuData.paidInstallments < iptuData.installments) {
+                        const installmentValue = parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
+                        revenueAmount = amount - installmentValue;
+                        iptuData.paidInstallments += 1;
+                        
+                        iptuTransactionToCreate = {
+                             id: Date.now() + 2,
+                             type: 'expense',
+                             description: `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments}/${iptuData.installments}) - ${item.endereco || item.name}`,
+                             amount: installmentValue,
+                             date: transactionDate,
+                             itemId: itemId,
+                             createdBy: currentManager.id,
+                             excludeFromDashboard: true
+                         };
+                    }
+                }
+            }
+
+            if (selectedItemId && description.startsWith('Recebimento aluguel:')) {
+                finalDescription = 'Recebimento de Aluguel';
+            }
 
             const newTransaction = {
                 id: Date.now(),
                 type: type,
-                description: document.getElementById('transactionDescription').value,
-                amount: amount,
-                date: document.getElementById('transactionDate').value,
+                description: finalDescription,
+                amount: revenueAmount,
+                date: transactionDate,
                 itemId: itemId,
                 createdBy: currentManager.id
             };
             
-            if (isDirectPayment) {
+            if (isDirectPayment && newTransaction.type === 'expense') {
                  newTransaction.excludeFromDashboard = true;
                  const yearMatch = newTransaction.description.match(/IPTU (\d{4})/);
                  if (item && yearMatch) {
@@ -1017,20 +1067,24 @@
 
             allTransactions.push(newTransaction);
             
+            if (iptuTransactionToCreate) {
+                allTransactions.push(iptuTransactionToCreate);
+            }
+            
             if (type === 'revenue' && item && !isDirectPayment) {
                  if (item.rentedTo) {
                     if (!item.debt) item.debt = { amount: 0, cycles: 0 };
                     
-                    const difference = item.rentValue - amount; 
+                    const difference = item.rentValue - revenueAmount; 
                     const paymentPeriod = `${new Date(newTransaction.date + 'T00:00:00').getFullYear()}-${String(new Date(newTransaction.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
                     const hasPaymentForPeriod = item.paymentsMade && item.paymentsMade.includes(paymentPeriod);
 
-                    if (difference > 0.01) { // Paid less
+                    if (difference > 0.01) {
                         item.debt.amount += difference;
                         if (!hasPaymentForPeriod) {
                             item.debt.cycles = (item.debt.cycles || 0) + 1;
                         }
-                    } else if (difference < -0.01 && item.debt.amount > 0) { // Overpaid
+                    } else if (difference < -0.01 && item.debt.amount > 0) {
                         const surplus = -difference;
                         item.debt.amount -= surplus;
                         if (item.debt.amount < 0.01) {
@@ -1047,7 +1101,7 @@
                 
                 if (item.hasManagementFee) {
                     const feePercentage = item.managementFeePercentage || 10;
-                    const feeAmount = amount * (feePercentage / 100);
+                    const feeAmount = revenueAmount * (feePercentage / 100);
                     const feeTransaction = {
                         id: Date.now() + 1,
                         type: 'management_fee',
