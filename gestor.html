@@ -127,7 +127,12 @@
 
                 <!-- Filtros de Transações -->
                  <div class="bg-gray-800 p-4 rounded-xl mb-6">
-                    <h3 class="text-lg font-semibold mb-3">Filtrar Transações</h3>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-semibold">Filtrar Transações</h3>
+                        <button id="clearFiltersBtn" title="Limpar Filtros" class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-2 rounded-md text-sm">
+                            <i data-lucide="rotate-ccw" class="h-5 w-5"></i>
+                        </button>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                         <div>
                             <label for="filterType" class="block text-sm font-medium mb-1">Tipo de Transação</label>
@@ -217,6 +222,7 @@
             <form id="addTransactionForm">
                 <h2 id="transactionModalTitle" class="text-2xl font-bold mb-4">Adicionar Transação</h2>
                 <input type="hidden" id="transactionType">
+                <input type="hidden" id="isDirectIptuPayment" value="false">
                 <div class="space-y-4">
                     <div>
                         <label for="transactionItemLink" class="block mb-1 font-medium">Associar a um Item</label>
@@ -270,7 +276,77 @@
             </form>
         </div>
     </div>
-    
+
+    <!-- Modal Registrar IPTU -->
+    <div id="iptuModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+            <form id="iptuForm">
+                <h2 id="iptuModalTitle" class="text-2xl font-bold mb-4">Registrar IPTU</h2>
+                <input type="hidden" id="iptuItemId">
+                <div class="space-y-4">
+                    <div>
+                        <label for="iptuInstallmentValue" class="block mb-1 font-medium">Valor de Cada Parcela (R$)</label>
+                        <input type="number" step="0.01" id="iptuInstallmentValue" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="iptuInstallments" class="block mb-1 font-medium">Pagar em</label>
+                        <select id="iptuInstallments" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+                            <option value="1">1 parcela (à vista)</option>
+                            <option value="2">2 parcelas</option>
+                            <option value="3">3 parcelas</option>
+                            <option value="4">4 parcelas</option>
+                            <option value="5">5 parcelas</option>
+                            <option value="6">6 parcelas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-md font-semibold">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Gerenciar IPTU -->
+    <div id="manageIptuModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+            <form id="manageIptuForm">
+                <h2 id="manageIptuModalTitle" class="text-2xl font-bold mb-4">Gerenciar IPTU</h2>
+                <input type="hidden" id="manageIptuItemId">
+                <input type="hidden" id="manageIptuYear">
+                <div class="space-y-4">
+                    <div>
+                        <label for="manageIptuInstallmentValue" class="block mb-1 font-medium">Valor de Cada Parcela (R$)</label>
+                        <input type="number" step="0.01" id="manageIptuInstallmentValue" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                    </div>
+                    <div>
+                        <label for="manageIptuInstallments" class="block mb-1 font-medium">Pagar em</label>
+                        <select id="manageIptuInstallments" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
+                            <option value="1">1 parcela (à vista)</option>
+                            <option value="2">2 parcelas</option>
+                            <option value="3">3 parcelas</option>
+                            <option value="4">4 parcelas</option>
+                            <option value="5">5 parcelas</option>
+                            <option value="6">6 parcelas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">Parcelas Pagas: <span id="manageIptuPaidInstallments" class="font-semibold text-white">0</span></p>
+                        <p id="manageIptuWarning" class="text-xs text-yellow-400 mt-1 hidden">Atenção: Alterar o número de parcelas reseta os pagamentos.</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-between items-center">
+                    <button type="button" id="deleteIptuBtn" class="px-4 py-2 bg-red-700 hover:bg-red-600 rounded-md font-semibold text-sm">Apagar</button>
+                    <div class="flex space-x-3">
+                        <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-md font-semibold">Salvar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Confirmar Ação -->
     <div id="confirmActionModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50">
         <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
@@ -297,6 +373,7 @@
         let allTransactions = [];
         let managedItems = [];
         let managedTransactions = [];
+        let settings = {};
 
         const loadData = () => {
             const storedItems = localStorage.getItem('rentalManagerItems');
@@ -304,6 +381,10 @@
 
             const storedTransactions = localStorage.getItem('rentalManagerTransactions');
             allTransactions = storedTransactions ? JSON.parse(storedTransactions) : [];
+            
+            const storedSettings = localStorage.getItem('rentalManagerSettings');
+            settings = storedSettings ? JSON.parse(storedSettings) : {};
+
 
             // Filtra dados específicos do gestor
             managedItems = allItems.filter(item => currentManager.assignedItemIds.includes(item.id));
@@ -323,6 +404,8 @@
         const modals = document.querySelectorAll('.modal');
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
+        const iptuForm = document.getElementById('iptuForm');
+        const manageIptuForm = document.getElementById('manageIptuForm');
         
         document.title = `Painel: ${currentManager.name}`;
         document.getElementById('manager-name-header').textContent = currentManager.name;
@@ -364,7 +447,7 @@
             renderDashboard();
             renderItems();
             renderRentals();
-            applyManagerFiltersAndRender(); // Usa a função de filtro
+            applyManagerFiltersAndRender();
             lucide.createIcons();
         };
 
@@ -383,7 +466,7 @@
                 
                 return true;
             });
-            renderTransactions(filtered);
+            renderTransactions(filtered.sort((a,b) => b.id - a.id));
         };
 
         const renderDashboard = () => {
@@ -418,14 +501,37 @@
                 availableList.innerHTML = `<p class="text-gray-400">Nenhum item foi designado a você.</p>`;
                 return;
             }
+            
+            const currentYear = new Date().getFullYear();
 
             managedItems.forEach(item => {
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+
+                let iptuStatusHTML = '';
+                if (item.category === 'Imóvel' && item.iptu && item.iptu[currentYear]) {
+                    const iptuData = item.iptu[currentYear];
+                    if (iptuData.paidInstallments >= iptuData.installments) {
+                        iptuStatusHTML = `<p class="text-xs text-green-400 mt-1">IPTU ${currentYear}: Pago</p>`;
+                    } else {
+                        iptuStatusHTML = `<p class="text-xs text-blue-400 mt-1">IPTU ${currentYear}: ${iptuData.paidInstallments}/${iptuData.installments} parcelas pagas</p>`;
+                    }
+                }
+                
+                let payIptuButton = '';
+                if (!item.rentedTo && item.category === 'Imóvel' && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
+                    payIptuButton = `<button data-id="${item.id}" class="pay-iptu-expense-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Registrar Pagamento Parcela IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>Pagar IPTU</button>`;
+                }
+                
+                const iptuButton = item.category === 'Imóvel' ? `<button data-id="${item.id}" class="iptu-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Gerenciar/Registrar IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>IPTU</button>` : '';
+
                 const actionButtons = item.rentedTo
-                    ? `<div class="mt-4 flex justify-end items-center space-x-2">
+                    ? `<div class="mt-4 flex justify-end items-center flex-wrap gap-2">
+                           ${iptuButton}
                            <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita"><i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita</button>
                            <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
                        </div>`
-                    : `<div class="mt-4 flex justify-end items-center space-x-2">
+                    : `<div class="mt-4 flex justify-end items-center flex-wrap gap-2">
+                           ${iptuButton}${payIptuButton}
                            <button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm"><i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar</button>
                        </div>`;
 
@@ -433,8 +539,9 @@
                     <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${item.rentedTo ? 'border-yellow-500' : 'border-green-500'}">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h3 class="font-bold text-lg">${item.name}</h3>
+                                <h3 class="font-bold text-lg">${displayName}</h3>
                                 <p class="text-sm text-gray-400">${item.category}</p>
+                                ${iptuStatusHTML}
                             </div>
                             <span class="text-lg font-semibold">${formatCurrency(item.rentedTo ? item.rentValue : item.value)}</span>
                         </div>
@@ -466,11 +573,12 @@
             rentedItems.sort((a,b) => new Date(a.rentEndDate) - new Date(b.rentEndDate));
 
             rentedItems.forEach(item => {
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
                 const card = `
                     <div class="bg-gray-800 p-4 rounded-lg border-l-4 border-cyan-500">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h3 class="font-bold text-lg">${item.name}</h3>
+                                <h3 class="font-bold text-lg">${displayName}</h3>
                                 <p class="text-sm text-gray-400">Inquilino: ${item.rentedTo}</p>
                             </div>
                             <span class="text-lg font-semibold block">${formatCurrency(item.rentValue)}</span>
@@ -501,8 +609,10 @@
             
             const mobileHTML = transactionsToRender.map(t => {
                 const item = managedItems.find(i => i.id === t.itemId);
+                const displayName = (item && item.category === 'Imóvel' && item.endereco) ? item.endereco : (item ? item.name : '');
                 let typeClass, typeText, amountClass, amountPrefix;
                 if(t.type === 'revenue') { typeClass='bg-green-900 text-green-300'; typeText='Receita'; amountClass='text-green-400'; amountPrefix='+'; }
+                else if (t.type === 'expense' && t.description.startsWith('Pagamento IPTU')) { typeClass = 'bg-blue-900 text-blue-300'; typeText = 'Despesa (IPTU)'; amountClass = 'text-blue-400'; amountPrefix = '-'; }
                 else if(t.type === 'expense') { typeClass='bg-red-900 text-red-300'; typeText='Despesa'; amountClass='text-red-400'; amountPrefix='-'; }
                 else { typeClass='bg-yellow-900 text-yellow-300'; typeText='Taxa'; amountClass='text-yellow-400'; amountPrefix='-'; }
                 
@@ -516,7 +626,7 @@
                 
                 return `<div class="bg-gray-800 p-4 rounded-lg shadow-lg">
                     <p class="text-lg font-bold text-white break-words">${t.description}</p>
-                    ${item ? `<p class="text-sm text-gray-400">Item: ${item.name}</p>` : ''}
+                    ${item ? `<p class="text-sm text-gray-400">Item: ${displayName}</p>` : ''}
                     <div class="flex items-center justify-between text-sm pt-1">
                         <span class="px-2 py-1 rounded-full text-xs font-medium ${typeClass}">${typeText}</span>
                         <span class="text-gray-400">${formatDate(t.date)}</span>
@@ -540,6 +650,12 @@
         });
         document.getElementById('filterType').addEventListener('change', applyManagerFiltersAndRender);
         document.getElementById('filterStartDate').addEventListener('input', applyManagerFiltersAndRender);
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            document.getElementById('filterType').value = 'all';
+            document.getElementById('filterStartDate').value = '';
+            applyManagerFiltersAndRender();
+        });
+
 
         modals.forEach(modal => modal.addEventListener('click', (e) => { 
             if (e.target.classList.contains('modal') || e.target.closest('.modal-close-btn')) hideModal(modal.id); 
@@ -549,8 +665,9 @@
             const rentBtn = e.target.closest('.rent-btn');
             if(rentBtn) {
                 const item = managedItems.find(i => i.id === parseInt(rentBtn.dataset.id));
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
                 document.getElementById('rentItemForm').reset();
-                document.getElementById('rentModalTitle').textContent = `Alugar: ${item.name}`;
+                document.getElementById('rentModalTitle').textContent = `Alugar: ${displayName}`;
                 document.getElementById('rentItemId').value = item.id;
                 document.getElementById('rentValue').value = item.value;
                 document.getElementById('rentStartDate').value = getTodayDateString();
@@ -560,8 +677,9 @@
             const editRentBtn = e.target.closest('.edit-rent-btn');
             if(editRentBtn) {
                 const item = managedItems.find(i => i.id === parseInt(editRentBtn.dataset.id));
+                 const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
                 document.getElementById('rentItemForm').reset();
-                document.getElementById('rentModalTitle').textContent = `Editar Aluguel: ${item.name}`;
+                document.getElementById('rentModalTitle').textContent = `Editar Aluguel: ${displayName}`;
                 document.getElementById('rentItemId').value = item.id;
                 document.getElementById('tenantName').value = item.rentedTo;
                 document.getElementById('rentStartDate').value = item.rentStartDate;
@@ -574,7 +692,8 @@
             const deleteBtn = e.target.closest('.delete-btn');
             if(deleteBtn) {
                 const item = allItems.find(i => i.id === parseInt(deleteBtn.dataset.id));
-                showConfirmModal('Finalizar Aluguel', `Tem certeza que deseja finalizar o aluguel do item "${item.name}"?`, () => {
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                showConfirmModal('Finalizar Aluguel', `Tem certeza que deseja finalizar o aluguel do item "${displayName}"?`, () => {
                     item.rentedTo = null; item.rentStartDate = null; item.rentEndDate = null; item.rentValue = null; item.paymentDay = null; item.paymentsMade = []; item.debt = {amount: 0, cycles: 0};
                     saveData();
                     renderAll();
@@ -586,6 +705,52 @@
                 const item = managedItems.find(i => i.id === parseInt(addRevenueBtn.dataset.id));
                 openTransactionModal('revenue', item);
             }
+            
+            const iptuButton = e.target.closest('.iptu-btn');
+            if (iptuButton) {
+                const itemId = parseInt(iptuButton.dataset.id);
+                const item = allItems.find(i => i.id === itemId);
+                const currentYear = new Date().getFullYear();
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+
+                if (item) {
+                    if (item.iptu && item.iptu[currentYear]) {
+                        const iptuData = item.iptu[currentYear];
+                        const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
+
+                        document.getElementById('manageIptuModalTitle').textContent = `Gerenciar IPTU ${currentYear} - ${displayName}`;
+                        document.getElementById('manageIptuItemId').value = item.id;
+                        document.getElementById('manageIptuYear').value = currentYear;
+                        document.getElementById('manageIptuInstallmentValue').value = installmentValue.toFixed(2);
+                        document.getElementById('manageIptuInstallments').value = iptuData.installments;
+                        document.getElementById('manageIptuPaidInstallments').textContent = `${iptuData.paidInstallments} de ${iptuData.installments}`;
+                        document.getElementById('manageIptuWarning').classList.add('hidden');
+                        showModal('manageIptuModal');
+                    } else {
+                        iptuForm.reset();
+                        document.getElementById('iptuItemId').value = item.id;
+                        document.getElementById('iptuModalTitle').textContent = `Registrar IPTU ${currentYear} para: ${displayName}`;
+                        showModal('iptuModal');
+                    }
+                }
+            }
+             const payIptuExpenseButton = e.target.closest('.pay-iptu-expense-btn');
+            if (payIptuExpenseButton) {
+                const itemId = parseInt(payIptuExpenseButton.dataset.id);
+                const item = allItems.find(i => i.id === itemId);
+                const currentYear = new Date().getFullYear();
+
+                if (item && item.iptu && item.iptu[currentYear]) {
+                    const iptuData = item.iptu[currentYear];
+                    if (iptuData.paidInstallments < iptuData.installments) {
+                        const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
+                        openTransactionModal('expense', item, { isIptu: true, iptuData, installmentValue, currentYear });
+                    } else {
+                        alert("IPTU já está pago para este ano.");
+                    }
+                }
+            }
+
         });
         
         document.getElementById('setOneYearBtn').addEventListener('click', () => {
@@ -620,6 +785,16 @@
                  const tx = allTransactions.find(t => t.id === txId);
                  if (tx && tx.createdBy === currentManager.id) {
                      showConfirmModal('Excluir Transação', 'Tem certeza que deseja excluir esta transação?', () => {
+                        if (tx.description.startsWith('Pagamento IPTU')) {
+                            const item = allItems.find(i => i.id === tx.itemId);
+                            const yearMatch = tx.description.match(/IPTU (\d{4})/);
+                            if (item && yearMatch) {
+                                const year = parseInt(yearMatch[1], 10);
+                                if (item.iptu && item.iptu[year] && item.iptu[year].paidInstallments > 0) {
+                                    item.iptu[year].paidInstallments -= 1;
+                                }
+                            }
+                        }
                          allTransactions = allTransactions.filter(t => t.id !== txId);
                          saveData();
                          renderAll();
@@ -632,20 +807,29 @@
             const select = document.getElementById('transactionItemLink');
             select.innerHTML = '';
             managedItems.forEach(item => {
-                select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                select.innerHTML += `<option value="${item.id}">${displayName}</option>`;
             });
             if (selectedId) select.value = selectedId;
         };
 
-        const openTransactionModal = (type, itemToPreselect = null) => {
+        const openTransactionModal = (type, itemToPreselect = null, iptuDetails = null) => {
             document.getElementById('addTransactionForm').reset();
             document.getElementById('transactionType').value = type;
             document.getElementById('transactionModalTitle').textContent = type === 'revenue' ? 'Adicionar Receita' : 'Adicionar Despesa';
             populateTransactionItemSelect(itemToPreselect ? itemToPreselect.id : null);
-            if (itemToPreselect && type === 'revenue') {
+            document.getElementById('isDirectIptuPayment').value = 'false';
+
+            if (iptuDetails && iptuDetails.isIptu) {
+                 document.getElementById('transactionModalTitle').textContent = 'Registrar Pagamento IPTU';
+                 document.getElementById('transactionDescription').value = `Pagamento IPTU ${iptuDetails.currentYear} (${iptuDetails.iptuData.paidInstallments + 1}/${iptuDetails.iptuData.installments}) - ${itemToPreselect.name}`;
+                 document.getElementById('transactionAmount').value = iptuDetails.installmentValue.toFixed(2);
+                 document.getElementById('isDirectIptuPayment').value = 'true';
+            } else if (itemToPreselect && type === 'revenue') {
                 document.getElementById('transactionDescription').value = `Recebimento aluguel: ${itemToPreselect.name}`;
                 document.getElementById('transactionAmount').value = itemToPreselect.rentValue;
             }
+
             document.getElementById('transactionDate').value = getTodayDateString();
             showModal('addTransactionModal');
         };
@@ -676,6 +860,8 @@
             const amount = parseFloat(document.getElementById('transactionAmount').value);
             const item = allItems.find(i => i.id === itemId);
 
+            const isDirectPayment = document.getElementById('isDirectIptuPayment').value === 'true';
+
             const newTransaction = {
                 id: Date.now(),
                 type: type,
@@ -685,9 +871,20 @@
                 itemId: itemId,
                 createdBy: currentManager.id // Adiciona o ID do gestor
             };
+            
+            if (isDirectPayment) {
+                 newTransaction.excludeFromDashboard = true;
+                 const yearMatch = newTransaction.description.match(/IPTU (\d{4})/);
+                 if (item && yearMatch) {
+                     const year = parseInt(yearMatch[1], 10);
+                     if (item.iptu && item.iptu[year] && item.iptu[year].paidInstallments < item.iptu[year].installments) {
+                          item.iptu[year].paidInstallments += 1;
+                     }
+                 }
+            }
+
             allTransactions.push(newTransaction);
             
-            // Se for receita e o item tiver taxa de gerência, cria a transação de taxa
             if (type === 'revenue' && item && item.hasManagementFee) {
                 const feePercentage = item.managementFeePercentage || 10;
                 const feeAmount = amount * (feePercentage / 100);
@@ -698,7 +895,7 @@
                     amount: feeAmount,
                     date: newTransaction.date,
                     itemId: itemId,
-                    createdBy: currentManager.id // Adiciona o ID do gestor
+                    createdBy: currentManager.id
                 };
                 allTransactions.push(feeTransaction);
             }
@@ -721,6 +918,80 @@
                 hideModal('editTransactionModal');
             }
         });
+        
+        iptuForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const itemId = parseInt(document.getElementById('iptuItemId').value);
+            const installmentValue = parseFloat(document.getElementById('iptuInstallmentValue').value);
+            const installments = parseInt(document.getElementById('iptuInstallments').value);
+            const item = allItems.find(i => i.id === itemId);
+            const totalValue = installmentValue * installments;
+
+            if (item && !isNaN(installmentValue) && installmentValue > 0 && installments > 0) {
+                const currentYear = new Date().getFullYear();
+                if (!item.iptu) item.iptu = {};
+                item.iptu[currentYear] = {
+                    totalValue: totalValue,
+                    installments: installments,
+                    paidInstallments: 0
+                };
+                saveData();
+                renderAll();
+                hideModal('iptuModal');
+            } else {
+                 alert("Por favor, insira um valor de parcela válido e selecione o número de parcelas.");
+            }
+        });
+
+        manageIptuForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const itemId = parseInt(document.getElementById('manageIptuItemId').value);
+            const year = parseInt(document.getElementById('manageIptuYear').value);
+            const newInstallmentValue = parseFloat(document.getElementById('manageIptuInstallmentValue').value);
+            const newInstallments = parseInt(document.getElementById('manageIptuInstallments').value);
+            const item = allItems.find(i => i.id === itemId);
+            const newTotalValue = newInstallmentValue * newInstallments;
+
+            if (item && item.iptu && item.iptu[year] && !isNaN(newInstallmentValue) && newInstallmentValue >= 0 && newInstallments > 0) {
+                const iptuData = item.iptu[year];
+                iptuData.totalValue = newTotalValue;
+
+                if (iptuData.installments !== newInstallments) {
+                     iptuData.paidInstallments = 0;
+                     console.warn("Número de parcelas alterado. Pagamentos foram resetados para 0.");
+                }
+                 iptuData.installments = newInstallments;
+
+                saveData();
+                renderAll();
+                hideModal('manageIptuModal');
+            } else {
+                 alert("Erro ao salvar. Verifique os valores.");
+            }
+        });
+        
+        document.getElementById('deleteIptuBtn').addEventListener('click', () => {
+            const itemId = parseInt(document.getElementById('manageIptuItemId').value);
+            const year = parseInt(document.getElementById('manageIptuYear').value);
+            const item = allItems.find(i => i.id === itemId);
+
+            if (item && item.iptu && item.iptu[year]) {
+                showConfirmModal(
+                    `Apagar IPTU ${year}`,
+                    `Tem certeza que deseja apagar o registro do IPTU de ${year}? Isso removerá as transações de pagamento associadas.`,
+                    () => {
+                        allTransactions = allTransactions.filter(t => 
+                            !(t.itemId === itemId && t.type === 'expense' && t.description.includes(`Pagamento IPTU ${year}`))
+                        );
+                        delete item.iptu[year];
+                        saveData();
+                        renderAll();
+                        hideModal('manageIptuModal');
+                    }
+                );
+            }
+        });
+
 
         document.getElementById('confirmActionConfirm').addEventListener('click', () => {
             if (typeof onConfirm === 'function') onConfirm();
