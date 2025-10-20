@@ -1029,6 +1029,7 @@
         settings.iptuButtonEnabled = e.target.checked;
         saveData(); // Salva a nova configuração
         renderItems(items); // Re-renderiza apenas a lista de itens para mostrar/esconder o botão
+        lucide.createIcons();
     });
         
         const saveData = () => {
