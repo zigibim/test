@@ -575,18 +575,22 @@
 
             const calculateOverdueCycles = (item) => {
                 if (item.paymentFrequency !== 'monthly') return 0;
-                let overdueCount = 0;
+                const overdueMonths = [];
                 const startDate = new Date(item.rentStartDate + 'T00:00:00');
+                const endDate = new Date(item.rentEndDate + 'T00:00:00');
                 let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
-                while (checkDate < new Date(today.getFullYear(), today.getMonth(), 1)) {
-                    const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
-                    if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
-                        overdueCount++;
+                while (checkDate < new Date(today.getFullYear(), today.getMonth(), 1) && checkDate <= endDate) {
+                    const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
+                    if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
+                        const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                        if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
+                            overdueMonths.push(periodString);
+                        }
                     }
                     checkDate.setMonth(checkDate.getMonth() + 1);
                 }
-                return overdueCount;
+                return overdueMonths.length;
             };
 
             rentedItems.forEach(item => {
