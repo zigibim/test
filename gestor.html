@@ -494,7 +494,9 @@
             });
 
             const totalFees = monthTransactions.filter(t => t.type === 'management_fee').reduce((sum, t) => sum + t.amount, 0);
-            const totalExpenses = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpenses = monthTransactions
+                .filter(t => t.type === 'expense' && !t.excludeFromDashboard)
+                .reduce((sum, t) => sum + t.amount, 0);
 
             document.getElementById('month-fee').textContent = formatCurrency(totalFees);
             document.getElementById('month-expense').textContent = formatCurrency(totalExpenses);
@@ -1222,6 +1224,18 @@
         document.getElementById('confirmActionCancel').addEventListener('click', () => {
             hideModal('confirmActionModal');
             onConfirm = null;
+        });
+        
+        document.getElementById('autoIptuCheckbox').addEventListener('change', (e) => {
+            const transactionAmountInput = document.getElementById('transactionAmount');
+            const installmentValue = parseFloat(e.target.dataset.iptuValue) || 0;
+            let currentAmount = parseFloat(transactionAmountInput.value) || 0;
+
+            if (e.target.checked) {
+                transactionAmountInput.value = (currentAmount + installmentValue).toFixed(2);
+            } else {
+                transactionAmountInput.value = (currentAmount - installmentValue).toFixed(2);
+            }
         });
 
         // Carga inicial
