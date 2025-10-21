@@ -968,7 +968,8 @@
             if (selectedId) select.value = selectedId;
         };
 
-        const updateTransactionModalDetails = (itemId) => {
+        // PASSO 1 - SUBSTITUIR ESTA FUNÇÃO
+const updateTransactionModalDetails = (itemId) => {
     const item = managedItems.find(i => i.id == itemId);
 
     const descriptionInput = document.getElementById('transactionDescription');
@@ -980,7 +981,7 @@
     const autoIptuContainer = document.getElementById('autoIptuContainer');
     const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
 
-    // Resetar campos primeiro
+    // Reseta todos os campos dinâmicos primeiro
     feeContainer.classList.add('hidden');
     feeCheckbox.checked = false;
     feeDiv.classList.add('hidden');
@@ -998,8 +999,10 @@
 
     if (type === 'revenue') {
         descriptionInput.value = `Recebimento aluguel: ${displayName}`;
+        // Usa o valor do aluguel se estiver alugado, senão o valor padrão do item
         amountInput.value = item.rentedTo ? (item.rentValue || '') : (item.value || '');
 
+        // Lógica CORRIGIDA para mostrar a taxa de gerência
         if (item.hasManagementFee) {
             feeContainer.classList.remove('hidden');
             feeCheckbox.checked = true;
@@ -1009,6 +1012,7 @@
             feeAmountInput.value = feeValue.toFixed(2);
         }
 
+        // Lógica para o IPTU (já existente)
         const currentYear = new Date().getFullYear();
         if (item.category === 'Imóvel' && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
             const iptuData = item.iptu[currentYear];
@@ -1083,7 +1087,8 @@
             }
         });
         
-        document.getElementById('addTransactionForm').addEventListener('submit', (e) => {
+        // PASSO 3 - SUBSTITUIR ESTA FUNÇÃO
+document.getElementById('addTransactionForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const type = document.getElementById('transactionType').value;
     const itemId = parseInt(document.getElementById('transactionItemLink').value);
@@ -1179,6 +1184,7 @@
             }
         }
 
+        // Lógica CORRIGIDA para salvar a taxa de gerência
         const addFeeCheckbox = document.getElementById('addManagementFee');
         if (addFeeCheckbox.checked) {
             const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
@@ -1333,13 +1339,15 @@
         });
 
 
-        document.getElementById('addManagementFee').addEventListener('change', (e) => {
-            document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked);
+       
+document.getElementById('addManagementFee').addEventListener('change', (e) => {
+    document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked);
 });
 
 document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => {
     const itemId = document.getElementById('transactionItemLink').value;
     const item = managedItems.find(i => i.id == itemId);
+
     if(item && item.hasManagementFee) {
         let rentValue = parseFloat(document.getElementById('transactionAmount').value) || 0;
         const iptuCheckbox = document.getElementById('autoIptuCheckbox');
