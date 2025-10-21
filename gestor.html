@@ -969,63 +969,64 @@
             if (selectedId) select.value = selectedId;
         };
 
-
         const updateTransactionModalDetails = (itemId) => {
-    const item = managedItems.find(i => i.id == itemId);
+            const item = managedItems.find(i => i.id == itemId);
+            
+            const descriptionInput = document.getElementById('transactionDescription');
+            const amountInput = document.getElementById('transactionAmount');
+            const feeContainer = document.getElementById('managementFeeContainer');
+            const feeCheckbox = document.getElementById('addManagementFee');
+            const feeDiv = document.getElementById('managementFeeDiv');
+            const feeAmountInput = document.getElementById('managementFeeAmount');
+            const autoIptuContainer = document.getElementById('autoIptuContainer');
+            const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
 
-    const descriptionInput = document.getElementById('transactionDescription');
-    const amountInput = document.getElementById('transactionAmount');
-    const feeContainer = document.getElementById('managementFeeContainer');
-    const feeCheckbox = document.getElementById('addManagementFee');
-    const feeDiv = document.getElementById('managementFeeDiv');
-    const feeAmountInput = document.getElementById('managementFeeAmount');
-    const autoIptuContainer = document.getElementById('autoIptuContainer');
-    const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
+            // Resetar campos primeiro
+            feeContainer.classList.add('hidden');
+            feeCheckbox.checked = false;
+            feeDiv.classList.add('hidden');
+            autoIptuContainer.classList.add('hidden');
+            autoIptuCheckbox.checked = false;
 
-    // Resetar campos primeiro
-    feeContainer.classList.add('hidden');
-    feeCheckbox.checked = false;
-    feeDiv.classList.add('hidden');
-    autoIptuContainer.classList.add('hidden');
-    autoIptuCheckbox.checked = false;
+            if (!item) {
+                descriptionInput.value = '';
+                amountInput.value = '';
+                return;
+            }
 
-    if (!item) {
-        descriptionInput.value = '';
-        amountInput.value = '';
-        return;
-    }
+            const type = document.getElementById('transactionType').value;
+            const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
 
-    const type = document.getElementById('transactionType').value;
-    const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+            if (type === 'revenue') {
+                descriptionInput.value = `Recebimento aluguel: ${displayName}`;
+                amountInput.value = item.rentValue || '';
 
-    if (type === 'revenue') {
-        descriptionInput.value = `Recebimento aluguel: ${displayName}`;
-        amountInput.value = item.rentValue || '';
+                if (item.hasManagementFee) {
+                    feeContainer.classList.remove('hidden');
+                    feeCheckbox.checked = true;
+                    feeDiv.classList.remove('hidden');
+                    const feePercentage = item.managementFeePercentage || 10;
+                    const feeValue = (parseFloat(amountInput.value) || 0) * (feePercentage / 100);
+                    feeAmountInput.value = feeValue.toFixed(2);
+                }
 
-        if (item.hasManagementFee) {
-            feeContainer.classList.remove('hidden');
-            feeCheckbox.checked = true;
-            feeDiv.classList.remove('hidden');
-            const feePercentage = item.managementFeePercentage || 10;
-            const feeValue = (parseFloat(amountInput.value) || 0) * (feePercentage / 100);
-            feeAmountInput.value = feeValue.toFixed(2);
-        }
+                const currentYear = new Date().getFullYear();
+                if (item.category === 'Imóvel' && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
+                    const iptuData = item.iptu[currentYear];
+                    const installmentValue = iptuData.totalValue / iptuData.installments;
+                    const autoIptuLabel = document.getElementById('autoIptuLabel');
 
-        const currentYear = new Date().getFullYear();
-        if (item.category === 'Imóvel' && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
-            const iptuData = item.iptu[currentYear];
-            const installmentValue = iptuData.totalValue / iptuData.installments;
-            const autoIptuLabel = document.getElementById('autoIptuLabel');
+                    autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
+                    autoIptuCheckbox.dataset.iptuValue = installmentValue;
+                    autoIptuContainer.classList.remove('hidden');
+                }
+            } else if (type === 'expense') {
+                descriptionInput.value = '';
+                amountInput.value = '';
+            }
+        };
 
-            autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
-            autoIptuCheckbox.dataset.iptuValue = installmentValue;
-            autoIptuContainer.classList.remove('hidden');
-        }
-    } else if (type === 'expense') {
-        descriptionInput.value = '';
-        amountInput.value = '';
-    }
-};
+        
 
         const openTransactionModal = (type, itemToPreselect = null, iptuDetails = null) => {
             const form = document.getElementById('addTransactionForm');
