@@ -260,20 +260,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Seção de Taxa de Gerência -->
-                    <div id="managementFeeContainer" class="border-t border-gray-700 pt-4 mt-4 hidden">
-                        <label class="flex items-center space-x-3 cursor-pointer">
-                            <input type="checkbox" id="addManagementFee" class="h-5 w-5 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600">
-                            <span>Incluir despesa de gerência (taxa)?</span>
-                        </label>
-                        <div id="managementFeeDiv" class="mt-3 hidden">
-                            <label for="managementFeeAmount" class="block mb-1 font-medium">Valor da Taxa de Gerência (R$)</label>
-                            <div class="flex items-center space-x-2">
-                                <input type="number" step="0.01" id="managementFeeAmount" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
-                                <button type="button" id="recalculateFeeBtn" class="px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded-md text-sm whitespace-nowrap">%</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" class="modal-close-btn px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-md">Cancelar</button>
@@ -1026,8 +1012,6 @@
             }
         };
 
-        
-
         const openTransactionModal = (type, itemToPreselect = null, iptuDetails = null) => {
             const form = document.getElementById('addTransactionForm');
             form.reset();
@@ -1087,124 +1071,124 @@
         });
         
         document.getElementById('addTransactionForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const type = document.getElementById('transactionType').value;
-    const itemId = parseInt(document.getElementById('transactionItemLink').value);
-    const amountPaidFromForm = parseFloat(document.getElementById('transactionAmount').value);
-    const item = allItems.find(i => i.id === itemId);
-    const description = document.getElementById('transactionDescription').value;
-    const transactionDate = document.getElementById('transactionDate').value;
+            e.preventDefault();
+            const type = document.getElementById('transactionType').value;
+            const itemId = parseInt(document.getElementById('transactionItemLink').value);
+            const amountPaidFromForm = parseFloat(document.getElementById('transactionAmount').value);
+            const item = allItems.find(i => i.id === itemId);
+            const description = document.getElementById('transactionDescription').value;
+            const transactionDate = document.getElementById('transactionDate').value;
+            
+            const isDirectPayment = document.getElementById('isDirectIptuPayment').value === 'true';
+            
+            const iptuCheckbox = document.getElementById('autoIptuCheckbox');
+            let iptuTransactionToCreate = null;
+            let revenueAmount = amountPaidFromForm; 
+            let finalDescription = description;
 
-    const isDirectPayment = document.getElementById('isDirectIptuPayment').value === 'true';
-
-    const iptuCheckbox = document.getElementById('autoIptuCheckbox');
-    let iptuTransactionToCreate = null;
-    let revenueAmount = amountPaidFromForm; 
-    let finalDescription = description;
-
-    if (!isDirectPayment && type === 'revenue' && itemId && iptuCheckbox.checked) {
-        const currentYear = new Date().getFullYear();
-        if (item && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
-            const installmentValue = parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
-            revenueAmount = amountPaidFromForm - installmentValue;
-            item.iptu[currentYear].paidInstallments += 1;
-
-            const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-            iptuTransactionToCreate = {
-                 id: Date.now() + 2,
-                 type: 'expense',
-                 description: `Pagamento IPTU ${currentYear} (${item.iptu[currentYear].paidInstallments}/${item.iptu[currentYear].installments}) - ${displayName}`,
-                 amount: installmentValue,
-                 date: transactionDate,
-                 itemId: itemId,
-                 createdBy: currentManager.id,
-                 excludeFromDashboard: true
-             };
-        }
-    }
-
-    if (itemId && description.startsWith('Recebimento aluguel:')) {
-        finalDescription = 'Recebimento de Aluguel';
-    }
-
-    const newTransaction = {
-        id: Date.now(),
-        type: type,
-        description: finalDescription,
-        amount: revenueAmount,
-        date: transactionDate,
-        itemId: itemId,
-        createdBy: currentManager.id
-    };
-
-    if (isDirectPayment && newTransaction.type === 'expense') {
-         newTransaction.excludeFromDashboard = true;
-         const yearMatch = newTransaction.description.match(/IPTU (\d{4})/);
-         if (item && yearMatch) {
-             const year = parseInt(yearMatch[1], 10);
-             if (item.iptu && item.iptu[year] && item.iptu[year].paidInstallments < item.iptu[year].installments) {
-                  item.iptu[year].paidInstallments += 1;
-             }
-         }
-    }
-
-    allTransactions.push(newTransaction);
-
-    if (iptuTransactionToCreate) {
-        allTransactions.push(iptuTransactionToCreate);
-    }
-
-    if (type === 'revenue' && item && !isDirectPayment) {
-         if (item.rentedTo) {
-            if (!item.debt) item.debt = { amount: 0, cycles: 0 };
-
-            const difference = item.rentValue - revenueAmount; 
-            const paymentPeriod = `${new Date(newTransaction.date + 'T00:00:00').getFullYear()}-${String(new Date(newTransaction.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
-            const hasPaymentForPeriod = item.paymentsMade && item.paymentsMade.includes(paymentPeriod);
-
-            if (difference > 0.01) {
-                item.debt.amount += difference;
-                if (!hasPaymentForPeriod) {
-                    item.debt.cycles = (item.debt.cycles || 0) + 1;
-                }
-            } else if (difference < -0.01 && item.debt.amount > 0) {
-                const surplus = -difference;
-                item.debt.amount -= surplus;
-                if (item.debt.amount < 0.01) {
-                    item.debt.amount = 0;
-                    item.debt.cycles = 0;
+            if (!isDirectPayment && type === 'revenue' && itemId && iptuCheckbox.checked) {
+                const currentYear = new Date().getFullYear();
+                if (item && item.iptu && item.iptu[currentYear] && item.iptu[currentYear].paidInstallments < item.iptu[currentYear].installments) {
+                    const installmentValue = parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
+                    revenueAmount = amountPaidFromForm - installmentValue;
+                    item.iptu[currentYear].paidInstallments += 1;
+                    
+                    const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                    iptuTransactionToCreate = {
+                         id: Date.now() + 2,
+                         type: 'expense',
+                         description: `Pagamento IPTU ${currentYear} (${item.iptu[currentYear].paidInstallments}/${item.iptu[currentYear].installments}) - ${displayName}`,
+                         amount: installmentValue,
+                         date: transactionDate,
+                         itemId: itemId,
+                         createdBy: currentManager.id,
+                         excludeFromDashboard: true
+                     };
                 }
             }
 
-            if (!item.paymentsMade) item.paymentsMade = [];
-            if (!item.paymentsMade.includes(paymentPeriod)) {
-                item.paymentsMade.push(paymentPeriod);
+            if (itemId && description.startsWith('Recebimento aluguel:')) {
+                finalDescription = 'Recebimento de Aluguel';
             }
-        }
 
-        const addFeeCheckbox = document.getElementById('addManagementFee');
-        if (addFeeCheckbox.checked) {
-            const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
-            if (!isNaN(feeAmount) && feeAmount > 0) {
-                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-                const feeTransaction = {
-                    id: Date.now() + 1,
-                    type: 'management_fee',
-                    description: `Taxa Gerência - ${displayName}`,
-                    amount: feeAmount,
-                    date: newTransaction.date,
-                    itemId: itemId,
-                    createdBy: currentManager.id
-                };
-                allTransactions.push(feeTransaction);
+            const newTransaction = {
+                id: Date.now(),
+                type: type,
+                description: finalDescription,
+                amount: revenueAmount,
+                date: transactionDate,
+                itemId: itemId,
+                createdBy: currentManager.id
+            };
+            
+            if (isDirectPayment && newTransaction.type === 'expense') {
+                 newTransaction.excludeFromDashboard = true;
+                 const yearMatch = newTransaction.description.match(/IPTU (\d{4})/);
+                 if (item && yearMatch) {
+                     const year = parseInt(yearMatch[1], 10);
+                     if (item.iptu && item.iptu[year] && item.iptu[year].paidInstallments < item.iptu[year].installments) {
+                          item.iptu[year].paidInstallments += 1;
+                     }
+                 }
             }
-        }
-    }
 
-    saveData();
-    renderAll();
-    hideModal('addTransactionModal');
-});
+            allTransactions.push(newTransaction);
+            
+            if (iptuTransactionToCreate) {
+                allTransactions.push(iptuTransactionToCreate);
+            }
+            
+            if (type === 'revenue' && item && !isDirectPayment) {
+                 if (item.rentedTo) {
+                    if (!item.debt) item.debt = { amount: 0, cycles: 0 };
+                    
+                    const difference = item.rentValue - revenueAmount; 
+                    const paymentPeriod = `${new Date(newTransaction.date + 'T00:00:00').getFullYear()}-${String(new Date(newTransaction.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}`;
+                    const hasPaymentForPeriod = item.paymentsMade && item.paymentsMade.includes(paymentPeriod);
+
+                    if (difference > 0.01) {
+                        item.debt.amount += difference;
+                        if (!hasPaymentForPeriod) {
+                            item.debt.cycles = (item.debt.cycles || 0) + 1;
+                        }
+                    } else if (difference < -0.01 && item.debt.amount > 0) {
+                        const surplus = -difference;
+                        item.debt.amount -= surplus;
+                        if (item.debt.amount < 0.01) {
+                            item.debt.amount = 0;
+                            item.debt.cycles = 0;
+                        }
+                    }
+
+                    if (!item.paymentsMade) item.paymentsMade = [];
+                    if (!item.paymentsMade.includes(paymentPeriod)) {
+                        item.paymentsMade.push(paymentPeriod);
+                    }
+                }
+                
+                const addFeeCheckbox = document.getElementById('addManagementFee');
+                if (addFeeCheckbox.checked) {
+                    const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
+                    if (!isNaN(feeAmount) && feeAmount > 0) {
+                        const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                        const feeTransaction = {
+                            id: Date.now() + 1,
+                            type: 'management_fee',
+                            description: `Taxa Gerência - ${displayName}`,
+                            amount: feeAmount,
+                            date: newTransaction.date,
+                            itemId: itemId,
+                            createdBy: currentManager.id
+                        };
+                        allTransactions.push(feeTransaction);
+                    }
+                }
+            }
+            
+            saveData();
+            renderAll();
+            hideModal('addTransactionModal');
+        });
         
         document.getElementById('editTransactionForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -1320,7 +1304,7 @@
             document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked);
         });
 
-        document.getElementById('recalculateFeeBtn').addEventListener('click', () => {
+        document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => {
             const itemId = document.getElementById('transactionItemLink').value;
             const item = managedItems.find(i => i.id == itemId);
             if(item && item.hasManagementFee) {
@@ -1337,26 +1321,6 @@
 
         // Carga inicial
         renderAll();
-
-        document.getElementById('addManagementFee').addEventListener('change', (e) => {
-    document.getElementById('managementFeeDiv').classList.toggle('hidden', !e.target.checked);
-});
-
-document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => {
-    const itemId = document.getElementById('transactionItemLink').value;
-    const item = managedItems.find(i => i.id == itemId);
-
-    if (item && item.hasManagementFee) {
-        let rentValue = parseFloat(document.getElementById('transactionAmount').value) || 0;
-        const iptuCheckbox = document.getElementById('autoIptuCheckbox');
-        if (iptuCheckbox.checked) {
-            rentValue -= parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
-        }
-        const feePercentage = item.managementFeePercentage || 10;
-        const feeValue = rentValue * (feePercentage / 100);
-        document.getElementById('managementFeeAmount').value = feeValue.toFixed(2);
-    }
-});
     });
     </script>
 </body>
