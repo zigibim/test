@@ -1171,7 +1171,7 @@
         const actionButtons = `<div class="mt-4 flex justify-end items-center space-x-2">${iptuButton}<button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item"><i data-lucide="file-signature" class="h-5 w-5"></i></button>${item.rentedTo ? `<button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel"><i data-lucide="clipboard-edit" class="h-5 w-5"></i></button>` : ''}<button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="${item.rentedTo ? 'Finalizar Aluguel' : 'Excluir Item'}"><i data-lucide="trash-2" class="h-5 w-5"></i></button>${!item.rentedTo ? `<button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm"><i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar</button>` : ''}</div>`;
 
         if (item.rentedTo) {
-            const card = `<div class="bg-gray-800 p-4 rounded-lg border-l-4 border-yellow-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span></div><div class="mt-3 text-sm space-y-1"><p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p><p><strong class="text-gray-300">Término Contrato:</strong> <span>${formatDate(item.rentEndDate)}</span></p></div></div>${actionButtons}</div>`;
+            const card = `<div class="bg-gray-800 p-4 rounded-lg border-l-4 border-yellow-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span></div><div class="mt-3 text-sm space-y-1"><p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p><p><strong class="text-gray-300">Término Contrato:</strong> <span>${formatDate(item.rentEndDate)}</span></p></div></div>${actionButtons}</div>`;
             rentedList.innerHTML += card;
         } else {
             // --- INÍCIO: Lógica para Botão Pagar IPTU (Item Disponível) ---
@@ -1198,7 +1198,7 @@
 
             // Monta o HTML do card para item disponível
             // (Note que iptuStatusHTML foi definido anteriormente dentro do loop forEach)
-            const card = `<div class="bg-gray-800 p-4 rounded-lg border-l-4 border-green-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.value)}</span></div>${item.description ? `<p class="text-sm text-gray-300 mt-2">${item.description}</p>` : ''}</div>${actionButtons}</div>`;
+            const card = `<div class="bg-gray-800 p-4 rounded-lg border-l-4 border-green-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.value)}</span></div>${item.description ? `<p class="text-sm text-gray-300 mt-2">${item.description}</p>` : ''}</div>${actionButtons}</div>`;
             availableList.innerHTML += card;
 
        
@@ -1316,7 +1316,7 @@
                 <div class="flex-grow">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="font-bold text-lg">${item.name}</h3>
+                            <h3 class="font-bold text-lg">${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}</h3>
                             <p class="text-sm text-gray-400">${item.category}</p>
                         </div>
                         <div class="text-right">
@@ -1510,7 +1510,7 @@ const renderTransactions = (transactionsToRender) => {
                     alertCount++;
                     const alertHTML = `
                         <div class="bg-red-900/50 border border-red-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                            <div><p class="font-semibold text-red-300">O contrato de "${item.name}" terminou.</p><p class="text-sm text-red-400">Ação necessária: renovar, finalizar ou deixar pendente.</p></div>
+                            <div><p class="font-semibold text-red-300">O contrato de "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}" terminou.</p><p class="text-sm text-red-400">Ação necessária: renovar, finalizar ou deixar pendente.</p></div>
                             <button data-id="${item.id}" class="resolve-contract-end-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-md text-sm whitespace-nowrap self-end sm:self-center">Resolver</button>
                         </div>
                     `;
@@ -1544,7 +1544,7 @@ const renderTransactions = (transactionsToRender) => {
                     alertCount++;
                     const alertHTML = `
                         <div class="bg-yellow-900/50 border border-yellow-700 p-4 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                            <div><p class="font-semibold text-yellow-300">Pagamento de "${item.name}" está pendente este mês.</p><p class="text-sm text-yellow-400">A data de vencimento foi dia ${item.paymentDay}.</p></div>
+                            <div><p class="font-semibold text-yellow-300">Pagamento de "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}" está pendente este mês.</p><p class="text-sm text-yellow-400">A data de vencimento foi dia ${item.paymentDay}.</p></div>
                             <button data-id="${item.id}" class="resolve-payment-btn bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-3 rounded-md text-sm whitespace-nowrap self-end sm:self-center">Resolver</button>
                         </div>
                     `;
@@ -1866,7 +1866,8 @@ const checkAndDisplayDebt = (item) => {
         availableItems.forEach(item => {
             const option = document.createElement('option');
             option.value = item.id;
-            option.textContent = item.name;
+            const itemIdentifier = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+            option.textContent = itemIdentifier;
             availableGroup.appendChild(option);
         });
         select.appendChild(availableGroup);
@@ -2118,7 +2119,8 @@ if (iptuButton) {
         const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
 
         // Preenche o modal de GERENCIAMENTO
-        document.getElementById('manageIptuModalTitle').textContent = `Gerenciar IPTU ${currentYear} - ${item.name}`;
+        const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+        document.getElementById('manageIptuModalTitle').textContent = `Gerenciar IPTU ${currentYear} - ${displayName}`;
         document.getElementById('manageIptuItemId').value = item.id;
         document.getElementById('manageIptuYear').value = currentYear;
         // Preenche com o VALOR DA PARCELA calculado
@@ -2134,7 +2136,7 @@ if (iptuButton) {
             // Se NÃO EXISTE, abre o modal de REGISTRO (comportamento antigo)
             iptuForm.reset();
             document.getElementById('iptuItemId').value = item.id;
-            document.getElementById('iptuModalTitle').textContent = `Registrar IPTU ${currentYear} para: ${item.name}`;
+            document.getElementById('iptuModalTitle').textContent = `Registrar IPTU ${currentYear} para: ${displayName}`;
             showModal('iptuModal');
         }
     }
@@ -2148,7 +2150,8 @@ if (manageDebtButton) {
     const item = items.find(i => i.id === itemId);
     if (item) {
         document.getElementById('debtActionsItemId').value = item.id;
-        document.getElementById('debtActionsInfo').textContent = `Item: ${item.name}`;
+        const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+        document.getElementById('debtActionsInfo').textContent = `Item: ${displayName}`;
         showModal('debtActionsModal');
     }
 }
@@ -2273,7 +2276,7 @@ if(editManagerBtn) {
 
                 label.innerHTML = `
                     <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isChecked ? 'checked' : ''} ${isDisabled}>
-                    <span>${item.name} <span class="text-xs ${isManagedByOther ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
+                    <span>${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name} <span class="text-xs ${isManagedByOther ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
                 `;
                 rentalsListDiv.appendChild(label);
             });
@@ -2574,7 +2577,8 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                 addTransactionForm.reset();
                 document.getElementById('transactionDate').value = getTodayDateString();
                 populateTransactionItemSelect('transactionItemLink', item.id);
-                document.getElementById('transactionDescription').value = `Recebimento aluguel: ${item.name}`;
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                document.getElementById('transactionDescription').value = `Recebimento aluguel: ${displayName}`;
                 document.getElementById('transactionAmount').value = item.rentValue;
                 checkAndDisplayDebt(item);
                 
@@ -2639,7 +2643,8 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                     document.getElementById('transactionDate').value = getTodayDateString(); // Data atual
                     populateTransactionItemSelect('transactionItemLink', item.id); // Seleciona o item
                     // Preenche descrição e valor
-                    document.getElementById('transactionDescription').value = `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${item.name}`;
+                    const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                    document.getElementById('transactionDescription').value = `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${displayName}`;
                     document.getElementById('transactionAmount').value = installmentValue.toFixed(2);
                     // Define a flag oculta
                     document.getElementById('isDirectIptuPayment').value = 'true';
@@ -2674,13 +2679,13 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                 const itemId = parseInt(deleteButton.dataset.id);
                 const item = items.find(i => i.id === itemId);
                 if (item.rentedTo) {
-                    showConfirmModal('Finalizar Aluguel', `Isso irá finalizar o aluguel do item "${item.name}" e o tornará disponível. Deseja continuar?`, () => {
+                    showConfirmModal('Finalizar Aluguel', `Isso irá finalizar o aluguel do item "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}" e o tornará disponível. Deseja continuar?`, () => {
                         finalizeRental(itemId);
                         saveData();
                         renderAll();
                     });
                 } else {
-                    showConfirmModal('Apagar Item', `Você tem certeza que deseja apagar o item "${item.name}"? Esta ação não pode ser desfeita.`, () => {
+                    showConfirmModal('Apagar Item', `Você tem certeza que deseja apagar o item "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}"? Esta ação não pode ser desfeita.`, () => {
                         items = items.filter(i => i.id !== itemId);
                         // Also remove from any manager
                         managers.forEach(m => {
@@ -2844,7 +2849,8 @@ if (deleteTransactionButton) {
                 const itemId = parseInt(resolvePaymentBtn.dataset.id);
                 const item = items.find(i => i.id === itemId);
                 document.getElementById('paymentAlertItemId').value = item.id;
-                document.getElementById('paymentAlertItemName').textContent = item.name;
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                document.getElementById('paymentAlertItemName').textContent = displayName;
                 showModal('paymentAlertModal');
             }
             
@@ -2853,7 +2859,8 @@ if (deleteTransactionButton) {
                 const itemId = parseInt(resolveContractEndBtn.dataset.id);
                 const item = items.find(i => i.id === itemId);
                 document.getElementById('contractEndItemId').value = item.id;
-                document.getElementById('contractEndItemName').textContent = item.name;
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                document.getElementById('contractEndItemName').textContent = displayName;
                 showModal('contractEndModal');
             }
         });
@@ -2916,7 +2923,7 @@ if (deleteTransactionButton) {
                     iptuTransactionToCreate = {
                          id: Date.now() + 2, // ID ligeiramente diferente
                          type: 'expense',
-                         description: `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments}/${iptuData.installments}) - ${item.name}`,
+                         description: `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments}/${iptuData.installments}) - ${displayName}`,
                          amount: installmentValue,
                          date: transactionDate,
                          itemId: item.id,
@@ -3006,7 +3013,8 @@ if (deleteTransactionButton) {
         const feeAmount = parseFloat(document.getElementById('managementFeeAmount').value);
         if (!isDirectPayment && addFee && !isNaN(feeAmount) && feeAmount > 0 && newTransaction.type === 'revenue') {
              const item = items.find(i => i.id === parseInt(selectedItemId));
-             const feeDescription = `Taxa de Gerência - ${item ? item.name : description}`;
+             const displayName = (item && item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+             const feeDescription = `Taxa de Gerência - ${item ? displayName : description}`;
              const feeTransaction = {
                  id: Date.now() + 1, // ID ligeiramente diferente
                  type: 'management_fee',
@@ -3063,7 +3071,7 @@ if (deleteTransactionButton) {
             document.getElementById('transactionType').value = 'revenue'; document.getElementById('managementFeeContainer').style.display = 'block';
             addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString();
             populateTransactionItemSelect('transactionItemLink', item.id);
-            document.getElementById('transactionDescription').value = `Recebimento aluguel: ${item.name}`; document.getElementById('transactionAmount').value = item.rentValue;
+            document.getElementById('transactionDescription').value = `Recebimento aluguel: ${displayName}`; document.getElementById('transactionAmount').value = item.rentValue;
             showModal('addTransactionModal');
 
             renderAll();
@@ -3182,7 +3190,7 @@ if (deleteTransactionButton) {
 
             label.innerHTML = `
                 <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isDisabled}>
-                <span>${item.name} <span class="text-xs ${isManaged ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
+                <span>${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name} <span class="text-xs ${isManaged ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
             `;
             rentalsListDiv.appendChild(label);
         });
@@ -3353,7 +3361,7 @@ manageIptuForm.addEventListener('submit', (e) => {
         if (item && item.iptu && item.iptu[year]) {
             showConfirmModal(
                 `Apagar IPTU ${year}`,
-                `Tem certeza que deseja apagar o registro do IPTU de ${year} para "${item.name}"? Isso também removerá as transações de pagamento de IPTU associadas a este ano.`,
+                `Tem certeza que deseja apagar o registro do IPTU de ${year} para "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}"? Isso também removerá as transações de pagamento de IPTU associadas a este ano.`,
                 () => {
                     // 1. Remove as transações de despesa de IPTU daquele ano
                     transactions = transactions.filter(t =>
