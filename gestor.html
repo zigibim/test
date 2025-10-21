@@ -955,7 +955,7 @@
             if (selectedId) select.value = selectedId;
         };
 
-        // PASSO 1 - SUBSTITUIR ESTA FUNÇÃO
+        // PASSO 1 - FUNÇÃO ALTERADA
 const updateTransactionModalDetails = (itemId) => {
     const item = managedItems.find(i => i.id == itemId);
 
@@ -989,15 +989,11 @@ const updateTransactionModalDetails = (itemId) => {
         // Usa o valor do aluguel se estiver alugado, senão o valor padrão do item
         amountInput.value = item.rentedTo ? (item.rentValue || '') : (item.value || '');
 
-        // Lógica CORRIGIDA para mostrar a taxa de gerência
-        if (item.hasManagementFee) {
-            feeContainer.classList.remove('hidden');
-            feeCheckbox.checked = true;
-            feeDiv.classList.remove('hidden');
-            const feePercentage = item.managementFeePercentage || 10;
-            const feeValue = (parseFloat(amountInput.value) || 0) * (feePercentage / 100);
-            feeAmountInput.value = feeValue.toFixed(2);
-        }
+        // --- ALTERAÇÃO AQUI ---
+        // Lógica ALTERADA para SEMPRE mostrar a taxa de gerência em "Receita"
+        feeContainer.classList.remove('hidden');
+        // Deixamos o checkbox desmarcado por padrão. O gestor decide se ativa.
+        // --- FIM DA ALTERAÇÃO ---
 
         // Lógica para o IPTU (já existente)
         const currentYear = new Date().getFullYear();
@@ -1313,13 +1309,23 @@ document.getElementById('addTransactionForm').addEventListener('submit', (e) => 
         document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => {
             const itemId = document.getElementById('transactionItemLink').value;
             const item = managedItems.find(i => i.id == itemId);
-            if(item && item.hasManagementFee) {
+            
+            // --- ALTERAÇÃO AQUI ---
+            // Removemos '&& item.hasManagementFee'
+            if(item) { 
+            // --- FIM DA ALTERAÇÃO ---
+
                 let rentValue = parseFloat(document.getElementById('transactionAmount').value) || 0;
                 const iptuCheckbox = document.getElementById('autoIptuCheckbox');
                 if (iptuCheckbox.checked) {
                     rentValue -= parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
                 }
-                const feePercentage = item.managementFeePercentage || 10;
+                
+                // --- ALTERAÇÃO AQUI ---
+                // Forçamos o cálculo em 10%
+                const feePercentage = 10; 
+                // --- FIM DA ALTERAÇÃO ---
+                
                 const feeValue = rentValue * (feePercentage / 100);
                 document.getElementById('managementFeeAmount').value = feeValue.toFixed(2);
             }
