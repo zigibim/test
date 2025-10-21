@@ -1026,38 +1026,38 @@
 };
 
         const openTransactionModal = (type, itemToPreselect = null, iptuDetails = null) => {
-            const form = document.getElementById('addTransactionForm');
-            form.reset();
-            
-            const title = document.getElementById('transactionModalTitle');
-            const typeInput = document.getElementById('transactionType');
-            const itemLink = document.getElementById('transactionItemLink');
-            const descriptionInput = document.getElementById('transactionDescription');
-            const amountInput = document.getElementById('transactionAmount');
-            const dateInput = document.getElementById('transactionDate');
-            const isDirectIptuInput = document.getElementById('isDirectIptuPayment');
-            
-            typeInput.value = type;
-            dateInput.value = getTodayDateString();
-            populateTransactionItemSelect(itemToPreselect ? itemToPreselect.id : null);
-            isDirectIptuInput.value = 'false';
-            
-            title.textContent = type === 'revenue' ? 'Adicionar Receita' : 'Adicionar Despesa';
+        const form = document.getElementById('addTransactionForm');
+        form.reset();
 
-            // Lida com o caso especial de pagamento direto de IPTU a partir do botão
-            if (type === 'expense' && iptuDetails && iptuDetails.isIptu) {
-                const displayName = (itemToPreselect.category === 'Imóvel' && itemToPreselect.endereco) ? itemToPreselect.endereco : itemToPreselect.name;
-                title.textContent = 'Registrar Pagamento IPTU';
-                descriptionInput.value = `Pagamento IPTU ${iptuDetails.currentYear} (${iptuDetails.iptuData.paidInstallments + 1}/${iptuDetails.iptuData.installments}) - ${displayName}`;
-                amountInput.value = iptuDetails.installmentValue.toFixed(2);
-                isDirectIptuInput.value = 'true';
-            } else {
-                // Para todos os outros casos, aciona a função de atualização com base na seleção
-                updateTransactionModalDetails(itemLink.value);
-            }
-            
-            showModal('addTransactionModal');
-        };
+        const title = document.getElementById('transactionModalTitle');
+        const typeInput = document.getElementById('transactionType');
+        const itemLink = document.getElementById('transactionItemLink');
+        const descriptionInput = document.getElementById('transactionDescription');
+        const amountInput = document.getElementById('transactionAmount');
+        const dateInput = document.getElementById('transactionDate');
+        const isDirectIptuInput = document.getElementById('isDirectIptuPayment');
+
+        typeInput.value = type;
+        dateInput.value = getTodayDateString();
+        populateTransactionItemSelect(itemToPreselect ? itemToPreselect.id : null);
+        isDirectIptuInput.value = 'false';
+
+        title.textContent = type === 'revenue' ? 'Adicionar Receita' : 'Adicionar Despesa';
+
+        // Lida com o caso especial de pagamento direto de IPTU a partir do botão
+        if (type === 'expense' && iptuDetails && iptuDetails.isIptu) {
+            const displayName = (itemToPreselect.category === 'Imóvel' && itemToPreselect.endereco) ? itemToPreselect.endereco : itemToPreselect.name;
+            title.textContent = 'Registrar Pagamento IPTU';
+            descriptionInput.value = `Pagamento IPTU ${iptuDetails.currentYear} (${iptuDetails.iptuData.paidInstallments + 1}/${iptuDetails.iptuData.installments}) - ${displayName}`;
+            amountInput.value = iptuDetails.installmentValue.toFixed(2);
+            isDirectIptuInput.value = 'true';
+        } else {
+            // Para todos os outros casos, aciona a função de atualização com base na seleção
+            updateTransactionModalDetails(itemLink.value);
+        }
+
+        showModal('addTransactionModal');
+    };
         
         document.getElementById('transactionItemLink').addEventListener('change', (e) => {
             updateTransactionModalDetails(e.target.value);
