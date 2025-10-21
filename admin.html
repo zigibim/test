@@ -2384,7 +2384,33 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 });
 
 
-        document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => { const totalAmount = parseFloat(document.getElementById('transactionAmount').value); if (!isNaN(totalAmount) && totalAmount > 0) document.getElementById('managementFeeAmount').value = (totalAmount * 0.10).toFixed(2); });
+        document.getElementById('setTenPercentFeeBtn').addEventListener('click', () => {
+            // 1. Pega o valor total que está no campo "Valor (R$)"
+            const totalInField = parseFloat(document.getElementById('transactionAmount').value) || 0;
+            
+            // 2. Pega o checkbox do IPTU
+            const iptuCheckbox = document.getElementById('autoIptuCheckbox');
+            
+            let rentValue = totalInField; // Por padrão, o valor do aluguel é o valor total
+
+            // 3. Verifica se o checkbox de IPTU está MARCADO
+            if (iptuCheckbox.checked) {
+                // Se estiver marcado, pega o valor da parcela do IPTU guardado no 'dataset'
+                const iptuValue = parseFloat(iptuCheckbox.dataset.iptuValue) || 0;
+                
+                // 4. Subtrai o valor do IPTU do total, para termos apenas o valor do aluguel
+                rentValue = totalInField - iptuValue;
+            }
+
+            // 5. Calcula 10% APENAS sobre o valor do aluguel (rentValue)
+            //    (Também garante que o valor não seja negativo)
+            if (rentValue > 0) {
+                document.getElementById('managementFeeAmount').value = (rentValue * 0.10).toFixed(2);
+            } else {
+                document.getElementById('managementFeeAmount').value = '0.00';
+            }
+        });        
+
         document.getElementById('setOneYearBtn').addEventListener('click', () => { const startDateInput = document.getElementById('rentStartDate'); if(startDateInput.value) { const startDate = new Date(startDateInput.value + "T00:00:00"); startDate.setFullYear(startDate.getFullYear() + 1); document.getElementById('rentEndDate').value = dateToYMD(startDate); } });
 
         addItemForm.addEventListener('submit', (e) => {
