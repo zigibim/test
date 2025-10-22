@@ -2054,8 +2054,24 @@ const checkAndDisplayDebt = (item) => {
                 return;
             }
 
+            // --- INÍCIO DA LÓGICA MODIFICADA (Mapeamento dos dados) ---
             const reportData = relevantTransactions.map(rev => {
                 const item = items.find(i => i.id === rev.itemId);
+                
+                // Encontra o GESTOR real associado ao item
+                const gestor = managers.find(m => m.assignedItemIds.includes(item.id));
+                
+                let groupKey, groupType;
+                if (gestor) {
+                    // Se encontrou um gestor, usa o nome dele para agrupar
+                    groupKey = `${gestor.name} (Gestor)`; // <-- Corrigido
+                    groupType = 'Gestor';
+                } else {
+                    // Se não, é 'Particular'
+                    groupKey = 'Particular';
+                    groupType = 'Particular';
+                }
+
                 const feeTransaction = transactions.find(t => 
                     t.type === 'management_fee' && 
                     t.date === rev.date && 
@@ -2069,8 +2085,8 @@ const checkAndDisplayDebt = (item) => {
                 totalNetValue += netValue;
 
                 return {
-                    managedBy: item.managedBy || 'particular',
-                    managerName: item.managerName || 'N/A',
+                    groupKey: groupKey,       // <-- Novo campo para agrupar
+                    groupType: groupType,     // <-- Novo campo para ordenar
                     tenantName: item.rentedTo,
                     tenantCPF: item.tenantCPF || 'Não informado',
                     address: item.endereco || 'Não informado',
@@ -2082,30 +2098,47 @@ const checkAndDisplayDebt = (item) => {
                     netValueForCopy: netValue.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
                 };
             });
+            // --- FIM DA LÓGICA MODIFICADA (Mapeamento dos dados) ---
 
+
+            // --- INÍCIO DA LÓGICA MODIFICADA (Agrupamento) ---
             const groupedData = reportData.reduce((acc, data) => {
-                const key = data.managedBy === 'particular' ? 'Particular' : `${data.managerName} (${data.managedBy === 'imobiliaria' ? 'Imobiliária' : 'Outros'})`;
+                const key = data.groupKey; // <-- Agrupa pela nova 'groupKey'
                 if (!acc[key]) {
-                    acc[key] = [];
+                    acc[key] = {
+                        groupType: data.groupType, // <-- Armazena o tipo para ordenação
+                        entries: []
+                    };
                 }
-                acc[key].push(data);
+                acc[key].entries.push(data); // Adiciona a transação ao grupo
                 return acc;
             }, {});
+            // --- FIM DA LÓGICA MODIFICADA (Agrupamento) ---
 
-            const order = { 'Particular': 1, 'Outros': 2, 'Imobiliária': 3 };
+
+            // --- INÍCIO DA LÓGICA MODIFICADA (Ordenação) ---
+            const order = { 'Particular': 1, 'Gestor': 2 }; // Define a ordem: Particular primeiro
             const sortedKeys = Object.keys(groupedData).sort((a, b) => {
-                const typeA = a.split(' (')[0];
-                const typeB = b.split(' (')[0];
-                return order[typeA] - order[typeB] || a.localeCompare(b);
+                const typeA = groupedData[a].groupType; // <-- Pega o tipo do grupo A
+                const typeB = groupedData[b].groupType; // <-- Pega o tipo do grupo B
+                // Ordena por tipo (Particular > Gestor) e depois alfabeticamente
+                return order[typeA] - order[typeB] || a.localeCompare(b); 
             });
+            // --- FIM DA LÓGICA MODIFICADA (Ordenação) ---
 
 
             let reportHTML = '';
             let copyIdCounter = 0;
+            
+            // --- INÍCIO DA LÓGICA MODIFICADA (Loop de Renderização) ---
             sortedKeys.forEach(key => {
-                reportHTML += `<h3 class="text-xl font-semibold text-cyan-400 mt-6 mb-3 border-b border-gray-700 pb-2">${key}</h3>`;
+                // 'key' agora é o nome do grupo (Ex: "Particular" ou "Nome do Gestor (Gestor)")
+                reportHTML += `<h3 class="text-xl font-semibold text-cyan-400 mt-6 mb-3 border-b border-gray-700 pb-2">${key}</h3>`; // <-- Corrigido
                 
-                groupedData[key].forEach(entry => {
+                // Pega as transações de dentro de '.entries'
+                groupedData[key].entries.forEach(entry => {
+            // --- FIM DA LÓGICA MODIFICADA (Loop de Renderização) ---
+            
                     const cpfId = `copy-cpf-${copyIdCounter}`;
                     const addressId = `copy-address-${copyIdCounter}`;
                     const grossValueId = `copy-gross-${copyIdCounter}`;
@@ -2136,7 +2169,7 @@ const checkAndDisplayDebt = (item) => {
                                     <i data-lucide="copy" class="h-5 w-5"></i>
                                 </button>
                             </div>
-                        `;
+                        `; // <-- Corrigido
                     } else {
                         valuesHTML = `
                             <div class="flex items-center gap-3">
@@ -2146,7 +2179,7 @@ const checkAndDisplayDebt = (item) => {
                                     <i data-lucide="copy" class="h-5 w-5"></i>
                                 </button>
                             </div>
-                        `;
+                        `; // <-- Corrigido
                     }
 
                     reportHTML += `
@@ -2169,7 +2202,7 @@ const checkAndDisplayDebt = (item) => {
 
                             ${valuesHTML}
                         </div>
-                    `;
+                    `; // <-- Corrigido
                     copyIdCounter++;
                 });
             });
@@ -2179,7 +2212,7 @@ const checkAndDisplayDebt = (item) => {
                     <p class="text-lg font-medium text-gray-300">Soma Total Líquida do Mês:</p>
                     <p class="text-3xl font-bold text-green-400">${formatCurrency(totalNetValue)}</p>
                 </div>
-            `;
+            `; // <-- Corrigido
             
             resultDiv.innerHTML = reportHTML;
             lucide.createIcons();
