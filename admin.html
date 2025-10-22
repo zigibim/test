@@ -1988,29 +1988,30 @@ const checkAndDisplayDebt = (item) => {
             });
         };
 
-        const toggleRequiredFields = (modalPrefix, isImovel) => {
-            try {
-                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+        // SUBSTITUA A FUNÇÃO ANTIGA POR ESTA
+const toggleRequiredFields = (modalPrefix, isImovel) => {
+    try {
+        const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+        const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
 
-                if (!nameInput || !enderecoInput) {
-                    console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!");
-                    return;
-                }
+        if (!nameInput || !enderecoInput) {
+            console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!");
+            return;
+        }
 
-                if (isImovel) {
-                    // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
-                    nameInput.required = false;
-                    enderecoInput.required = true;
-                } else {
-                    // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
-                    nameInput.required = true;
-                    enderecoInput.required = false;
-                }
-            } catch (error) {
-                console.error("Erro inesperado em toggleRequiredFields:", error);
-            }
-        };
+        if (isImovel) {
+            // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
+            nameInput.required = false;
+            enderecoInput.required = true;
+        } else {
+            // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
+            nameInput.required = true;
+            enderecoInput.required = false;
+        }
+    } catch (error) {
+        console.error("Erro inesperado em toggleRequiredFields:", error);
+    }
+};
         
         const finalizeRental = (itemId) => {
             const item = items.find(i => i.id === itemId);
@@ -2682,7 +2683,7 @@ const checkAndDisplayDebt = (item) => {
                         }
                     }
                     document.getElementById('editItemIncludeInTaxReport').checked = (item.includeInTaxReport === undefined || item.includeInTaxReport === true);
-                    toggleRequiredFields('editItem', item.category);
+                    toggleRequiredFields('editItem', isImovel);
                     showModal('editItemModal');
                 };
 
@@ -2856,13 +2857,13 @@ const checkAndDisplayDebt = (item) => {
 
         tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
         document.getElementById('openAddItemModal').addEventListener('click', () => { 
-    addItemForm.reset(); 
-    document.getElementById('itemCategorySelect').value = ""; 
-    document.getElementById('imovelFieldsWrapper').classList.add('hidden'); 
-    document.getElementById('itemCategoryOtherWrapper').classList.add('hidden'); 
-    toggleRequiredFields('item', false); 
-    showModal('addItemModal'); 
-});
+            addItemForm.reset(); 
+            document.getElementById('itemCategorySelect').value = ""; 
+            document.getElementById('imovelFieldsWrapper').classList.add('hidden'); 
+            document.getElementById('itemCategoryOtherWrapper').classList.add('hidden'); 
+            toggleRequiredFields('item', false); // <-- ADICIONE ESTA LINHA
+            showModal('addItemModal'); 
+        });
 
         document.getElementById('openAddTransactionModalRevenue').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita'; document.getElementById('transactionType').value = 'revenue'; document.getElementById('managementFeeContainer').style.display = 'block'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
         document.getElementById('openAddTransactionModalExpense').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Despesa'; document.getElementById('transactionType').value = 'expense'; document.getElementById('managementFeeContainer').style.display = 'none'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
