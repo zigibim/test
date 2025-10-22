@@ -342,7 +342,7 @@
                 <div class="space-y-4">
                     <div>
                         <label for="itemName" class="block mb-1 font-medium">Nome do Item/Serviço</label>
-                        <input type="text" id="itemName" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                        <input type="text" id="itemName" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
                     </div>
                     <div>
                         <label for="itemDescription" class="block mb-1 font-medium">Descrição</label>
@@ -431,7 +431,7 @@
                 <div class="space-y-4">
                     <div>
                         <label for="editItemName" class="block mb-1 font-medium">Nome do Item/Serviço</label>
-                        <input type="text" id="editItemName" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
+                        <input type="text" id="editItemName" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2">
                     </div>
                     <div>
                         <label for="editItemDescription" class="block mb-1 font-medium">Descrição</label>
@@ -1989,31 +1989,35 @@ const checkAndDisplayDebt = (item) => {
             });
         };
 
-        const toggleRequiredFields = (modalPrefix, isImovel) => {
-            try {
-                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+        const toggleRequiredFields = (modalPrefix, categoryValue) => {
+    try {
+        const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+        const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
 
-                if (!nameInput || !enderecoInput) {
-                    console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!", { modalPrefix, isImovel });
-                    return;
-                }
+        if (!nameInput || !enderecoInput) {
+            console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!", { modalPrefix, categoryValue });
+            return;
+        }
 
-                if (isImovel) {
-                    // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
-                    nameInput.required = false;
-                    enderecoInput.required = true;
-                } else {
-                    // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
-                    nameInput.required = true;
-                    enderecoInput.required = false;
-                }
-                
-                // console.log(`toggleRequiredFields (${modalPrefix}): é Imóvel=${isImovel}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
-            } catch (error) {
-                console.error("Erro inesperado em toggleRequiredFields:", error);
-            }
-        };
+        if (categoryValue === 'Imóvel') {
+            // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
+            nameInput.required = false;
+            enderecoInput.required = true;
+        } else if (categoryValue === '') {
+            // Se NENHUMA categoria está selecionada (estado inicial do AddModal)
+            // O campo <select> da Categoria é 'required', por isso ele irá travar o form.
+            // Deixamos ambos como não-obrigatórios por enquanto.
+            nameInput.required = false;
+            enderecoInput.required = false;
+        } else {
+            // Se NÃO é Imóvel (ex: Veículo, Equipamento, Outro): Nome É obrigatório, Endereço NÃO é obrigatório
+            nameInput.required = true;
+            enderecoInput.required = false;
+        }
+    } catch (error) {
+        console.error("Erro inesperado em toggleRequiredFields:", error);
+    }
+};
         
         const finalizeRental = (itemId) => {
             const item = items.find(i => i.id === itemId);
@@ -2685,7 +2689,7 @@ const checkAndDisplayDebt = (item) => {
                         }
                     }
                     document.getElementById('editItemIncludeInTaxReport').checked = (item.includeInTaxReport === undefined || item.includeInTaxReport === true);
-                    toggleRequiredFields('editItem', isImovel);
+                    toggleRequiredFields('editItem', item.category);
                     showModal('editItemModal');
                 };
 
@@ -2858,7 +2862,15 @@ const checkAndDisplayDebt = (item) => {
         });
 
         tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
-        document.getElementById('openAddItemModal').addEventListener('click', () => { addItemForm.reset(); document.getElementById('itemCategorySelect').value = ""; document.getElementById('imovelFieldsWrapper').classList.add('hidden'); document.getElementById('itemCategoryOtherWrapper').classList.add('hidden'); showModal('addItemModal'); });
+        document.getElementById('openAddItemModal').addEventListener('click', () => { 
+    addItemForm.reset(); 
+    document.getElementById('itemCategorySelect').value = ""; 
+    document.getElementById('imovelFieldsWrapper').classList.add('hidden'); 
+    document.getElementById('itemCategoryOtherWrapper').classList.add('hidden'); 
+    toggleRequiredFields('item', ''); // <-- ADICIONE ESTA LINHA
+    showModal('addItemModal'); 
+});
+
         document.getElementById('openAddTransactionModalRevenue').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita'; document.getElementById('transactionType').value = 'revenue'; document.getElementById('managementFeeContainer').style.display = 'block'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
         document.getElementById('openAddTransactionModalExpense').addEventListener('click', () => { document.getElementById('transactionModalTitle').textContent = 'Adicionar Despesa'; document.getElementById('transactionType').value = 'expense'; document.getElementById('managementFeeContainer').style.display = 'none'; addTransactionForm.reset(); document.getElementById('transactionDate').value = getTodayDateString(); populateTransactionItemSelect('transactionItemLink'); showModal('addTransactionModal'); });
         document.getElementById('openTaxReportModal').addEventListener('click', () => { initTaxReportFilters(); showModal('taxReportModal'); });
@@ -2872,19 +2884,21 @@ const checkAndDisplayDebt = (item) => {
         });
         
         document.getElementById('itemCategorySelect').addEventListener('change', (e) => {
-            const isImovel = e.target.value === 'Imóvel'; // <-- Verifica se é Imóvel
-            document.getElementById('itemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro');
-            document.getElementById('imovelFieldsWrapper').classList.toggle('hidden', !isImovel);
-            toggleRequiredFields('item', isImovel); // <-- CHAMA A NOVA FUNÇÃO
-        });
+    const categoryValue = e.target.value; // <-- Pega o valor
+    const isImovel = categoryValue === 'Imóvel';
+    document.getElementById('itemCategoryOtherWrapper').classList.toggle('hidden', categoryValue !== 'outro');
+    document.getElementById('imovelFieldsWrapper').classList.toggle('hidden', !isImovel);
+    toggleRequiredFields('item', categoryValue); // <-- Passe o valor da categoria
+});
 
         
         document.getElementById('editItemCategorySelect').addEventListener('change', (e) => {
-            const isImovel = e.target.value === 'Imóvel'; // <-- Verifica se é Imóvel
-            document.getElementById('editItemCategoryOtherWrapper').classList.toggle('hidden', e.target.value !== 'outro');
-            document.getElementById('editImovelFieldsWrapper').classList.toggle('hidden', !isImovel);
-            toggleRequiredFields('editItem', isImovel); // <-- CHAMA A NOVA FUNÇÃO
-        });
+    const categoryValue = e.target.value; // <-- Pega o valor
+    const isImovel = categoryValue === 'Imóvel';
+    document.getElementById('editItemCategoryOtherWrapper').classList.toggle('hidden', categoryValue !== 'outro');
+    document.getElementById('editImovelFieldsWrapper').classList.toggle('hidden', !isImovel);
+    toggleRequiredFields('editItem', categoryValue); // <-- Passe o valor da categoria
+});
 
         document.querySelectorAll('.itemManagedBySelect').forEach(select => { select.addEventListener('change', (e) => { const wrapper = e.target.closest('form').querySelector('.itemManagerNameWrapper'); const feeWrapper = e.target.closest('form').querySelector('.itemFeeWrapper'); const show = e.target.value === 'imobiliaria' || e.target.value === 'outros'; wrapper.classList.toggle('hidden', !show); feeWrapper.classList.toggle('hidden', !show);}); });
         document.querySelectorAll('input[type="checkbox"][id$="HasManagementFee"]').forEach(checkbox => { checkbox.addEventListener('change', (e) => { const wrapper = e.target.closest('.itemFeeWrapper').querySelector('.itemFeePercentageWrapper'); wrapper.classList.toggle('hidden', !e.target.checked); }); });
