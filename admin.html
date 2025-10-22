@@ -1003,6 +1003,16 @@
         let transactions = [];
         let financialChart;
         let onConfirm = null;
+        let allManagedItemIds = new Set();
+
+        const updateManagedItemIds = () => {
+                allManagedItemIds.clear();
+                managers.forEach(m => {
+                    m.assignedItemIds.forEach(id => allManagedItemIds.add(id));
+                });
+            };
+            
+            const isItemManagedByGestor = (itemId) => allManagedItemIds.has(parseInt(itemId));
 
         const appContainer = document.getElementById('app');
         const modals = document.querySelectorAll('.modal');
@@ -1079,6 +1089,7 @@
 };
         
         const renderAll = () => {
+            updateManagedItemIds();
             customizeUIForAdmin();
             updateNotificationVisibility();
             document.getElementById('notificationsToggle').checked = settings.notificationsEnabled;
@@ -2130,89 +2141,104 @@ const checkAndDisplayDebt = (item) => {
     textarea.addEventListener('input', () => autoResizeTextarea(textarea));
 });
         document.body.addEventListener('click', (e) => { 
-            // --- INÍCIO DA SUBSTITUIÇÃO DO LISTENER DO BOTÃO IPTU ---
-const iptuButton = e.target.closest('.iptu-btn');
-if (iptuButton) {
-    const itemId = parseInt(iptuButton.dataset.id);
-    const item = items.find(i => i.id === itemId);
-    const currentYear = new Date().getFullYear();
+            
+            const iptuButton = e.target.closest('.iptu-btn');
+            if (iptuButton) {
+                const itemId = parseInt(iptuButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
 
-    if (item) {
-        // Verifica se JÁ EXISTE IPTU registrado para o ano atual
-        if (item.iptu && item.iptu[currentYear]) {
-            const iptuData = item.iptu[currentYear];
+                const action = () => { // Ação a ser executada
+                    const currentYear = new Date().getFullYear();
+                    if (item) {
+                        // Verifica se JÁ EXISTE IPTU registrado para o ano atual
+                        if (item.iptu && item.iptu[currentYear]) {
+                            const iptuData = item.iptu[currentYear];
 
-            // Calcula o valor da parcela
-        const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
+                            // Calcula o valor da parcela
+                            const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
 
-        // Preenche o modal de GERENCIAMENTO
-        const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-        document.getElementById('manageIptuModalTitle').textContent = `Gerenciar IPTU ${currentYear} - ${displayName}`;
-        document.getElementById('manageIptuItemId').value = item.id;
-        document.getElementById('manageIptuYear').value = currentYear;
-        // Preenche com o VALOR DA PARCELA calculado
-        document.getElementById('manageIptuInstallmentValue').value = installmentValue.toFixed(2);
-        document.getElementById('manageIptuInstallments').value = iptuData.installments;
-        document.getElementById('manageIptuPaidInstallments').textContent = `${iptuData.paidInstallments} de ${iptuData.installments}`;
-        document.getElementById('manageIptuWarning').classList.add('hidden');
+                            // Preenche o modal de GERENCIAMENTO
+                            document.getElementById('manageIptuModalTitle').textContent = `Gerenciar IPTU ${currentYear} - ${displayName}`;
+                            document.getElementById('manageIptuItemId').value = item.id;
+                            document.getElementById('manageIptuYear').value = currentYear;
+                            // Preenche com o VALOR DA PARCELA calculado
+                            document.getElementById('manageIptuInstallmentValue').value = installmentValue.toFixed(2);
+                            document.getElementById('manageIptuInstallments').value = iptuData.installments;
+                            document.getElementById('manageIptuPaidInstallments').textContent = `${iptuData.paidInstallments} de ${iptuData.installments}`;
+                            document.getElementById('manageIptuWarning').classList.add('hidden');
 
-            // Mostra o modal de GERENCIAMENTO
-            showModal('manageIptuModal');
+                            // Mostra o modal de GERENCIAMENTO
+                            showModal('manageIptuModal');
 
-        } else {
-            // Se NÃO EXISTE, abre o modal de REGISTRO (comportamento antigo)
-            iptuForm.reset();
-            document.getElementById('iptuItemId').value = item.id;
-            document.getElementById('iptuModalTitle').textContent = `Registrar IPTU ${currentYear} para: ${displayName}`;
-            showModal('iptuModal');
-        }
-    }
-}
+                        } else {
+                            // Se NÃO EXISTE, abre o modal de REGISTRO (comportamento antigo)
+                            iptuForm.reset();
+                            document.getElementById('iptuItemId').value = item.id;
+                            document.getElementById('iptuModalTitle').textContent = `Registrar IPTU ${currentYear} para: ${displayName}`;
+                            showModal('iptuModal');
+                        }
+                    }
+                };
+                
+                if (isItemManagedByGestor(itemId)) { // Verifica se é gerenciado
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Alterar o IPTU pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action(); // Executa direto se não for
+                }
+            }
+            
             // --- Lógica para Gerenciamento de Dívida ---
+            const manageDebtButton = e.target.closest('.manage-debt-btn');
+            if (manageDebtButton) {
+                const itemId = parseInt(manageDebtButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+                
+                const action = () => { // Ação
+                    if (item) {
+                        document.getElementById('debtActionsItemId').value = item.id;
+                        const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                        document.getElementById('debtActionsInfo').textContent = `Item: ${displayName}`;
+                        showModal('debtActionsModal');
+                    }
+                };
 
-// Abre o modal de ações (Alterar/Apagar) ao clicar no botão de dívida
-const manageDebtButton = e.target.closest('.manage-debt-btn');
-if (manageDebtButton) {
-    const itemId = parseInt(manageDebtButton.dataset.id);
-    const item = items.find(i => i.id === itemId);
-    if (item) {
-        document.getElementById('debtActionsItemId').value = item.id;
-        const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-        document.getElementById('debtActionsInfo').textContent = `Item: ${displayName}`;
-        showModal('debtActionsModal');
-    }
-}
+                if (isItemManagedByGestor(itemId)) { // Verificação
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Gerenciar a dívida pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action(); // Executa direto
+                }
+            }
 
-// Abre o modal para editar o valor da dívida
-const openEditDebtModalButton = e.target.closest('#openEditDebtModalBtn');
-if (openEditDebtModalButton) {
-    const itemId = parseInt(document.getElementById('debtActionsItemId').value);
-    const item = items.find(i => i.id === itemId);
-    if (item && item.debt) {
-        hideModal('debtActionsModal');
-        document.getElementById('editDebtItemId').value = item.id;
-        document.getElementById('newDebtAmount').value = item.debt.amount.toFixed(2);
-        showModal('editDebtModal');
-    }
-}
+            // Abre o modal para editar o valor da dívida
+            const openEditDebtModalButton = e.target.closest('#openEditDebtModalBtn');
+            if (openEditDebtModalButton) {
+                const itemId = parseInt(document.getElementById('debtActionsItemId').value);
+                const item = items.find(i => i.id === itemId);
+                if (item && item.debt) {
+                    hideModal('debtActionsModal');
+                    document.getElementById('editDebtItemId').value = item.id;
+                    document.getElementById('newDebtAmount').value = item.debt.amount.toFixed(2);
+                    showModal('editDebtModal');
+                }
+            }
 
-// Apaga a dívida após confirmação
-const deleteDebtButton = e.target.closest('#deleteDebtBtn');
-if (deleteDebtButton) {
-    const itemId = parseInt(document.getElementById('debtActionsItemId').value);
-    hideModal('debtActionsModal');
-    showConfirmModal('Apagar Dívida', 'Você tem certeza que deseja apagar a dívida deste item?', () => {
-        const item = items.find(i => i.id === itemId);
-        if (item) {
-            item.debt.amount = 0;
-            saveData();
-            renderAll();
-        }
-    });
-}
+            // Apaga a dívida após confirmação
+            const deleteDebtButton = e.target.closest('#deleteDebtBtn');
+            if (deleteDebtButton) {
+                const itemId = parseInt(document.getElementById('debtActionsItemId').value);
+                hideModal('debtActionsModal');
+                showConfirmModal('Apagar Dívida', 'Você tem certeza que deseja apagar a dívida deste item?', () => {
+                    const item = items.find(i => i.id === itemId);
+                    if (item) {
+                        item.debt.amount = 0;
+                        saveData();
+                        renderAll();
+                    }
+                });
+            }
 
-// --- Fim da Lógica de Gerenciamento de Dívida ---
-
+            // --- Fim da Lógica de Gerenciamento de Dívida ---
 
             const copyButton = e.target.closest('.copy-btn');
             if (copyButton) {
@@ -2258,59 +2284,457 @@ if (deleteDebtButton) {
             }
 
             const editManagerBtn = e.target.closest('.edit-manager-btn');
-if(editManagerBtn) {
-    const managerId = parseInt(editManagerBtn.dataset.id);
-    const manager = managers.find(m => m.id === managerId);
-    if(manager) {
-        document.getElementById('managerModalTitle').textContent = 'Editar Gestor';
-        document.getElementById('managerId').value = manager.id;
-        document.getElementById('managerType').value = manager.type;
-        document.getElementById('managerName').value = manager.name;
-        document.getElementById('managerPassword').value = manager.password;
+            if(editManagerBtn) {
+                const managerId = parseInt(editManagerBtn.dataset.id);
+                const manager = managers.find(m => m.id === managerId);
+                if(manager) {
+                    document.getElementById('managerModalTitle').textContent = 'Editar Gestor';
+                    document.getElementById('managerId').value = manager.id;
+                    document.getElementById('managerType').value = manager.type;
+                    document.getElementById('managerName').value = manager.name;
+                    document.getElementById('managerPassword').value = manager.password;
 
-        const rentalsListDiv = document.getElementById('managerRentalsList');
-        rentalsListDiv.innerHTML = '';
-        const allItems = items;
+                    const rentalsListDiv = document.getElementById('managerRentalsList');
+                    rentalsListDiv.innerHTML = '';
+                    const allItems = items;
 
-        // Cria um conjunto de IDs de itens gerenciados por OUTROS gestores
-        const otherAssignedItemIds = new Set();
-        managers.forEach(m => {
-            if (m.id !== manager.id) { // Importante: ignora o gestor que estamos editando
-                m.assignedItemIds.forEach(id => otherAssignedItemIds.add(id));
+                    // Cria um conjunto de IDs de itens gerenciados por OUTROS gestores
+                    const otherAssignedItemIds = new Set();
+                    managers.forEach(m => {
+                        if (m.id !== manager.id) { // Importante: ignora o gestor que estamos editando
+                            m.assignedItemIds.forEach(id => otherAssignedItemIds.add(id));
+                        }
+                    });
+
+                    if (allItems.length === 0) {
+                        rentalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum item cadastrado para associar.</p>';
+                    } else {
+                        allItems.forEach(item => {
+                            const checkboxId = `manager-item-edit-${item.id}`;
+                            const isChecked = manager.assignedItemIds.includes(item.id);
+
+                            const isManagedByOther = otherAssignedItemIds.has(item.id);
+                            const isDisabled = isManagedByOther ? 'disabled' : '';
+                            const cursorClass = isManagedByOther ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-600/50';
+
+                            const label = document.createElement('label');
+                            label.htmlFor = checkboxId;
+                            label.className = `flex items-center space-x-3 p-2 rounded-md ${cursorClass}`;
+
+                            let statusText = item.rentedTo ? `(Alugado para: ${item.rentedTo})` : '(Disponível)';
+                            if(isManagedByOther) {
+                                const managingManager = managers.find(m => m.assignedItemIds.includes(item.id));
+                                statusText = `(Gerenciado por: ${managingManager.name})`;
+                            }
+
+                            label.innerHTML = `
+                                <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isChecked ? 'checked' : ''} ${isDisabled}>
+                                <span>${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name} <span class="text-xs ${isManagedByOther ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
+                            `;
+                            rentalsListDiv.appendChild(label);
+                        });
+                    }
+                    showModal('managerModal');
+                }
             }
         });
 
-        if (allItems.length === 0) {
-             rentalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum item cadastrado para associar.</p>';
-        } else {
-            allItems.forEach(item => {
-                const checkboxId = `manager-item-edit-${item.id}`;
-                const isChecked = manager.assignedItemIds.includes(item.id);
+        appContainer.addEventListener('click', (e) => {
+            const rentButton = e.target.closest('.rent-btn');
+            if (rentButton) {
+                const itemId = parseInt(rentButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+                
+                const action = () => { // Ação
+                    rentItemForm.reset();
+                    document.getElementById('rentModalTitle').textContent = "Registrar Aluguel";
+                    document.getElementById('rentItemId').value = item.id;
+                    document.getElementById('rentValue').value = item.value;
+                    document.getElementById('rentStartDate').value = getTodayDateString();
+                    showModal('rentItemModal');
+                };
 
-                const isManagedByOther = otherAssignedItemIds.has(item.id);
-                const isDisabled = isManagedByOther ? 'disabled' : '';
-                const cursorClass = isManagedByOther ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-600/50';
-
-                const label = document.createElement('label');
-                label.htmlFor = checkboxId;
-                label.className = `flex items-center space-x-3 p-2 rounded-md ${cursorClass}`;
-
-                let statusText = item.rentedTo ? `(Alugado para: ${item.rentedTo})` : '(Disponível)';
-                if(isManagedByOther) {
-                    const managingManager = managers.find(m => m.assignedItemIds.includes(item.id));
-                    statusText = `(Gerenciado por: ${managingManager.name})`;
+                if (isItemManagedByGestor(itemId)) { // Verificação
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Alugar este item pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action();
                 }
+            }
 
-                label.innerHTML = `
-                    <input type="checkbox" id="${checkboxId}" value="${item.id}" name="assignedItems" class="h-4 w-4 bg-gray-600 border-gray-500 rounded text-cyan-500 focus:ring-cyan-600" ${isChecked ? 'checked' : ''} ${isDisabled}>
-                    <span>${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name} <span class="text-xs ${isManagedByOther ? 'text-yellow-400' : 'text-gray-400'}">${statusText}</span></span>
-                `;
-                rentalsListDiv.appendChild(label);
-            });
-        }
-        showModal('managerModal');
-    }
-}
+            const addRevenueButton = e.target.closest('.add-revenue-btn');
+            if (addRevenueButton) {
+                const itemId = parseInt(addRevenueButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+                
+                const action = () => { // Ação
+                    switchTab('finance');
+                    
+                    document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita';
+                    document.getElementById('transactionType').value = 'revenue';
+                    document.getElementById('managementFeeContainer').style.display = 'block';
+                    addTransactionForm.reset();
+                    document.getElementById('transactionDate').value = getTodayDateString();
+                    populateTransactionItemSelect('transactionItemLink', item.id);
+                    const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                    document.getElementById('transactionDescription').value = `Recebimento aluguel: ${displayName}`;
+                    document.getElementById('transactionAmount').value = item.rentValue;
+                    checkAndDisplayDebt(item);
+                    
+                    if (item.hasManagementFee && item.managementFeePercentage > 0) {
+                        const feeCheckbox = document.getElementById('addManagementFee');
+                        const feeDiv = document.getElementById('managementFeeDiv');
+                        const feeAmountInput = document.getElementById('managementFeeAmount');
+                        const fee = item.rentValue * (item.managementFeePercentage / 100);
+
+                        feeCheckbox.checked = true;
+                        feeDiv.classList.remove('hidden');
+                        feeAmountInput.value = fee.toFixed(2);
+                    }
+
+                    // --- INÍCIO: Verificação Automática de IPTU ao Abrir Modal ---
+                    const preselectedItemId = document.getElementById('transactionItemLink').value;
+                    if (preselectedItemId) {
+                        const preselectedItem = items.find(i => i.id === parseInt(preselectedItemId));
+                        const currentYear = new Date().getFullYear();
+                        const autoIptuContainer = document.getElementById('autoIptuContainer');
+                        const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
+                        const autoIptuLabel = document.getElementById('autoIptuLabel');
+
+                        // Garante que o checkbox está resetado antes de verificar
+                        autoIptuContainer.classList.add('hidden');
+                        autoIptuCheckbox.checked = false;
+                        autoIptuCheckbox.dataset.iptuValue = 0;
+                        autoIptuLabel.textContent = '';
+
+                        // Verifica se é Imóvel com IPTU pendente
+                        if (preselectedItem && preselectedItem.category === 'Imóvel' && preselectedItem.iptu && preselectedItem.iptu[currentYear] && preselectedItem.iptu[currentYear].paidInstallments < preselectedItem.iptu[currentYear].installments) {
+                            const iptuData = preselectedItem.iptu[currentYear];
+                            const installmentValue = iptuData.totalValue / iptuData.installments;
+
+                            // Configura e exibe o checkbox
+                            autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
+                            autoIptuCheckbox.dataset.iptuValue = installmentValue;
+                            autoIptuContainer.classList.remove('hidden');
+                        }
+                    }
+                    
+                    showModal('addTransactionModal');
+                };
+
+                if (isItemManagedByGestor(itemId)) { // Verificação
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Adicionar receita pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action();
+                }
+            }
+
+            // --- INÍCIO: Listener para o botão "Pagar IPTU" (Item Disponível) ---
+            const payIptuExpenseButton = e.target.closest('.pay-iptu-expense-btn');
+            if (payIptuExpenseButton) {
+                const itemId = parseInt(payIptuExpenseButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+
+                const action = () => { // Ação
+                    const currentYear = new Date().getFullYear();
+
+                    if (item && item.iptu && item.iptu[currentYear]) {
+                        const iptuData = item.iptu[currentYear];
+                        if (iptuData.paidInstallments < iptuData.installments) {
+                            const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
+
+                            // Abre o modal de transação configurado para despesa de IPTU
+                            document.getElementById('transactionModalTitle').textContent = 'Registrar Pagamento IPTU';
+                            document.getElementById('transactionType').value = 'expense'; // Define como Despesa
+                            document.getElementById('managementFeeContainer').style.display = 'none'; // Esconde taxa
+                            addTransactionForm.reset(); // Limpa o formulário
+                            document.getElementById('transactionDate').value = getTodayDateString(); // Data atual
+                            populateTransactionItemSelect('transactionItemLink', item.id); // Seleciona o item
+                            // Preenche descrição e valor
+                            const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                            document.getElementById('transactionDescription').value = `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${displayName}`;
+                            document.getElementById('transactionAmount').value = installmentValue.toFixed(2);
+                            // Define a flag oculta
+                            document.getElementById('isDirectIptuPayment').value = 'true';
+
+                            // Esconde campos irrelevantes que possam ter ficado visíveis
+                            document.getElementById('debtAmountDisplay').classList.add('hidden');
+                            document.getElementById('debtInfoContainer').classList.add('hidden');
+                            document.getElementById('autoIptuContainer').classList.add('hidden');
+
+                            showModal('addTransactionModal');
+                        } else {
+                            alert("IPTU já está pago para este ano."); // Caso o botão apareça por erro
+                        }
+                    }
+                };
+
+                if (isItemManagedByGestor(itemId)) { // Verificação
+                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Pagar o IPTU pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action();
+                }
+            }
+            
+            const editRentButton = e.target.closest('.edit-rent-btn');
+            if (editRentButton) {
+                const itemId = parseInt(editRentButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+
+                const action = () => { // Ação
+                    document.getElementById('rentModalTitle').textContent = "Editar Aluguel";
+                    document.getElementById('rentItemId').value = item.id;
+                    document.getElementById('tenantName').value = item.rentedTo; document.getElementById('tenantPhone').value = item.tenantPhone || ''; document.getElementById('tenantCPF').value = item.tenantCPF || '';
+                    document.getElementById('rentStartDate').value = item.rentStartDate; document.getElementById('rentEndDate').value = item.rentEndDate; document.getElementById('rentValue').value = item.rentValue; document.getElementById('paymentDay').value = item.paymentDay;
+                    showModal('rentItemModal');
+                };
+
+                if (isItemManagedByGestor(itemId)) { // Verificação
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Editar o aluguel pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action();
+                }
+            }
+            
+            const deleteButton = e.target.closest('.delete-btn');
+            if (deleteButton) {
+                const itemId = parseInt(deleteButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+
+                // --- MODIFICAÇÃO: Adiciona aviso ao modal existente ---
+                const isManaged = isItemManagedByGestor(itemId);
+                const warningTitle = isManaged ? " (Item Gerenciado)" : "";
+                const warningMsg = isManaged ? " Esta ação também pode afetar o painel do gestor." : "";
+                // --- FIM DA MODIFICAÇÃO ---
+
+                if (item.rentedTo) {
+                    showConfirmModal('Finalizar Aluguel' + warningTitle, `Isso irá finalizar o aluguel do item "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}" e o tornará disponível.${warningMsg} Deseja continuar?`, () => {
+                        finalizeRental(itemId);
+                        saveData();
+                        renderAll();
+                    });
+                } else {
+                    showConfirmModal('Apagar Item' + warningTitle, `Você tem certeza que deseja apagar o item "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}"?${warningMsg} Esta ação não pode ser desfeita.`, () => {
+                        items = items.filter(i => i.id !== itemId);
+                        // Also remove from any manager
+                        managers.forEach(m => {
+                            m.assignedItemIds = m.assignedItemIds.filter(id => id !== itemId);
+                        });
+                        saveData();
+                        renderAll();
+                    });
+                }
+            }
+            
+            const editItemButton = e.target.closest('.edit-item-btn');
+            if (editItemButton) {
+                const itemId = parseInt(editItemButton.dataset.id);
+                const item = items.find(i => i.id === itemId);
+
+                const action = () => { // Ação
+                    document.getElementById('editItemId').value = item.id;
+                    document.getElementById('editItemName').value = item.name; document.getElementById('editItemDescription').value = item.description;
+                    
+                    const editDescriptionTextarea = document.getElementById('editItemDescription'); // Pega o textarea
+                    setTimeout(() => autoResizeTextarea(editDescriptionTextarea), 0); // Ajusta o tamanho
+                    
+                    document.getElementById('editItemValue').value = item.value; document.getElementById('editItemPaymentFrequency').value = item.paymentFrequency;
+                    const categorySelect = document.getElementById('editItemCategorySelect');
+                    const otherWrapper = document.getElementById('editItemCategoryOtherWrapper'); const otherInput = document.getElementById('editItemCategoryOther'); const imovelWrapper = document.getElementById('editImovelFieldsWrapper');
+                    const predefinedCategories = Array.from(categorySelect.options).map(opt => opt.value);
+                    if (predefinedCategories.includes(item.category) && item.category !== 'outro') { categorySelect.value = item.category; otherWrapper.classList.add('hidden'); } 
+                    else { categorySelect.value = 'outro'; otherInput.value = item.category; otherWrapper.classList.remove('hidden'); }
+                    
+                    const isImovel = categorySelect.value === 'Imóvel';
+                    imovelWrapper.classList.toggle('hidden', !isImovel);
+                    if(isImovel) { 
+                        document.getElementById('editItemEndereco').value = item.endereco || ''; 
+                        document.getElementById('editItemCep').value = item.cep || ''; 
+                        const managedBySelect = document.getElementById('editItemManagedBy');
+                        const managerNameWrapper = document.getElementById('editItemManagerName').parentElement;
+                        const feeWrapper = document.getElementById('editItemHasManagementFee').parentElement.parentElement;
+                        const feeCheckbox = document.getElementById('editItemHasManagementFee');
+                        const feePercentageWrapper = document.getElementById('editItemManagementFeePercentage').parentElement;
+
+                        managedBySelect.value = item.managedBy || 'particular';
+                        const showManagerFields = managedBySelect.value === 'imobiliaria' || managedBySelect.value === 'outros';
+                        managerNameWrapper.classList.toggle('hidden', !showManagerFields);
+                        feeWrapper.classList.toggle('hidden', !showManagerFields);
+
+                        if (showManagerFields) {
+                            document.getElementById('editItemManagerName').value = item.managerName || '';
+                            feeCheckbox.checked = item.hasManagementFee || false;
+                            feePercentageWrapper.classList.toggle('hidden', !feeCheckbox.checked);
+                            if (feeCheckbox.checked) {
+                                document.getElementById('editItemManagementFeePercentage').value = item.managementFeePercentage || 10;
+                            }
+                        }
+                    }
+                    document.getElementById('editItemIncludeInTaxReport').checked = (item.includeInTaxReport === undefined || item.includeInTaxReport === true);
+                    showModal('editItemModal');
+                };
+
+                if (isItemManagedByGestor(itemId)) { // Verificação
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Editar os dados do item pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action();
+                }
+            }
+            
+            const editTransactionButton = e.target.closest('.edit-transaction-btn');
+            if (editTransactionButton) {
+                const transactionId = parseInt(editTransactionButton.dataset.id);
+                const transaction = transactions.find(t => t.id === transactionId);
+                
+                const action = () => { // Ação
+                    document.getElementById('editTransactionId').value = transaction.id;
+                    document.getElementById('editTransactionDescription').value = transaction.description;
+                    document.getElementById('editTransactionAmount').value = transaction.amount;
+                    document.getElementById('editTransactionDate').value = transaction.date;
+                    showModal('editTransactionModal');
+                };
+
+                if (transaction.itemId && isItemManagedByGestor(transaction.itemId)) { // Verificação
+                    showConfirmModal('Item Gerenciado', 'Esta transação é de um item gerenciado. Alterá-la pode afetar o balanço do gestor. Deseja continuar?', action);
+                } else {
+                    action();
+                }
+            }
+
+            const deleteTransactionButton = e.target.closest('.delete-transaction-btn');
+            if (deleteTransactionButton) {
+                const transactionId = parseInt(deleteTransactionButton.dataset.id);
+                const transaction = transactions.find(t => t.id === transactionId);
+                if (!transaction) return;
+
+                // --- MODIFICAÇÃO: Adiciona aviso ao modal existente ---
+                const isManaged = transaction.itemId && isItemManagedByGestor(transaction.itemId);
+                const warningTitle = isManaged ? " (Item Gerenciado)" : "";
+                const warningMsg = isManaged ? " Esta ação também pode afetar o balanço do gestor." : "";
+                // --- FIM DA MODIFICAÇÃO ---
+
+                showConfirmModal('Excluir Transação' + warningTitle, `Você tem certeza que deseja excluir a transação "${transaction.description}"?${warningMsg}`, () => {
+                    const txToDelete = transactions.find(t => t.id === transactionId);
+
+                    // --- INÍCIO: LÓGICA PARA REVERTER CONTAGEM DE IPTU (ADICIONADA) ---
+                    if (txToDelete && txToDelete.type === 'expense' && txToDelete.itemId && txToDelete.description.startsWith('Pagamento IPTU')) {
+                        const item = items.find(i => i.id === txToDelete.itemId);
+                        // Extrai o ano da descrição da transação (ex: "Pagamento IPTU 2025 (1/6) - Nome Item")
+                        const yearMatch = txToDelete.description.match(/IPTU (\d{4})/);
+                        if (item && yearMatch) {
+                            const year = parseInt(yearMatch[1], 10);
+                            // Verifica se existe IPTU para aquele ano e se há parcelas pagas para decrementar
+                            if (item.iptu && item.iptu[year] && item.iptu[year].paidInstallments > 0) {
+                                item.iptu[year].paidInstallments -= 1; // Decrementa o contador
+                            }
+                        }
+                    }
+                    // --- FIM: LÓGICA PARA REVERTER CONTAGEM DE IPTU ---
+
+                    // --- Lógica existente para reverter dívida/pagamento (mantida) ---
+                    if (txToDelete && txToDelete.type === 'revenue' && txToDelete.itemId) {
+                        const item = items.find(i => i.id === txToDelete.itemId);
+                        if (item && item.rentedTo) {
+
+                            const transactionDate = new Date(txToDelete.date + 'T00:00:00');
+                            const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
+
+                            const otherPaymentsInPeriod = transactions.filter(t =>
+                                t.id !== txToDelete.id &&
+                                t.itemId === txToDelete.itemId &&
+                                t.type === 'revenue' &&
+                                `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
+                            );
+
+                            // Reverte o cálculo da dívida (se aplicável)
+                            if (item.debt) {
+                                const amountDeleted = txToDelete.amount;
+                                const rentValue = item.rentValue;
+                                const difference = rentValue - amountDeleted;
+
+                                // Se o pagamento apagado era parcial e gerou uma dívida
+                                if (difference > 0) {
+                                    item.debt.amount -= difference;
+
+                                    // LÓGICA CORRIGIDA: Só decrementa o ciclo se este for o único pagamento do período
+                                    if (otherPaymentsInPeriod.length === 0) {
+                                        if (item.debt.cycles > 0) {
+                                            item.debt.cycles -= 1;
+                                        }
+                                    }
+                                }
+                                // Se o pagamento apagado era maior e abateu uma dívida
+                                else if (difference < 0) {
+                                    const surplus = -difference;
+                                    item.debt.amount += surplus;
+                                    // Se ao restaurar a dívida, ela volta a existir, e não havia ciclo, adiciona um.
+                                    if (item.debt.amount > 0 && item.debt.cycles === 0) {
+                                        item.debt.cycles = 1;
+                                    }
+                                }
+
+                                if (item.debt.amount < 0.01) {
+                                    item.debt.amount = 0;
+                                    item.debt.cycles = 0; // Zera os ciclos se a dívida for zerada
+                                }
+                            }
+
+                            // Se não houver outros pagamentos, desmarca o mês como "pago".
+                            if (otherPaymentsInPeriod.length === 0 && item.paymentsMade) {
+                                const index = item.paymentsMade.indexOf(paymentPeriod);
+                                if (index > -1) {
+                                    item.paymentsMade.splice(index, 1);
+                                }
+                            }
+                        }
+                    }
+                    // --- Fim da lógica existente ---
+
+                    // Remove a transação da lista
+                    transactions = transactions.filter(t => t.id !== transactionId);
+
+                    saveData();
+                    renderAll();
+                });
+            }
+            
+            const resolvePaymentBtn = e.target.closest('.resolve-payment-btn');
+            if(resolvePaymentBtn) {
+                const itemId = parseInt(resolvePaymentBtn.dataset.id);
+                const item = items.find(i => i.id === itemId);
+
+                const action = () => { // Ação
+                    document.getElementById('paymentAlertItemId').value = item.id;
+                    const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                    document.getElementById('paymentAlertItemName').textContent = displayName;
+                    showModal('paymentAlertModal');
+                };
+
+                // Verificação (alertas SÓ aparecem para itens alugados, que podem ser gerenciados)
+                if (isItemManagedByGestor(itemId)) { 
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado. Resolver este alerta pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action();
+                }
+            }
+            
+            const resolveContractEndBtn = e.target.closest('.resolve-contract-end-btn');
+            if(resolveContractEndBtn) {
+                const itemId = parseInt(resolveContractEndBtn.dataset.id);
+                const item = items.find(i => i.id === itemId);
+                
+                const action = () => { // Ação
+                    document.getElementById('contractEndItemId').value = item.id;
+                    const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
+                    document.getElementById('contractEndItemName').textContent = displayName;
+                    showModal('contractEndModal');
+                };
+                
+                if (isItemManagedByGestor(itemId)) { // Verificação
+                    showConfirmModal('Item Gerenciado', 'Este item é gerenciado. Resolver este alerta de contrato pode afetar o painel do gestor. Deseja continuar?', action);
+                } else {
+                    action();
+                }
+            }
         });
 
         tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
@@ -2577,320 +3001,7 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
 });
 
         
-        appContainer.addEventListener('click', (e) => {
-            const rentButton = e.target.closest('.rent-btn');
-            if (rentButton) {
-                const itemId = parseInt(rentButton.dataset.id);
-                const item = items.find(i => i.id === itemId);
-                
-                rentItemForm.reset();
-                document.getElementById('rentModalTitle').textContent = "Registrar Aluguel";
-                document.getElementById('rentItemId').value = item.id;
-                document.getElementById('rentValue').value = item.value;
-                document.getElementById('rentStartDate').value = getTodayDateString();
-                showModal('rentItemModal');
-            }
-
-            const addRevenueButton = e.target.closest('.add-revenue-btn');
-            if (addRevenueButton) {
-                const itemId = parseInt(addRevenueButton.dataset.id);
-                const item = items.find(i => i.id === itemId);
-                
-                switchTab('finance');
-                
-                document.getElementById('transactionModalTitle').textContent = 'Adicionar Receita';
-                document.getElementById('transactionType').value = 'revenue';
-                document.getElementById('managementFeeContainer').style.display = 'block';
-                addTransactionForm.reset();
-                document.getElementById('transactionDate').value = getTodayDateString();
-                populateTransactionItemSelect('transactionItemLink', item.id);
-                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-                document.getElementById('transactionDescription').value = `Recebimento aluguel: ${displayName}`;
-                document.getElementById('transactionAmount').value = item.rentValue;
-                checkAndDisplayDebt(item);
-                
-                if (item.hasManagementFee && item.managementFeePercentage > 0) {
-                    const feeCheckbox = document.getElementById('addManagementFee');
-                    const feeDiv = document.getElementById('managementFeeDiv');
-                    const feeAmountInput = document.getElementById('managementFeeAmount');
-                    const fee = item.rentValue * (item.managementFeePercentage / 100);
-
-                    feeCheckbox.checked = true;
-                    feeDiv.classList.remove('hidden');
-                    feeAmountInput.value = fee.toFixed(2);
-                }
-
-                // --- INÍCIO: Verificação Automática de IPTU ao Abrir Modal ---
-        const preselectedItemId = document.getElementById('transactionItemLink').value;
-        if (preselectedItemId) {
-            const preselectedItem = items.find(i => i.id === parseInt(preselectedItemId));
-            const currentYear = new Date().getFullYear();
-            const autoIptuContainer = document.getElementById('autoIptuContainer');
-            const autoIptuCheckbox = document.getElementById('autoIptuCheckbox');
-            const autoIptuLabel = document.getElementById('autoIptuLabel');
-
-            // Garante que o checkbox está resetado antes de verificar
-            autoIptuContainer.classList.add('hidden');
-            autoIptuCheckbox.checked = false;
-            autoIptuCheckbox.dataset.iptuValue = 0;
-            autoIptuLabel.textContent = '';
-
-            // Verifica se é Imóvel com IPTU pendente
-            if (preselectedItem && preselectedItem.category === 'Imóvel' && preselectedItem.iptu && preselectedItem.iptu[currentYear] && preselectedItem.iptu[currentYear].paidInstallments < preselectedItem.iptu[currentYear].installments) {
-                const iptuData = preselectedItem.iptu[currentYear];
-                const installmentValue = iptuData.totalValue / iptuData.installments;
-
-                // Configura e exibe o checkbox
-                autoIptuLabel.textContent = `Adicionar 1 parcela IPTU (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${formatCurrency(installmentValue)}`;
-                autoIptuCheckbox.dataset.iptuValue = installmentValue;
-                autoIptuContainer.classList.remove('hidden');
-            }
-        }
-                
-                showModal('addTransactionModal');
-            }
-
-            // --- INÍCIO: Listener para o botão "Pagar IPTU" (Item Disponível) ---
-        const payIptuExpenseButton = e.target.closest('.pay-iptu-expense-btn');
-        if (payIptuExpenseButton) {
-            const itemId = parseInt(payIptuExpenseButton.dataset.id);
-            const item = items.find(i => i.id === itemId);
-            const currentYear = new Date().getFullYear();
-
-            if (item && item.iptu && item.iptu[currentYear]) {
-                const iptuData = item.iptu[currentYear];
-                if (iptuData.paidInstallments < iptuData.installments) {
-                    const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
-
-                    // Abre o modal de transação configurado para despesa de IPTU
-                    document.getElementById('transactionModalTitle').textContent = 'Registrar Pagamento IPTU';
-                    document.getElementById('transactionType').value = 'expense'; // Define como Despesa
-                    document.getElementById('managementFeeContainer').style.display = 'none'; // Esconde taxa
-                    addTransactionForm.reset(); // Limpa o formulário
-                    document.getElementById('transactionDate').value = getTodayDateString(); // Data atual
-                    populateTransactionItemSelect('transactionItemLink', item.id); // Seleciona o item
-                    // Preenche descrição e valor
-                    const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-                    document.getElementById('transactionDescription').value = `Pagamento IPTU ${currentYear} (${iptuData.paidInstallments + 1}/${iptuData.installments}) - ${displayName}`;
-                    document.getElementById('transactionAmount').value = installmentValue.toFixed(2);
-                    // Define a flag oculta
-                    document.getElementById('isDirectIptuPayment').value = 'true';
-
-                    // Esconde campos irrelevantes que possam ter ficado visíveis
-                    document.getElementById('debtAmountDisplay').classList.add('hidden');
-                    document.getElementById('debtInfoContainer').classList.add('hidden');
-                    document.getElementById('autoIptuContainer').classList.add('hidden');
-
-
-                    showModal('addTransactionModal');
-                } else {
-                    alert("IPTU já está pago para este ano."); // Caso o botão apareça por erro
-                }
-            }
-        }
-            
-            const editRentButton = e.target.closest('.edit-rent-btn');
-            if (editRentButton) {
-                const itemId = parseInt(editRentButton.dataset.id);
-                const item = items.find(i => i.id === itemId);
-
-                document.getElementById('rentModalTitle').textContent = "Editar Aluguel";
-                document.getElementById('rentItemId').value = item.id;
-                document.getElementById('tenantName').value = item.rentedTo; document.getElementById('tenantPhone').value = item.tenantPhone || ''; document.getElementById('tenantCPF').value = item.tenantCPF || '';
-                document.getElementById('rentStartDate').value = item.rentStartDate; document.getElementById('rentEndDate').value = item.rentEndDate; document.getElementById('rentValue').value = item.rentValue; document.getElementById('paymentDay').value = item.paymentDay;
-                showModal('rentItemModal');
-            }
-            
-            const deleteButton = e.target.closest('.delete-btn');
-            if (deleteButton) {
-                const itemId = parseInt(deleteButton.dataset.id);
-                const item = items.find(i => i.id === itemId);
-                if (item.rentedTo) {
-                    showConfirmModal('Finalizar Aluguel', `Isso irá finalizar o aluguel do item "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}" e o tornará disponível. Deseja continuar?`, () => {
-                        finalizeRental(itemId);
-                        saveData();
-                        renderAll();
-                    });
-                } else {
-                    showConfirmModal('Apagar Item', `Você tem certeza que deseja apagar o item "${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}"? Esta ação não pode ser desfeita.`, () => {
-                        items = items.filter(i => i.id !== itemId);
-                        // Also remove from any manager
-                        managers.forEach(m => {
-                            m.assignedItemIds = m.assignedItemIds.filter(id => id !== itemId);
-                        });
-                        saveData();
-                        renderAll();
-                    });
-                }
-            }
-            
-            const editItemButton = e.target.closest('.edit-item-btn');
-            if (editItemButton) {
-                const itemId = parseInt(editItemButton.dataset.id);
-                const item = items.find(i => i.id === itemId);
-                document.getElementById('editItemId').value = item.id;
-                document.getElementById('editItemName').value = item.name; document.getElementById('editItemDescription').value = item.description;
-                setTimeout(() => autoResizeTextarea(editDescriptionTextarea), 0);
-                document.getElementById('editItemValue').value = item.value; document.getElementById('editItemPaymentFrequency').value = item.paymentFrequency;
-                const categorySelect = document.getElementById('editItemCategorySelect');
-                const otherWrapper = document.getElementById('editItemCategoryOtherWrapper'); const otherInput = document.getElementById('editItemCategoryOther'); const imovelWrapper = document.getElementById('editImovelFieldsWrapper');
-                const predefinedCategories = Array.from(categorySelect.options).map(opt => opt.value);
-                if (predefinedCategories.includes(item.category) && item.category !== 'outro') { categorySelect.value = item.category; otherWrapper.classList.add('hidden'); } 
-                else { categorySelect.value = 'outro'; otherInput.value = item.category; otherWrapper.classList.remove('hidden'); }
-                
-                const isImovel = categorySelect.value === 'Imóvel';
-                imovelWrapper.classList.toggle('hidden', !isImovel);
-                if(isImovel) { 
-                    document.getElementById('editItemEndereco').value = item.endereco || ''; 
-                    document.getElementById('editItemCep').value = item.cep || ''; 
-                    const managedBySelect = document.getElementById('editItemManagedBy');
-                    const managerNameWrapper = document.getElementById('editItemManagerName').parentElement;
-                    const feeWrapper = document.getElementById('editItemHasManagementFee').parentElement.parentElement;
-                    const feeCheckbox = document.getElementById('editItemHasManagementFee');
-                    const feePercentageWrapper = document.getElementById('editItemManagementFeePercentage').parentElement;
-
-                    managedBySelect.value = item.managedBy || 'particular';
-                    const showManagerFields = managedBySelect.value === 'imobiliaria' || managedBySelect.value === 'outros';
-                    managerNameWrapper.classList.toggle('hidden', !showManagerFields);
-                    feeWrapper.classList.toggle('hidden', !showManagerFields);
-
-                    if (showManagerFields) {
-                        document.getElementById('editItemManagerName').value = item.managerName || '';
-                        feeCheckbox.checked = item.hasManagementFee || false;
-                        feePercentageWrapper.classList.toggle('hidden', !feeCheckbox.checked);
-                        if (feeCheckbox.checked) {
-                            document.getElementById('editItemManagementFeePercentage').value = item.managementFeePercentage || 10;
-                        }
-                    }
-                }
-                document.getElementById('editItemIncludeInTaxReport').checked = (item.includeInTaxReport === undefined || item.includeInTaxReport === true);
-
-
-                showModal('editItemModal');
-            }
-            
-            const editTransactionButton = e.target.closest('.edit-transaction-btn');
-            if (editTransactionButton) {
-                const transactionId = parseInt(editTransactionButton.dataset.id);
-                const transaction = transactions.find(t => t.id === transactionId);
-                document.getElementById('editTransactionId').value = transaction.id;
-                document.getElementById('editTransactionDescription').value = transaction.description;
-                document.getElementById('editTransactionAmount').value = transaction.amount;
-                document.getElementById('editTransactionDate').value = transaction.date;
-                showModal('editTransactionModal');
-            }
-
-            const deleteTransactionButton = e.target.closest('.delete-transaction-btn');
-if (deleteTransactionButton) {
-    const transactionId = parseInt(deleteTransactionButton.dataset.id);
-    const transaction = transactions.find(t => t.id === transactionId);
-    if (!transaction) return;
-
-    showConfirmModal('Excluir Transação', `Você tem certeza que deseja excluir a transação "${transaction.description}"?`, () => {
-        const txToDelete = transactions.find(t => t.id === transactionId);
-
-    // --- INÍCIO: LÓGICA PARA REVERTER CONTAGEM DE IPTU (ADICIONADA) ---
-    if (txToDelete && txToDelete.type === 'expense' && txToDelete.itemId && txToDelete.description.startsWith('Pagamento IPTU')) {
-        const item = items.find(i => i.id === txToDelete.itemId);
-        // Extrai o ano da descrição da transação (ex: "Pagamento IPTU 2025 (1/6) - Nome Item")
-        const yearMatch = txToDelete.description.match(/IPTU (\d{4})/);
-        if (item && yearMatch) {
-            const year = parseInt(yearMatch[1], 10);
-            // Verifica se existe IPTU para aquele ano e se há parcelas pagas para decrementar
-            if (item.iptu && item.iptu[year] && item.iptu[year].paidInstallments > 0) {
-                item.iptu[year].paidInstallments -= 1; // Decrementa o contador
-            }
-        }
-    }
-    // --- FIM: LÓGICA PARA REVERTER CONTAGEM DE IPTU ---
-
-    // --- Lógica existente para reverter dívida/pagamento (mantida) ---
-    if (txToDelete && txToDelete.type === 'revenue' && txToDelete.itemId) {
-        const item = items.find(i => i.id === txToDelete.itemId);
-        if (item && item.rentedTo) {
-
-            const transactionDate = new Date(txToDelete.date + 'T00:00:00');
-            const paymentPeriod = `${transactionDate.getFullYear()}-${String(transactionDate.getMonth() + 1).padStart(2, '0')}`;
-
-            const otherPaymentsInPeriod = transactions.filter(t =>
-                t.id !== txToDelete.id &&
-                t.itemId === txToDelete.itemId &&
-                t.type === 'revenue' &&
-                `${new Date(t.date + 'T00:00:00').getFullYear()}-${String(new Date(t.date + 'T00:00:00').getMonth() + 1).padStart(2, '0')}` === paymentPeriod
-            );
-
-            // Reverte o cálculo da dívida (se aplicável)
-            if (item.debt) {
-                const amountDeleted = txToDelete.amount;
-                const rentValue = item.rentValue;
-                const difference = rentValue - amountDeleted;
-
-                // Se o pagamento apagado era parcial e gerou uma dívida
-                if (difference > 0) {
-                    item.debt.amount -= difference;
-
-                    // LÓGICA CORRIGIDA: Só decrementa o ciclo se este for o único pagamento do período
-                    if (otherPaymentsInPeriod.length === 0) {
-                        if (item.debt.cycles > 0) {
-                            item.debt.cycles -= 1;
-                        }
-                    }
-                }
-                // Se o pagamento apagado era maior e abateu uma dívida
-                else if (difference < 0) {
-                    const surplus = -difference;
-                    item.debt.amount += surplus;
-                    // Se ao restaurar a dívida, ela volta a existir, e não havia ciclo, adiciona um.
-                    if (item.debt.amount > 0 && item.debt.cycles === 0) {
-                        item.debt.cycles = 1;
-                    }
-                }
-
-                if (item.debt.amount < 0.01) {
-                    item.debt.amount = 0;
-                    item.debt.cycles = 0; // Zera os ciclos se a dívida for zerada
-                }
-            }
-
-            // Se não houver outros pagamentos, desmarca o mês como "pago".
-            if (otherPaymentsInPeriod.length === 0 && item.paymentsMade) {
-                const index = item.paymentsMade.indexOf(paymentPeriod);
-                if (index > -1) {
-                    item.paymentsMade.splice(index, 1);
-                }
-            }
-        }
-    }
-    // --- Fim da lógica existente ---
-
-    // Remove a transação da lista
-    transactions = transactions.filter(t => t.id !== transactionId);
-
-        saveData();
-        renderAll();
-    });
-}
-            
-            const resolvePaymentBtn = e.target.closest('.resolve-payment-btn');
-            if(resolvePaymentBtn) {
-                const itemId = parseInt(resolvePaymentBtn.dataset.id);
-                const item = items.find(i => i.id === itemId);
-                document.getElementById('paymentAlertItemId').value = item.id;
-                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-                document.getElementById('paymentAlertItemName').textContent = displayName;
-                showModal('paymentAlertModal');
-            }
-            
-            const resolveContractEndBtn = e.target.closest('.resolve-contract-end-btn');
-            if(resolveContractEndBtn) {
-                const itemId = parseInt(resolveContractEndBtn.dataset.id);
-                const item = items.find(i => i.id === itemId);
-                document.getElementById('contractEndItemId').value = item.id;
-                const displayName = (item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name;
-                document.getElementById('contractEndItemName').textContent = displayName;
-                showModal('contractEndModal');
-            }
-        });
+        
 
         rentItemForm.addEventListener('submit', (e) => {
             e.preventDefault();
