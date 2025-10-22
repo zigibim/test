@@ -1988,30 +1988,29 @@ const checkAndDisplayDebt = (item) => {
             });
         };
 
-        // SUBSTITUA A FUNÇÃO ANTIGA POR ESTA
-const toggleRequiredFields = (modalPrefix, isImovel) => {
-    try {
-        const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-        const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+       const toggleRequiredFields = (modalPrefix, isImovel) => {
+            try {
+                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
 
-        if (!nameInput || !enderecoInput) {
-            console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!");
-            return;
-        }
+                if (!nameInput || !enderecoInput) {
+                    console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!");
+                    return;
+                }
 
-        if (isImovel) {
-            // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
-            nameInput.required = false;
-            enderecoInput.required = true;
-        } else {
-            // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
-            nameInput.required = true;
-            enderecoInput.required = false;
-        }
-    } catch (error) {
-        console.error("Erro inesperado em toggleRequiredFields:", error);
-    }
-};
+                if (isImovel) {
+                    // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
+                    nameInput.required = false;
+                    enderecoInput.required = true;
+                } else {
+                    // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
+                    nameInput.required = true;
+                    enderecoInput.required = false;
+                }
+            } catch (error) {
+                console.error("Erro inesperado em toggleRequiredFields:", error);
+            }
+        };
         
         const finalizeRental = (itemId) => {
             const item = items.find(i => i.id === itemId);
