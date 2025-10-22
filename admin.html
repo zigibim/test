@@ -341,7 +341,7 @@
                 <h2 class="text-2xl font-bold mb-4">Adicionar Novo Item</h2>
                 <div class="space-y-4">
                     <div>
-                        <label for="itemName" class="block mb-1 font-medium">Nome do Item/Serviço <span class="text-red-500"></span></label>
+                        <label for="itemName" class="block mb-1 font-medium">Nome do Item/Serviço</label>
                         <input type="text" id="itemName" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
                     </div>
                     <div>
@@ -1992,32 +1992,26 @@ const checkAndDisplayDebt = (item) => {
         const toggleRequiredFields = (modalPrefix, isImovel) => {
         try {
             const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-            // Busca o label associado ao input
-            const nameLabel = document.querySelector(`label[for="${nameInput.id}"]`);
-            // Busca o span do asterisco DENTRO do label encontrado
-            const nameLabelAsterisk = nameLabel ? nameLabel.querySelector('span.text-red-500') : null;
+            // REMOVEMOS a busca por nameLabel e nameLabelAsterisk
 
             const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
-             // Busca o label associado ao input
             const enderecoLabel = document.querySelector(`label[for="${enderecoInput.id}"]`);
-            // Busca os spans DENTRO do label encontrado
             const enderecoLabelAsterisk = enderecoLabel ? enderecoLabel.querySelector('span.text-red-500') : null;
             const optionalSpanClass = modalPrefix === 'item' ? 'item-endereco-optional' : 'editItem-endereco-optional';
             const enderecoOptionalText = enderecoLabel ? enderecoLabel.querySelector(`span.${optionalSpanClass}`) : null;
 
-            // VERIFICAÇÃO ESSENCIAL: Garante que todos os elementos foram achados
-            // Se algum for null, não tenta modificar e avisa no console
-            if (!nameInput || !nameLabel || !nameLabelAsterisk || !enderecoInput || !enderecoLabel || !enderecoLabelAsterisk || !enderecoOptionalText) {
-                console.error("toggleRequiredFields: Um ou mais elementos não foram encontrados!", {
-                    modalPrefix, isImovel, nameInput, nameLabel, nameLabelAsterisk, enderecoInput, enderecoLabel, enderecoLabelAsterisk, enderecoOptionalText
+            // Ajustamos a verificação para não depender mais dos elementos do nome removidos
+            if (!nameInput || !enderecoInput || !enderecoLabel || !enderecoLabelAsterisk || !enderecoOptionalText) {
+                console.error("toggleRequiredFields: Elementos de nome ou endereço não encontrados!", {
+                    modalPrefix, isImovel, nameInput, /* nameLabelAsterisk removido */ enderecoInput, enderecoLabel, enderecoLabelAsterisk, enderecoOptionalText
                 });
-                return; // Interrompe a função para evitar erros
+                return;
             }
 
             if (isImovel) {
                 // Nome NÃO é obrigatório
                 nameInput.required = false;
-                nameLabelAsterisk.classList.add('hidden');
+                // REMOVEMOS a linha: nameLabelAsterisk.classList.add('hidden');
 
                 // Endereço É obrigatório
                 enderecoInput.required = true;
@@ -2026,13 +2020,14 @@ const checkAndDisplayDebt = (item) => {
             } else {
                 // Nome É obrigatório
                 nameInput.required = true;
-                nameLabelAsterisk.classList.remove('hidden');
+                // REMOVEMOS a linha: nameLabelAsterisk.classList.remove('hidden');
 
                 // Endereço NÃO é obrigatório
                 enderecoInput.required = false;
                 enderecoLabelAsterisk.classList.add('hidden');
                 enderecoOptionalText.classList.remove('hidden'); // Mostra "(Opcional)"
             }
+             console.log(`toggleRequiredFields (${modalPrefix}): é Imóvel=${isImovel}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
         } catch (error) {
             console.error("Erro inesperado em toggleRequiredFields:", error);
         }
