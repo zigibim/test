@@ -1226,142 +1226,160 @@
         };
 
         const renderRentals = (rentedItemsToRender) => {
-    const sortedRentalsList = document.getElementById('sorted-rentals-list');
-    sortedRentalsList.innerHTML = '';
+            const sortedRentalsList = document.getElementById('sorted-rentals-list');
+            sortedRentalsList.innerHTML = '';
 
-    const rentedItems = rentedItemsToRender.filter(item => item.rentedTo);
+            // --- INÍCIO DA MODIFICAÇÃO ---
+            // 1. Criamos o Set com todos os IDs de itens gerenciados por gestores
+            const allManagedItemIds = new Set();
+            managers.forEach(m => {
+                m.assignedItemIds.forEach(id => allManagedItemIds.add(id));
+            });
+            // --- FIM DA MODIFICAÇÃO ---
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+            const rentedItems = rentedItemsToRender.filter(item => item.rentedTo);
 
-    // Lógica para calcular os ciclos de pagamento em atraso de meses anteriores
-    const calculateOverdueCycles = (item) => {
-        if (item.paymentFrequency !== 'monthly') return 0;
-        const overdueMonths = [];
-        const startDate = new Date(item.rentStartDate + 'T00:00:00');
-        const endDate = new Date(item.rentEndDate + 'T00:00:00');
-        let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-        while (checkDate < new Date(today.getFullYear(), today.getMonth(), 1) && checkDate <= endDate) {
-            const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
-            if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
-                const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
-                if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
-                    overdueMonths.push(periodString);
+            // Lógica para calcular os ciclos de pagamento em atraso de meses anteriores
+            const calculateOverdueCycles = (item) => {
+                if (item.paymentFrequency !== 'monthly') return 0;
+                const overdueMonths = [];
+                const startDate = new Date(item.rentStartDate + 'T00:00:00');
+                const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                let checkDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+                while (checkDate < new Date(today.getFullYear(), today.getMonth(), 1) && checkDate <= endDate) {
+                    const paymentDueDateInLoop = new Date(checkDate.getFullYear(), checkDate.getMonth(), item.paymentDay);
+                    if (paymentDueDateInLoop <= today && paymentDueDateInLoop > startDate) {
+                        const periodString = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}`;
+                        if (!item.paymentsMade || !item.paymentsMade.includes(periodString)) {
+                            overdueMonths.push(periodString);
+                        }
+                    }
+                    checkDate.setMonth(checkDate.getMonth() + 1);
                 }
+                return overdueMonths.length;
+            };
+
+            // Atribui uma pontuação de prioridade para cada item
+            rentedItems.forEach(item => {
+                const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                const overdueCycles = calculateOverdueCycles(item);
+                item.overdueCycles = overdueCycles; 
+
+                const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
+                const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+
+                if (today > endDate && !item.renewalPending) item.sortPriority = 1; // 1. Contrato Vencido (Máxima prioridade)
+                else if (overdueCycles > 0) item.sortPriority = 2; // 2. Atraso de meses anteriores
+                else if (today >= paymentDueDateThisMonth && !isPaidThisMonth) item.sortPriority = 3; // 3. Pagamento do mês atual VENCIDO
+                else if (item.debt && item.debt.amount > 0) item.sortPriority = 4; // 4. Dívida pendente (de pagamentos parciais)
+                else if (item.renewalPending) item.sortPriority = 5; // 5. Renovação marcada como pendente
+                else if (!isPaidThisMonth) item.sortPriority = 6; // 6. Pagamento do mês atual AINDA NÃO VENCEU
+                else item.sortPriority = 7; // 7. Tudo em dia, pago (Mínima prioridade)
+            });
+
+            // Ordena a lista: primeiro pela prioridade, depois pelo dia de pagamento
+            rentedItems.sort((a, b) => {
+                if (a.sortPriority !== b.sortPriority) {
+                    return a.sortPriority - b.sortPriority;
+                }
+                return a.paymentDay - b.paymentDay;
+            });
+
+            if (rentedItems.length === 0) {
+                sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
+                return;
             }
-            checkDate.setMonth(checkDate.getMonth() + 1);
-        }
-        return overdueMonths.length;
-    };
 
-    // Atribui uma pontuação de prioridade para cada item
-    rentedItems.forEach(item => {
-        const endDate = new Date(item.rentEndDate + 'T00:00:00');
-        const overdueCycles = calculateOverdueCycles(item);
-        item.overdueCycles = overdueCycles; 
+            rentedItems.forEach(item => {
+                const endDate = new Date(item.rentEndDate + 'T00:00:00');
+                const isContractOverdue = today > endDate;
+                const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
 
-        const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
-        const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
+                let borderColor = 'border-gray-600'; // Cor padrão
+                if (item.sortPriority === 1 || item.sortPriority === 2 || item.sortPriority === 4) {
+                    borderColor = 'border-red-500';
+                } 
+                else if (item.sortPriority === 3 || item.sortPriority === 6) {
+                    borderColor = 'border-yellow-500';
+                } 
+                else if (item.sortPriority === 5) {
+                    borderColor = 'border-pink-500';
+                } else if (item.sortPriority === 7) {
+                    borderColor = 'border-green-500';
+                }
 
-        if (today > endDate && !item.renewalPending) item.sortPriority = 1; // 1. Contrato Vencido (Máxima prioridade)
-        else if (overdueCycles > 0) item.sortPriority = 2; // 2. Atraso de meses anteriores
-        else if (today >= paymentDueDateThisMonth && !isPaidThisMonth) item.sortPriority = 3; // 3. Pagamento do mês atual VENCIDO
-        else if (item.debt && item.debt.amount > 0) item.sortPriority = 4; // 4. Dívida pendente (de pagamentos parciais)
-        else if (item.renewalPending) item.sortPriority = 5; // 5. Renovação marcada como pendente
-        else if (!isPaidThisMonth) item.sortPriority = 6; // 6. Pagamento do mês atual AINDA NÃO VENCEU
-        else item.sortPriority = 7; // 7. Tudo em dia, pago (Mínima prioridade)
-    });
+                let paymentStatusHTML = '';
+                if (isPaidThisMonth && item.overdueCycles === 0 && (!item.debt || item.debt.amount === 0)) {
+                    const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
+                    paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
+                }
 
-    // Ordena a lista: primeiro pela prioridade, depois pelo dia de pagamento
-    rentedItems.sort((a, b) => {
-        if (a.sortPriority !== b.sortPriority) {
-            return a.sortPriority - b.sortPriority;
-        }
-        return a.paymentDay - b.paymentDay;
-    });
+                // LÓGICA ADICIONADA PARA EXIBIR O STATUS DO IPTU E VALOR DA PARCELA
+                let iptuStatusHTML_rentals = '';
+                const currentYear = new Date().getFullYear();
+                if (item.iptu && item.iptu[currentYear]) {
+                    const iptuData = item.iptu[currentYear];
+                    // Calcula o valor da parcela apenas se houver parcelas
+                    const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
 
-    if (rentedItems.length === 0) {
-        sortedRentalsList.innerHTML = `<p class="text-gray-400">Nenhum aluguel ativo no momento.</p>`;
-        return;
-    }
+                    if (iptuData.paidInstallments < iptuData.installments) {
+                        // Adiciona o valor formatado da parcela ao texto
+                        iptuStatusHTML_rentals = `<p class="text-xs text-blue-400 font-semibold text-right">IPTU: ${iptuData.paidInstallments}/${iptuData.installments} - ${formatCurrency(installmentValue)}</p>`;
+                    } else {
+                        // Opcional: Mostrar que está pago (se desejar)
+                        // iptuStatusHTML_rentals = `<p class="text-xs text-green-400 font-semibold text-right">IPTU ${currentYear}: Pago</p>`;
+                    }
+                }
 
-    rentedItems.forEach(item => {
-        const endDate = new Date(item.rentEndDate + 'T00:00:00');
-        const isContractOverdue = today > endDate;
-        const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
+                // --- INÍCIO DA MODIFICAÇÃO ---
+                // 2. Verificamos se o item é gerenciado e definimos a cor
+                const isManagedByGestor = allManagedItemIds.has(item.id);
+                const cardBgClass = isManagedByGestor ? 'bg-gray-700' : 'bg-gray-800';
+                // --- FIM DA MODIFICAÇÃO ---
 
-        let borderColor = 'border-gray-600'; // Cor padrão
-        if (item.sortPriority === 1 || item.sortPriority === 2 || item.sortPriority === 4) {
-            borderColor = 'border-red-500';
-        } 
-        else if (item.sortPriority === 3 || item.sortPriority === 6) {
-            borderColor = 'border-yellow-500';
-        } 
-        else if (item.sortPriority === 5) {
-            borderColor = 'border-pink-500';
-        } else if (item.sortPriority === 7) {
-            borderColor = 'border-green-500';
-        }
 
-        let paymentStatusHTML = '';
-        if (isPaidThisMonth && item.overdueCycles === 0 && (!item.debt || item.debt.amount === 0)) {
-            const currentMonthName = today.toLocaleString('pt-BR', { month: 'long' });
-            paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
-        }
-
-        // LÓGICA ADICIONADA PARA EXIBIR O STATUS DO IPTU E VALOR DA PARCELA
-        let iptuStatusHTML_rentals = '';
-        const currentYear = new Date().getFullYear();
-        if (item.iptu && item.iptu[currentYear]) {
-            const iptuData = item.iptu[currentYear];
-            // Calcula o valor da parcela apenas se houver parcelas
-            const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
-
-            if (iptuData.paidInstallments < iptuData.installments) {
-                // Adiciona o valor formatado da parcela ao texto
-                iptuStatusHTML_rentals = `<p class="text-xs text-blue-400 font-semibold text-right">IPTU: ${iptuData.paidInstallments}/${iptuData.installments} - ${formatCurrency(installmentValue)}</p>`;
-            } else {
-                 // Opcional: Mostrar que está pago (se desejar)
-                 // iptuStatusHTML_rentals = `<p class="text-xs text-green-400 font-semibold text-right">IPTU ${currentYear}: Pago</p>`;
-            }
-        }
-
-        const card = `
-            <div class="bg-gray-800 p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
-                <div class="flex-grow">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-bold text-lg">${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}</h3>
-                            <p class="text-sm text-gray-400">${item.category}</p>
+                // --- INÍCIO DA MODIFICAÇÃO ---
+                // 3. Aplicamos a classe de cor (cardBgClass) no HTML do card
+                const card = `
+                    <div class="${cardBgClass} p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
+                // --- FIM DA MODIFICAÇÃO ---
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg">${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}</h3>
+                                    <p class="text-sm text-gray-400">${item.category}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-semibold block">${formatCurrency(item.rentValue)}</span>
+                                    ${iptuStatusHTML_rentals}
+                                    ${item.debt && item.debt.amount > 0 ? `<button data-id="${item.id}" class="manage-debt-btn text-xs text-red-400 font-semibold text-right w-full hover:bg-red-900/50 rounded-md px-1 py-0.5">Dívida: ${item.debt.cycles}ª - ${formatCurrency(item.debt.amount)}</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="mt-3 text-sm space-y-1">
+                                <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
+                                <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
+                                <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
+                                ${item.overdueCycles > 0 ? `<p class="text-red-400"><strong class="font-semibold">Atrasado:</strong> ${item.overdueCycles} ciclo(s)</p>` : ''}
+                                ${paymentStatusHTML}
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <span class="text-lg font-semibold block">${formatCurrency(item.rentValue)}</span>
-                            ${iptuStatusHTML_rentals}
-                            ${item.debt && item.debt.amount > 0 ? `<button data-id="${item.id}" class="manage-debt-btn text-xs text-red-400 font-semibold text-right w-full hover:bg-red-900/50 rounded-md px-1 py-0.5">Dívida: ${item.debt.cycles}ª - ${formatCurrency(item.debt.amount)}</button>` : ''}
+                        <div class="mt-4 flex justify-end items-center space-x-2">
+                            <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita"><i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita</button>
+                            <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel"><i data-lucide="clipboard-edit" class="h-5 w-5"></i></button>
+                            <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
                         </div>
                     </div>
-                    <div class="mt-3 text-sm space-y-1">
-                        <p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p>
-                        <p><strong class="text-gray-300">Dia do Pagamento:</strong> ${item.paymentDay}</p>
-                        <p><strong class="text-gray-300">Término Contrato:</strong> <span class="${isContractOverdue && !item.renewalPending ? 'text-red-400 font-bold' : ''}">${formatDate(item.rentEndDate)}</span></p>
-                        ${item.overdueCycles > 0 ? `<p class="text-red-400"><strong class="font-semibold">Atrasado:</strong> ${item.overdueCycles} ciclo(s)</p>` : ''}
-                        ${paymentStatusHTML}
-                    </div>
-                </div>
-                <div class="mt-4 flex justify-end items-center space-x-2">
-                    <button data-id="${item.id}" class="add-revenue-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Adicionar Receita"><i data-lucide="dollar-sign" class="h-4 w-4 mr-1"></i>Receita</button>
-                    <button data-id="${item.id}" class="edit-rent-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Aluguel"><i data-lucide="clipboard-edit" class="h-5 w-5"></i></button>
-                    <button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Finalizar Aluguel"><i data-lucide="trash-2" class="h-5 w-5"></i></button>
-                </div>
-            </div>
-        `;
-        sortedRentalsList.innerHTML += card;
-    });
+                `;
+                sortedRentalsList.innerHTML += card;
+            });
 
-    lucide.createIcons();
-};
+            lucide.createIcons();
+        };
    
 
 
