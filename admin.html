@@ -1990,30 +1990,49 @@ const checkAndDisplayDebt = (item) => {
         };
 
         const toggleRequiredFields = (modalPrefix, isImovel) => {
-            const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-            const nameLabelAsterisk = nameInput.previousElementSibling.querySelector('span.text-red-500'); 
-            const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
-            const enderecoLabelAsterisk = enderecoInput.previousElementSibling.querySelector('span.text-red-500');
-            const enderecoOptionalText = enderecoInput.previousElementSibling.querySelector(`span.${modalPrefix}-endereco-optional`); // Seleciona o span (Opcional)
+            try { // Adiciona um try...catch para ajudar a identificar erros
+                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+                // Seleciona o label pelo atributo 'for' e depois encontra o span do asterisco
+                const nameLabel = document.querySelector(`label[for="${nameInput.id}"]`);
+                const nameLabelAsterisk = nameLabel ? nameLabel.querySelector('span.text-red-500') : null;
 
-            if (isImovel) {
-                // Nome NÃO é obrigatório
-                nameInput.required = false;
-                if (nameLabelAsterisk) nameLabelAsterisk.classList.add('hidden'); 
+                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+                // Seleciona o label pelo atributo 'for' e depois encontra os spans
+                const enderecoLabel = document.querySelector(`label[for="${enderecoInput.id}"]`);
+                const enderecoLabelAsterisk = enderecoLabel ? enderecoLabel.querySelector('span.text-red-500') : null;
+                // Corrige o nome da classe para buscar o span "(Opcional)"
+                const optionalSpanClass = modalPrefix === 'item' ? 'item-endereco-optional' : 'editItem-endereco-optional';
+                const enderecoOptionalText = enderecoLabel ? enderecoLabel.querySelector(`span.${optionalSpanClass}`) : null;
 
-                // Endereço É obrigatório
-                enderecoInput.required = true;
-                if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.remove('hidden'); 
-                if (enderecoOptionalText) enderecoOptionalText.classList.add('hidden'); // Esconde "(Opcional)"
-            } else {
-                // Nome É obrigatório
-                nameInput.required = true;
-                if (nameLabelAsterisk) nameLabelAsterisk.classList.remove('hidden'); 
+                // Verifica se todos os elementos foram encontrados antes de prosseguir
+                if (!nameInput || !nameLabelAsterisk || !enderecoInput || !enderecoLabelAsterisk || !enderecoOptionalText) {
+                    console.error("Erro ao encontrar elementos no toggleRequiredFields:", { modalPrefix, isImovel, nameInput, nameLabelAsterisk, enderecoInput, enderecoLabelAsterisk, enderecoOptionalText });
+                    // Poderia adicionar um return aqui se quisesse parar a execução em caso de erro
+                }
 
-                // Endereço NÃO é obrigatório
-                enderecoInput.required = false;
-                if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.add('hidden'); 
-                if (enderecoOptionalText) enderecoOptionalText.classList.remove('hidden'); // Mostra "(Opcional)"
+                if (isImovel) {
+                    // Nome NÃO é obrigatório
+                    nameInput.required = false;
+                    if (nameLabelAsterisk) nameLabelAsterisk.classList.add('hidden');
+
+                    // Endereço É obrigatório
+                    enderecoInput.required = true;
+                    if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.remove('hidden');
+                    if (enderecoOptionalText) enderecoOptionalText.classList.add('hidden'); // Esconde "(Opcional)"
+                } else {
+                    // Nome É obrigatório
+                    nameInput.required = true;
+                    if (nameLabelAsterisk) nameLabelAsterisk.classList.remove('hidden');
+
+                    // Endereço NÃO é obrigatório
+                    enderecoInput.required = false;
+                    if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.add('hidden');
+                    if (enderecoOptionalText) enderecoOptionalText.classList.remove('hidden'); // Mostra "(Opcional)"
+                }
+            } catch (error) {
+                console.error("Erro dentro da função toggleRequiredFields:", error);
+                // Informa o usuário sobre o erro, se desejar
+                // alert("Ocorreu um erro ao ajustar os campos obrigatórios.");
             }
         };
         
