@@ -1706,8 +1706,9 @@ const renderTransactions = (transactionsToRender) => {
                 const card = `
                     <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
                         <h3 class="text-xl font-bold text-cyan-400 mb-4">${manager.name} <span class="text-base font-normal text-gray-400">- ${manager.type}</span></h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="bg-gray-700/50 p-4 rounded-lg">
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"> 
+                        <div class="bg-gray-700/50 p-4 rounded-lg">
                                 <h4 class="text-sm font-medium text-gray-400">Aluguéis Gerenciados</h4>
                                 <p class="mt-1 text-2xl font-semibold">${assignedItems.length}</p>
                             </div>
@@ -1725,7 +1726,7 @@ const renderTransactions = (transactionsToRender) => {
                             </div>
                         </div>
                     </div>
-                `;
+                `; //
                 dashboard.innerHTML += card;
             });
         };
