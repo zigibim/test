@@ -1990,45 +1990,47 @@ const checkAndDisplayDebt = (item) => {
         };
 
         const toggleRequiredFields = (modalPrefix, isImovel) => {
-            try { 
-                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-                const nameLabel = document.querySelector(`label[for="${nameInput.id}"]`);
-                const nameLabelAsterisk = nameLabel ? nameLabel.querySelector('span.text-red-500') : null;
+    console.log(`toggleRequiredFields chamada com prefixo: ${modalPrefix}, é Imóvel: ${isImovel}`); // Log para depuração
 
-                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
-                const enderecoLabel = document.querySelector(`label[for="${enderecoInput.id}"]`);
-                const enderecoLabelAsterisk = enderecoLabel ? enderecoLabel.querySelector('span.text-red-500') : null;
-                const optionalSpanClass = modalPrefix === 'item' ? 'item-endereco-optional' : 'editItem-endereco-optional';
-                const enderecoOptionalText = enderecoLabel ? enderecoLabel.querySelector(`span.${optionalSpanClass}`) : null;
+    const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+    const nameLabel = document.querySelector(`label[for="${nameInput.id}"]`);
+    const nameLabelAsterisk = nameLabel ? nameLabel.querySelector('span.text-red-500') : null;
 
-                if (!nameInput || !nameLabelAsterisk || !enderecoInput || !enderecoLabelAsterisk || !enderecoOptionalText) {
-                    console.error("Erro ao encontrar elementos no toggleRequiredFields:", { modalPrefix, isImovel });
-                    return; 
-                }
+    const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+    const enderecoLabel = document.querySelector(`label[for="${enderecoInput.id}"]`);
+    const enderecoLabelAsterisk = enderecoLabel ? enderecoLabel.querySelector('span.text-red-500') : null;
+    const optionalSpanClass = modalPrefix === 'item' ? 'item-endereco-optional' : 'editItem-endereco-optional';
+    const enderecoOptionalText = enderecoLabel ? enderecoLabel.querySelector(`span.${optionalSpanClass}`) : null;
 
-                if (isImovel) {
-                    // Nome NÃO é obrigatório
-                    nameInput.required = false;
-                    if (nameLabelAsterisk) nameLabelAsterisk.classList.add('hidden'); 
-                    
-                    // Endereço É obrigatório
-                    enderecoInput.required = true;
-                    if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.remove('hidden'); 
-                    if (enderecoOptionalText) enderecoOptionalText.classList.add('hidden'); // Esconde "(Opcional)"
-                } else {
-                    // Nome É obrigatório
-                    nameInput.required = true;
-                    if (nameLabelAsterisk) nameLabelAsterisk.classList.remove('hidden'); 
-                    
-                    // Endereço NÃO é obrigatório
-                    enderecoInput.required = false;
-                    if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.add('hidden'); 
-                    if (enderecoOptionalText) enderecoOptionalText.classList.remove('hidden'); // Mostra "(Opcional)"
-                }
-            } catch (error) {
-                console.error("Erro dentro da função toggleRequiredFields:", error);
-            }
-        };
+    // Verifica se os elementos foram encontrados
+    if (!nameInput || !nameLabelAsterisk || !enderecoInput || !enderecoLabelAsterisk || !enderecoOptionalText) {
+        console.error("Erro: Elementos não encontrados em toggleRequiredFields.", { modalPrefix, nameInput, nameLabelAsterisk, enderecoInput, enderecoLabelAsterisk, enderecoOptionalText });
+        return;
+    }
+
+    if (isImovel) {
+        console.log("Configurando para Imóvel: Endereço obrigatório, Nome opcional.");
+        // Nome NÃO é obrigatório
+        nameInput.required = false;
+        nameLabelAsterisk.classList.add('hidden');
+
+        // Endereço É obrigatório
+        enderecoInput.required = true;
+        enderecoLabelAsterisk.classList.remove('hidden');
+        enderecoOptionalText.classList.add('hidden'); // Esconde "(Opcional)"
+    } else {
+        console.log("Configurando para NÃO Imóvel: Nome obrigatório, Endereço opcional.");
+        // Nome É obrigatório
+        nameInput.required = true;
+        nameLabelAsterisk.classList.remove('hidden');
+
+        // Endereço NÃO é obrigatório
+        enderecoInput.required = false;
+        enderecoLabelAsterisk.classList.add('hidden');
+        enderecoOptionalText.classList.remove('hidden'); // Mostra "(Opcional)"
+    }
+    console.log("Estado final dos campos:", { nameRequired: nameInput.required, enderecoRequired: enderecoInput.required }); // Log final
+};
         
         const finalizeRental = (itemId) => {
             const item = items.find(i => i.id === itemId);
