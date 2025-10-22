@@ -796,9 +796,18 @@
             </div>
         </div>
 
+        <div class="border-t border-gray-700 pt-6">
+            <h3 class="text-xl font-semibold mb-4">Proteção de Itens</h3>
+            <div class="flex items-center justify-between">
+                <span class="text-gray-300">Ativar aviso ao editar itens gerenciados?</span>
+                <label for="managedItemWarningToggle" class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" id="managedItemWarningToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                </label>
+            </div>
+        </div>
         
-        <div class="border-t border-gray-700 pt-6"> 
-             
+        <div class="border-t border-gray-700 pt-6">      
             <h3 class="text-xl font-semibold mb-4">Imóveis</h3>
             <div class="flex items-center justify-between">
                 <span class="text-gray-300">Exibir botão de gerenciamento de IPTU nos itens?</span>
@@ -1035,6 +1044,13 @@
         checkAlerts(); // Re-checa os alertas para atualizar o badge (se habilitado)
     });
 
+    const managedItemWarningToggle = document.getElementById('managedItemWarningToggle');
+
+        managedItemWarningToggle.addEventListener('change', (e) => {
+            settings.managedItemWarningEnabled = e.target.checked;
+            saveData();
+        });
+
     iptuButtonToggle.addEventListener('change', (e) => {
         settings.iptuButtonEnabled = e.target.checked;
         saveData(); // Salva a nova configuração
@@ -1057,9 +1073,12 @@
                 settings.notificationsEnabled = false;
             }
 
-            // --- ADICIONADO: Garante que a chave 'iptuButtonEnabled' exista, default para true ---
             if (settings.iptuButtonEnabled === undefined) {
                 settings.iptuButtonEnabled = true;
+            }
+
+            if (settings.managedItemWarningEnabled === undefined) {
+                settings.managedItemWarningEnabled = true; 
             }
 
             const storedManagers = localStorage.getItem('rentalManagerManagers');
@@ -1094,6 +1113,7 @@
             updateNotificationVisibility();
             document.getElementById('notificationsToggle').checked = settings.notificationsEnabled;
             document.getElementById('iptuButtonToggle').checked = settings.iptuButtonEnabled;
+            document.getElementById('managedItemWarningToggle').checked = settings.managedItemWarningEnabled;
             renderDashboard(items, transactions);
             renderTransactions(transactions);
             checkAlerts();
@@ -2181,10 +2201,11 @@ const checkAndDisplayDebt = (item) => {
                     }
                 };
                 
-                if (isItemManagedByGestor(itemId)) { // Verifica se é gerenciado
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verifica se é gerenciado E se a configuração está LIGADA
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Alterar o IPTU pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
-                    action(); // Executa direto se não for
+                    action(); // Executa direto
                 }
             }
             
@@ -2203,7 +2224,8 @@ const checkAndDisplayDebt = (item) => {
                     }
                 };
 
-                if (isItemManagedByGestor(itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verificação
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Gerenciar a dívida pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action(); // Executa direto
@@ -2354,7 +2376,8 @@ const checkAndDisplayDebt = (item) => {
                     showModal('rentItemModal');
                 };
 
-                if (isItemManagedByGestor(itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verificação
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Alugar este item pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action();
@@ -2421,7 +2444,8 @@ const checkAndDisplayDebt = (item) => {
                     showModal('addTransactionModal');
                 };
 
-                if (isItemManagedByGestor(itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verificação
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Adicionar receita pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action();
@@ -2468,7 +2492,8 @@ const checkAndDisplayDebt = (item) => {
                     }
                 };
 
-                if (isItemManagedByGestor(itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verificação
                      showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Pagar o IPTU pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action();
@@ -2488,7 +2513,8 @@ const checkAndDisplayDebt = (item) => {
                     showModal('rentItemModal');
                 };
 
-                if (isItemManagedByGestor(itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verificação
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Editar o aluguel pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action();
@@ -2500,8 +2526,8 @@ const checkAndDisplayDebt = (item) => {
                 const itemId = parseInt(deleteButton.dataset.id);
                 const item = items.find(i => i.id === itemId);
 
-                // --- MODIFICAÇÃO: Adiciona aviso ao modal existente ---
-                const isManaged = isItemManagedByGestor(itemId);
+                // --- MODIFICADO AQUI ---
+                const isManaged = settings.managedItemWarningEnabled && isItemManagedByGestor(itemId);
                 const warningTitle = isManaged ? " (Item Gerenciado)" : "";
                 const warningMsg = isManaged ? " Esta ação também pode afetar o painel do gestor." : "";
                 // --- FIM DA MODIFICAÇÃO ---
@@ -2573,7 +2599,8 @@ const checkAndDisplayDebt = (item) => {
                     showModal('editItemModal');
                 };
 
-                if (isItemManagedByGestor(itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verificação
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado por um gestor. Editar os dados do item pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action();
@@ -2593,7 +2620,8 @@ const checkAndDisplayDebt = (item) => {
                     showModal('editTransactionModal');
                 };
 
-                if (transaction.itemId && isItemManagedByGestor(transaction.itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && transaction.itemId && isItemManagedByGestor(transaction.itemId)) { // Verificação
                     showConfirmModal('Item Gerenciado', 'Esta transação é de um item gerenciado. Alterá-la pode afetar o balanço do gestor. Deseja continuar?', action);
                 } else {
                     action();
@@ -2606,8 +2634,8 @@ const checkAndDisplayDebt = (item) => {
                 const transaction = transactions.find(t => t.id === transactionId);
                 if (!transaction) return;
 
-                // --- MODIFICAÇÃO: Adiciona aviso ao modal existente ---
-                const isManaged = transaction.itemId && isItemManagedByGestor(transaction.itemId);
+                // --- MODIFICADO AQUI ---
+                const isManaged = settings.managedItemWarningEnabled && transaction.itemId && isItemManagedByGestor(transaction.itemId);
                 const warningTitle = isManaged ? " (Item Gerenciado)" : "";
                 const warningMsg = isManaged ? " Esta ação também pode afetar o balanço do gestor." : "";
                 // --- FIM DA MODIFICAÇÃO ---
@@ -2710,7 +2738,8 @@ const checkAndDisplayDebt = (item) => {
                 };
 
                 // Verificação (alertas SÓ aparecem para itens alugados, que podem ser gerenciados)
-                if (isItemManagedByGestor(itemId)) { 
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { 
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado. Resolver este alerta pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action();
@@ -2729,7 +2758,8 @@ const checkAndDisplayDebt = (item) => {
                     showModal('contractEndModal');
                 };
                 
-                if (isItemManagedByGestor(itemId)) { // Verificação
+                // --- MODIFICADO AQUI ---
+                if (settings.managedItemWarningEnabled && isItemManagedByGestor(itemId)) { // Verificação
                     showConfirmModal('Item Gerenciado', 'Este item é gerenciado. Resolver este alerta de contrato pode afetar o painel do gestor. Deseja continuar?', action);
                 } else {
                     action();
