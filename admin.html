@@ -1990,30 +1990,20 @@ const checkAndDisplayDebt = (item) => {
         };
 
         const toggleRequiredFields = (modalPrefix, isImovel) => {
-        try {
-            const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-            const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+        const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+        const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
 
-            // Verifica se os inputs foram encontrados
-            if (!nameInput || !enderecoInput) {
-                console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!", { modalPrefix });
-                return;
-            }
-
-            if (isImovel) {
-                // É Imóvel: Endereço obrigatório, Nome opcional
-                nameInput.required = false;
-                enderecoInput.required = true;
-                console.log(`toggleRequiredFields (${modalPrefix}): Definido para Imóvel (Endereço obrigatório)`); // Log
-            } else {
-                // NÃO é Imóvel: Nome obrigatório, Endereço opcional
-                nameInput.required = true;
-                enderecoInput.required = false;
-                 console.log(`toggleRequiredFields (${modalPrefix}): Definido para NÃO Imóvel (Nome obrigatório)`); // Log
-            }
-        } catch (error) {
-            console.error("Erro inesperado em toggleRequiredFields:", error);
+        if (!nameInput || !enderecoInput) {
+            console.error("ERRO GRAVE: Inputs de nome ou endereço não encontrados para o prefixo:", modalPrefix);
+            return;
         }
+
+        // Define a obrigatoriedade com base em 'isImovel'
+        nameInput.required = !isImovel;     // Nome é obrigatório SE NÃO for Imóvel
+        enderecoInput.required = isImovel; // Endereço é obrigatório SE FOR Imóvel
+
+        // Log para confirmar a alteração
+        console.log(`toggleRequiredFields (${modalPrefix}): é Imóvel=${isImovel}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
     };
         
         const finalizeRental = (itemId) => {
