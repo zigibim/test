@@ -1150,13 +1150,10 @@
             availableList.innerHTML = '';
             rentedList.innerHTML = '';
 
-            // --- INÍCIO DA MODIFICAÇÃO ---
-            // 1. Criamos um Set com todos IDs de itens que estão sendo gerenciados por gestores
             const allManagedItemIds = new Set();
             managers.forEach(m => {
                 m.assignedItemIds.forEach(id => allManagedItemIds.add(id));
             });
-            
 
 
             if (itemsToRender.length === 0) {
@@ -1167,13 +1164,11 @@
 
             itemsToRender.forEach(item => {
 
-                // --- INÍCIO DA MODIFICAÇÃO ---
-                // 2. Verificamos se o item atual está no Set e definimos a cor do card
+                // --- MODIFICAÇÃO DA COR ---
                 const isManagedByGestor = allManagedItemIds.has(item.id);
-                // (Se for gerenciado: bg-gray-700. Se for particular: bg-gray-800)
-                const cardBgClass = isManagedByGestor ? 'bg-gray-700' : 'bg-gray-800'; 
-                
-
+                // (Se for gerenciado: bg-slate-900. Se for particular: bg-gray-800)
+                const cardBgClass = isManagedByGestor ? 'bg-slate-900' : 'bg-gray-800'; 
+                // --- FIM DA MODIFICAÇÃO ---
 
                 let iptuStatusHTML = '';
                 if (item.iptu && item.iptu[currentYear]) {
@@ -1190,14 +1185,10 @@
 
                 if (item.rentedTo) {
                     
-                    // --- INÍCIO DA MODIFICAÇÃO ---
-                    // 3. Aplicamos a classe de cor no card de item ALUGADO
                     const card = `<div class="${cardBgClass} p-4 rounded-lg border-l-4 border-yellow-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.rentValue)}</span></div><div class="mt-3 text-sm space-y-1"><p><strong class="text-gray-300">Inquilino:</strong> ${item.rentedTo}</p><p><strong class="text-gray-300">Término Contrato:</strong> <span>${formatDate(item.rentEndDate)}</span></p></div></div>${actionButtons}</div>`;
                     
-
                     rentedList.innerHTML += card;
                 } else {
-                    // --- INÍCIO (Código original para payIptuButton) ---
                     let payIptuButton = ''; 
                     const currentYear = new Date().getFullYear();
                     if (settings.iptuButtonEnabled &&
@@ -1211,13 +1202,9 @@
                     }
                     const iptuButton = settings.iptuButtonEnabled && item.category === 'Imóvel' ? `<button data-id="${item.id}" class="iptu-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md flex items-center text-xs" title="Gerenciar/Registrar IPTU"><i data-lucide="landmark" class="h-4 w-4 mr-1"></i>IPTU</button>` : '';
                     const actionButtons = `<div class="mt-4 flex justify-end items-center gap-2">${iptuButton}${payIptuButton}<button data-id="${item.id}" class="edit-item-btn text-gray-400 hover:text-cyan-400 transition-colors p-2 rounded-full" title="Editar Item"><i data-lucide="file-signature" class="h-5 w-5"></i></button><button data-id="${item.id}" class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full" title="Excluir Item"><i data-lucide="trash-2" class="h-5 w-5"></i></button><button data-id="${item.id}" class="rent-btn bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-3 rounded-md flex items-center text-sm"><i data-lucide="key-round" class="mr-2 h-4 w-4"></i>Alugar</button></div>`;
-                    // --- FIM (Código original para payIptuButton) ---
 
-                    // --- INÍCIO DA MODIFICAÇÃO ---
-                    // 4. Aplicamos a classe de cor no card de item DISPONÍVEL
                     const card = `<div class="${cardBgClass} p-4 rounded-lg border-l-4 border-green-500 flex flex-col h-full"><div class="flex-grow"><div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${(item.category === 'Imóvel' && item.endereco) ? item.endereco : item.name}</h3><p class="text-sm text-gray-400">${item.category}</p>${iptuStatusHTML}</div><span class="text-lg font-semibold">${formatCurrency(item.value)}</span></div>${item.description ? `<p class="text-sm text-gray-300 mt-2">${item.description}</p>` : ''}</div>${actionButtons}</div>`;
                     
-
                     availableList.innerHTML += card;
                 }
             });
@@ -1229,20 +1216,16 @@
             const sortedRentalsList = document.getElementById('sorted-rentals-list');
             sortedRentalsList.innerHTML = '';
 
-            // --- INÍCIO DA MODIFICAÇÃO ---
-            // 1. Criamos o Set com todos os IDs de itens gerenciados por gestores
             const allManagedItemIds = new Set();
             managers.forEach(m => {
                 m.assignedItemIds.forEach(id => allManagedItemIds.add(id));
             });
-            
 
             const rentedItems = rentedItemsToRender.filter(item => item.rentedTo);
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Lógica para calcular os ciclos de pagamento em atraso de meses anteriores
             const calculateOverdueCycles = (item) => {
                 if (item.paymentFrequency !== 'monthly') return 0;
                 const overdueMonths = [];
@@ -1263,7 +1246,6 @@
                 return overdueMonths.length;
             };
 
-            // Atribui uma pontuação de prioridade para cada item
             rentedItems.forEach(item => {
                 const endDate = new Date(item.rentEndDate + 'T00:00:00');
                 const overdueCycles = calculateOverdueCycles(item);
@@ -1273,16 +1255,15 @@
                 const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(currentMonthYear);
                 const paymentDueDateThisMonth = new Date(today.getFullYear(), today.getMonth(), item.paymentDay);
 
-                if (today > endDate && !item.renewalPending) item.sortPriority = 1; // 1. Contrato Vencido (Máxima prioridade)
-                else if (overdueCycles > 0) item.sortPriority = 2; // 2. Atraso de meses anteriores
-                else if (today >= paymentDueDateThisMonth && !isPaidThisMonth) item.sortPriority = 3; // 3. Pagamento do mês atual VENCIDO
-                else if (item.debt && item.debt.amount > 0) item.sortPriority = 4; // 4. Dívida pendente (de pagamentos parciais)
-                else if (item.renewalPending) item.sortPriority = 5; // 5. Renovação marcada como pendente
-                else if (!isPaidThisMonth) item.sortPriority = 6; // 6. Pagamento do mês atual AINDA NÃO VENCEU
-                else item.sortPriority = 7; // 7. Tudo em dia, pago (Mínima prioridade)
+                if (today > endDate && !item.renewalPending) item.sortPriority = 1; 
+                else if (overdueCycles > 0) item.sortPriority = 2; 
+                else if (today >= paymentDueDateThisMonth && !isPaidThisMonth) item.sortPriority = 3; 
+                else if (item.debt && item.debt.amount > 0) item.sortPriority = 4; 
+                else if (item.renewalPending) item.sortPriority = 5; 
+                else if (!isPaidThisMonth) item.sortPriority = 6; 
+                else item.sortPriority = 7; 
             });
 
-            // Ordena a lista: primeiro pela prioridade, depois pelo dia de pagamento
             rentedItems.sort((a, b) => {
                 if (a.sortPriority !== b.sortPriority) {
                     return a.sortPriority - b.sortPriority;
@@ -1300,7 +1281,7 @@
                 const isContractOverdue = today > endDate;
                 const isPaidThisMonth = item.paymentsMade && item.paymentsMade.includes(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
 
-                let borderColor = 'border-gray-600'; // Cor padrão
+                let borderColor = 'border-gray-600'; 
                 if (item.sortPriority === 1 || item.sortPriority === 2 || item.sortPriority === 4) {
                     borderColor = 'border-red-500';
                 } 
@@ -1319,35 +1300,24 @@
                     paymentStatusHTML = `<p><strong class="text-gray-300">Situação:</strong> <span class="text-xs font-medium bg-green-900 text-green-300 px-2 py-1 rounded-full">Pagamento de ${currentMonthName} OK</span></p>`;
                 }
 
-                // LÓGICA ADICIONADA PARA EXIBIR O STATUS DO IPTU E VALOR DA PARCELA
                 let iptuStatusHTML_rentals = '';
                 const currentYear = new Date().getFullYear();
                 if (item.iptu && item.iptu[currentYear]) {
                     const iptuData = item.iptu[currentYear];
-                    // Calcula o valor da parcela apenas se houver parcelas
                     const installmentValue = iptuData.installments > 0 ? (iptuData.totalValue / iptuData.installments) : 0;
 
                     if (iptuData.paidInstallments < iptuData.installments) {
-                        // Adiciona o valor formatado da parcela ao texto
                         iptuStatusHTML_rentals = `<p class="text-xs text-blue-400 font-semibold text-right">IPTU: ${iptuData.paidInstallments}/${iptuData.installments} - ${formatCurrency(installmentValue)}</p>`;
-                    } else {
-                        // Opcional: Mostrar que está pago (se desejar)
-                        // iptuStatusHTML_rentals = `<p class="text-xs text-green-400 font-semibold text-right">IPTU ${currentYear}: Pago</p>`;
-                    }
+                    } 
                 }
 
-                // --- INÍCIO DA MODIFICAÇÃO ---
-                // 2. Verificamos se o item é gerenciado e definimos a cor
+                // --- MODIFICAÇÃO DA COR ---
                 const isManagedByGestor = allManagedItemIds.has(item.id);
-                const cardBgClass = isManagedByGestor ? 'bg-gray-700' : 'bg-gray-800';
-                
+                const cardBgClass = isManagedByGestor ? 'bg-slate-900' : 'bg-gray-800';
+                // --- FIM DA MODIFICAÇÃO ---
 
-
-                // --- INÍCIO DA MODIFICAÇÃO ---
-                // 3. Aplicamos a classe de cor (cardBgClass) no HTML do card
                 const card = `
                     <div class="${cardBgClass} p-4 rounded-lg border-l-4 ${borderColor} flex flex-col h-full">
-                
                         <div class="flex-grow">
                             <div class="flex justify-between items-start">
                                 <div>
