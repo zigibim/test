@@ -364,7 +364,7 @@
                     </div>
                     <div id="imovelFieldsWrapper" class="hidden space-y-4 border-t border-gray-700 pt-4 mt-4">
                         <div>
-                            <label for="itemEndereco" class="block mb-1 font-medium">Endereço <span class="text-gray-400 font-normal item-endereco-optional">(Opcional)</span> <span class="text-red-500 hidden">*</span></label>
+                            <label for="itemEndereco" class="block mb-1 font-medium">Endereço <span class="text-red-500 hidden">*</span></label>
                             <input type="text" id="itemEndereco" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2" required>
                         </div>
                         <div>
@@ -1990,51 +1990,42 @@ const checkAndDisplayDebt = (item) => {
         };
 
         const toggleRequiredFields = (modalPrefix, isImovel) => {
-            try { // Adiciona um try...catch para ajudar a identificar erros
-                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-                // Seleciona o label pelo atributo 'for' e depois encontra o span do asterisco
-                const nameLabel = document.querySelector(`label[for="${nameInput.id}"]`);
-                const nameLabelAsterisk = nameLabel ? nameLabel.querySelector('span.text-red-500') : null;
+    try {
+        const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+        const nameLabel = document.querySelector(`label[for="${nameInput.id}"]`);
+        const nameLabelAsterisk = nameLabel ? nameLabel.querySelector('span.text-red-500') : null;
 
-                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
-                // Seleciona o label pelo atributo 'for' e depois encontra os spans
-                const enderecoLabel = document.querySelector(`label[for="${enderecoInput.id}"]`);
-                const enderecoLabelAsterisk = enderecoLabel ? enderecoLabel.querySelector('span.text-red-500') : null;
-                // Corrige o nome da classe para buscar o span "(Opcional)"
-                const optionalSpanClass = modalPrefix === 'item' ? 'item-endereco-optional' : 'editItem-endereco-optional';
-                const enderecoOptionalText = enderecoLabel ? enderecoLabel.querySelector(`span.${optionalSpanClass}`) : null;
+        const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+        const enderecoLabel = document.querySelector(`label[for="${enderecoInput.id}"]`);
+        const enderecoLabelAsterisk = enderecoLabel ? enderecoLabel.querySelector('span.text-red-500') : null;
 
-                // Verifica se todos os elementos foram encontrados antes de prosseguir
-                if (!nameInput || !nameLabelAsterisk || !enderecoInput || !enderecoLabelAsterisk || !enderecoOptionalText) {
-                    console.error("Erro ao encontrar elementos no toggleRequiredFields:", { modalPrefix, isImovel, nameInput, nameLabelAsterisk, enderecoInput, enderecoLabelAsterisk, enderecoOptionalText });
-                    // Poderia adicionar um return aqui se quisesse parar a execução em caso de erro
-                }
+        // Verifica se os elementos básicos foram encontrados
+        if (!nameInput || !nameLabelAsterisk || !enderecoInput || !enderecoLabelAsterisk) {
+            console.error("Erro ao encontrar elementos obrigatórios no toggleRequiredFields:", { modalPrefix, isImovel });
+            return; // Interrompe se elementos essenciais faltarem
+        }
 
-                if (isImovel) {
-                    // Nome NÃO é obrigatório
-                    nameInput.required = false;
-                    if (nameLabelAsterisk) nameLabelAsterisk.classList.add('hidden');
+        if (isImovel) {
+            // Nome NÃO é obrigatório
+            nameInput.required = false;
+            nameLabelAsterisk.classList.add('hidden');
 
-                    // Endereço É obrigatório
-                    enderecoInput.required = true;
-                    if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.remove('hidden');
-                    if (enderecoOptionalText) enderecoOptionalText.classList.add('hidden'); // Esconde "(Opcional)"
-                } else {
-                    // Nome É obrigatório
-                    nameInput.required = true;
-                    if (nameLabelAsterisk) nameLabelAsterisk.classList.remove('hidden');
+            // Endereço É obrigatório
+            enderecoInput.required = true;
+            enderecoLabelAsterisk.classList.remove('hidden');
+        } else {
+            // Nome É obrigatório
+            nameInput.required = true;
+            nameLabelAsterisk.classList.remove('hidden');
 
-                    // Endereço NÃO é obrigatório
-                    enderecoInput.required = false;
-                    if (enderecoLabelAsterisk) enderecoLabelAsterisk.classList.add('hidden');
-                    if (enderecoOptionalText) enderecoOptionalText.classList.remove('hidden'); // Mostra "(Opcional)"
-                }
-            } catch (error) {
-                console.error("Erro dentro da função toggleRequiredFields:", error);
-                // Informa o usuário sobre o erro, se desejar
-                // alert("Ocorreu um erro ao ajustar os campos obrigatórios.");
-            }
-        };
+            // Endereço NÃO é obrigatório
+            enderecoInput.required = false;
+            enderecoLabelAsterisk.classList.add('hidden');
+        }
+    } catch (error) {
+        console.error("Erro dentro da função toggleRequiredFields:", error);
+    }
+};
         
         const finalizeRental = (itemId) => {
             const item = items.find(i => i.id === itemId);
