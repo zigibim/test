@@ -3020,9 +3020,12 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                 }
             }
 
+            const itemName = document.getElementById('itemName').value;
+            const itemEndereco = (category === 'Imóvel') ? document.getElementById('itemEndereco').value : null;
+
             const newItem = {
                 id: Date.now(),
-                name: document.getElementById('itemName').value, 
+                name: (category === 'Imóvel' && !itemName) ? itemEndereco : itemName, 
                 description: document.getElementById('itemDescription').value, 
                 category: category,
                 value: parseFloat(document.getElementById('itemValue').value), 
@@ -3056,7 +3059,10 @@ document.getElementById('forgiveDebtBtn').addEventListener('click', () => {
                 if (!categorySelect.value) { alert('Por favor, selecione uma categoria.'); return; }
                 let category = categorySelect.value;
                 if (category === 'outro') category = document.getElementById('editItemCategoryOther').value || 'Outro';
-                item.name = document.getElementById('editItemName').value;
+                const itemName = document.getElementById('editItemName').value;
+                const itemEndereco = (category === 'Imóvel') ? document.getElementById('editItemEndereco').value : null;
+                
+                item.name = (category === 'Imóvel' && !itemName) ? itemEndereco : itemName;
                 item.description = document.getElementById('editItemDescription').value;
                 item.category = category;
                 item.value = parseFloat(document.getElementById('editItemValue').value);
