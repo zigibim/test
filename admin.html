@@ -2003,28 +2003,26 @@ const checkAndDisplayDebt = (item) => {
         };
 
        const toggleRequiredFields = (modalPrefix, isImovel) => {
-            try {
-                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+    try {
+        const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+        // Por agora, não vamos mexer no campo Endereço, como pediu.
 
-                if (!nameInput || !enderecoInput) {
-                    console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!");
-                    return;
-                }
+        if (!nameInput) {
+            console.error("toggleRequiredFields: Input de nome não encontrado!");
+            return;
+        }
 
-                if (isImovel) {
-                    // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
-                    nameInput.required = false;
-                    enderecoInput.required = true;
-                } else {
-                    // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
-                    nameInput.required = true;
-                    enderecoInput.required = false;
-                }
-            } catch (error) {
-                console.error("Erro inesperado em toggleRequiredFields:", error);
-            }
-        };
+        if (isImovel) {
+            // Se é Imóvel: Nome NÃO é obrigatório
+            nameInput.required = false;
+        } else {
+            // Se NÃO é Imóvel: Nome É obrigatório
+            nameInput.required = true;
+        }
+    } catch (error) {
+        console.error("Erro inesperado em toggleRequiredFields:", error);
+    }
+};
         
         const finalizeRental = (itemId) => {
             const item = items.find(i => i.id === itemId);
@@ -2869,6 +2867,7 @@ const checkAndDisplayDebt = (item) => {
         });
 
         tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+        
         document.getElementById('openAddItemModal').addEventListener('click', () => { 
     addItemForm.reset(); 
     document.getElementById('itemCategorySelect').value = ""; 
