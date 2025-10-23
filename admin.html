@@ -2004,17 +2004,19 @@ const checkAndDisplayDebt = (item) => {
 
        const toggleRequiredFields = (modalPrefix, isImovel) => {
             try {
-                // 1. Encontra os dois campos de input
-                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
+                // 1. CORREÇÃO: Encontra os IDs corretos
+                // (O prefixo já está incluído no nome, ex: "editItem" + "Name")
+                const nameInput = document.getElementById(`${modalPrefix}Name`);
+                const enderecoInput = document.getElementById(`${modalPrefix}Endereco`);
 
                 // 2. Garante que os campos existem antes de continuar
                 if (!nameInput || !enderecoInput) {
-                    console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!");
+                    // Esta mensagem de erro agora será mais clara
+                    console.error(`toggleRequiredFields: Input não encontrado! Tentou: #${modalPrefix}Name e #${modalPrefix}Endereco`);
                     return;
                 }
 
-                // 3. Aplica a sua nova regra
+                // 3. Aplica a sua regra completa
                 if (isImovel) {
                     // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
                     nameInput.required = false;
@@ -2025,8 +2027,7 @@ const checkAndDisplayDebt = (item) => {
                     enderecoInput.required = false;
                 }
                 
-                // (Mantive este log para podermos verificar na consola se a lógica está a ser aplicada)
-                console.log(`toggleRequiredFields (${modalPrefix}): é Imóvel=${isImovel}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
+                // console.log(`toggleRequiredFields (${modalPrefix}): é Imóvel=${isImovel}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
 
             } catch (error) {
                 console.error("Erro inesperado em toggleRequiredFields:", error);
