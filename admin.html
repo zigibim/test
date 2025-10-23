@@ -2002,31 +2002,36 @@ const checkAndDisplayDebt = (item) => {
             });
         };
 
-       // SUBSTITUA A FUNÇÃO DAS LINHAS 2131-2155 POR ESTA
-        const toggleRequiredFields = (modalPrefix, isImovel) => {
+       
+        const toggleRequiredFields = (modalPrefix, categoryValue) => {
             try {
-                // 1. Encontra os IDs corretos (Isto já estava correto)
                 const nameInput = document.getElementById(`${modalPrefix}Name`);
                 const enderecoInput = document.getElementById(`${modalPrefix}Endereco`);
 
-                // 2. Garante que os campos existem
                 if (!nameInput || !enderecoInput) {
                     console.error(`toggleRequiredFields: Input não encontrado! Tentou: #${modalPrefix}Name e #${modalPrefix}Endereco`);
                     return;
                 }
 
-                // 3. APLICA A LÓGICA CORRETA
-                if (isImovel) {
+                // A SUA LÓGICA DE IF-ELSE:
+                if (categoryValue === 'Imóvel') {
                     // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
                     nameInput.required = false;
                     enderecoInput.required = true;
-                } else {
+                
+                } else if (categoryValue === 'Veículo' || categoryValue === 'Equipamento' || categoryValue === 'outro') {
                     // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
+                    nameInput.required = true;
+                    enderecoInput.required = false;
+                
+                } else {
+                    // Estado padrão (ex: "" - "Selecione uma categoria...")
+                    // Deixamos o Nome obrigatório por defeito, como no HTML
                     nameInput.required = true;
                     enderecoInput.required = false;
                 }
                 
-                // console.log(`toggleRequiredFields (${modalPrefix}): é Imóvel=${isImovel}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
+                // console.log(`toggleRequiredFields (${modalPrefix}): Categoria=${categoryValue}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
 
             } catch (error) {
                 console.error("Erro inesperado em toggleRequiredFields:", error);
@@ -2703,7 +2708,7 @@ const checkAndDisplayDebt = (item) => {
                         }
                     }
                     document.getElementById('editItemIncludeInTaxReport').checked = (item.includeInTaxReport === undefined || item.includeInTaxReport === true);
-                    toggleRequiredFields('editItem', isImovel);
+                    toggleRequiredFields('editItem', e.target.value);
                     showModal('editItemModal');
                 };
 
@@ -2882,7 +2887,7 @@ const checkAndDisplayDebt = (item) => {
     document.getElementById('itemCategorySelect').value = ""; 
     document.getElementById('imovelFieldsWrapper').classList.add('hidden'); 
     document.getElementById('itemCategoryOtherWrapper').classList.add('hidden'); 
-    toggleRequiredFields('item', false); // <-- ADICIONE ESTA LINHA
+    toggleRequiredFields('item', ''); // <-- ADICIONE ESTA LINHA
     showModal('addItemModal'); 
 });
 
