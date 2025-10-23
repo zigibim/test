@@ -2002,21 +2002,20 @@ const checkAndDisplayDebt = (item) => {
             });
         };
 
-       const toggleRequiredFields = (modalPrefix, isImovel) => {
+       // SUBSTITUA A FUNÇÃO DAS LINHAS 2131-2155 POR ESTA
+        const toggleRequiredFields = (modalPrefix, isImovel) => {
             try {
-                // 1. CORREÇÃO: Encontra os IDs corretos
-                // (O prefixo já está incluído no nome, ex: "editItem" + "Name")
+                // 1. Encontra os IDs corretos (Isto já estava correto)
                 const nameInput = document.getElementById(`${modalPrefix}Name`);
                 const enderecoInput = document.getElementById(`${modalPrefix}Endereco`);
 
-                // 2. Garante que os campos existem antes de continuar
+                // 2. Garante que os campos existem
                 if (!nameInput || !enderecoInput) {
-                    // Esta mensagem de erro agora será mais clara
                     console.error(`toggleRequiredFields: Input não encontrado! Tentou: #${modalPrefix}Name e #${modalPrefix}Endereco`);
                     return;
                 }
 
-                // 3. Aplica a sua regra completa
+                // 3. APLICA A LÓGICA CORRETA
                 if (isImovel) {
                     // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
                     nameInput.required = false;
