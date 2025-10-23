@@ -2003,26 +2003,35 @@ const checkAndDisplayDebt = (item) => {
         };
 
        const toggleRequiredFields = (modalPrefix, isImovel) => {
-    try {
-        const nameInput = document.getElementById(`${modalPrefix}ItemName`);
-        // Por agora, não vamos mexer no campo Endereço, como pediu.
+            try {
+                // 1. Encontra os dois campos de input
+                const nameInput = document.getElementById(`${modalPrefix}ItemName`);
+                const enderecoInput = document.getElementById(`${modalPrefix}ItemEndereco`);
 
-        if (!nameInput) {
-            console.error("toggleRequiredFields: Input de nome não encontrado!");
-            return;
-        }
+                // 2. Garante que os campos existem antes de continuar
+                if (!nameInput || !enderecoInput) {
+                    console.error("toggleRequiredFields: Input de nome ou endereço não encontrado!");
+                    return;
+                }
 
-        if (isImovel) {
-            // Se é Imóvel: Nome NÃO é obrigatório
-            nameInput.required = false;
-        } else {
-            // Se NÃO é Imóvel: Nome É obrigatório
-            nameInput.required = true;
-        }
-    } catch (error) {
-        console.error("Erro inesperado em toggleRequiredFields:", error);
-    }
-};
+                // 3. Aplica a sua nova regra
+                if (isImovel) {
+                    // Se é Imóvel: Nome NÃO é obrigatório, Endereço É obrigatório
+                    nameInput.required = false;
+                    enderecoInput.required = true;
+                } else {
+                    // Se NÃO é Imóvel: Nome É obrigatório, Endereço NÃO é obrigatório
+                    nameInput.required = true;
+                    enderecoInput.required = false;
+                }
+                
+                // (Mantive este log para podermos verificar na consola se a lógica está a ser aplicada)
+                console.log(`toggleRequiredFields (${modalPrefix}): é Imóvel=${isImovel}. Nome required=${nameInput.required}, Endereço required=${enderecoInput.required}`);
+
+            } catch (error) {
+                console.error("Erro inesperado em toggleRequiredFields:", error);
+            }
+        };
         
         const finalizeRental = (itemId) => {
             const item = items.find(i => i.id === itemId);
